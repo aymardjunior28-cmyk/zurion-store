@@ -1,0 +1,48 @@
+<%- include('../partials/admin/nav') %>
+
+<% const statusLabels = { 'créée': 'Créée', 'paiement_confirmé': 'Paiement confirmé', 'préparation': 'Préparation', 'expédition': 'Expédition', 'livraison': 'Livraison', 'terminée': 'Terminée' }; %>
+<% const statusClass = { 'créée': 'zurion-badge-warning', 'paiement_confirmé': 'zurion-badge-info', 'préparation': 'zurion-badge-info', 'expédition': 'zurion-badge-info', 'livraison': 'zurion-badge-success', 'terminée': 'zurion-badge-success' }; %>
+
+<div class="zurion-section-block">
+  <h2>Commandes (<%= orders.length %>)</h2>
+  <% if (orders.length) { %>
+    <table class="zurion-table">
+      <thead>
+        <tr><th>Référence</th><th>Date</th><th>Articles</th><th>Livraison</th><th>Total</th><th>Statut</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        <% orders.forEach(o => { %>
+          <tr>
+            <td><strong><%= esc(o.reference) %></strong></td>
+            <td><%= new Date(o.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) %></td>
+            <td>
+              <% if (o.items && o.items.length) { %>
+                <%= o.items.map(it => `${it.quantity}× ${it.nameSnapshot}`).join(', ').length > 60
+                  ? esc(o.items.map(it => `${it.quantity}× ${it.nameSnapshot}`).join(', ').slice(0, 60)) + '…'
+                  : esc(o.items.map(it => `${it.quantity}× ${it.nameSnapshot}`).join(', ')) %>
+              <% } else { %>—<% } %>
+            </td>
+            <td>
+              <%= esc((deliveryModes[o.deliveryMode] || {}).label || o.deliveryMode) %><br>
+              <small class="zurion-muted"><%= esc(o.paymentMethod) %></small>
+            </td>
+            <td><strong><%= money(o.total) %></strong></td>
+            <td><span class="zurion-badge <%= statusClass[o.status] || 'zurion-badge-warning' %>"><%= esc(statusLabels[o.status] || o.status) %></span></td>
+            <td>
+              <% const next = nextStatus(o); %>
+              <% if (next) { %>
+                <form method="post" action="/admin/commandes/<%= encodeURIComponent(o.reference) %>/statut">
+                  <button type="submit" class="btn btn-primary btn-sm">→ <%= esc(statusLabels[next]) %></button>
+                </form>
+              <% } else { %>
+                <span class="zurion-muted">Cycle terminé</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+    <p class="zurion-muted">Aucune commande enregistrée pour le moment.</p>
+  <% } %>
+</div>

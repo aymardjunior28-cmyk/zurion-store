@@ -1,0 +1,141 @@
+<div class="container">
+  <nav class="zurion-breadcrumb" aria-label="Fil d’Ariane">
+    <a href="/">Accueil</a><span>/</span>
+    <a href="/catalogue">Catalogue</a><span>/</span>
+    <span><%= esc(product.name) %></span>
+  </nav>
+
+  <div class="zurion-product">
+    <!-- Galerie -->
+    <div class="zurion-gallery">
+      <div class="zurion-gallery__main">
+        <% const images = product.images && product.images.length ? product.images : [{ url: '/assets/images/demos/demo-3/products/product-1.jpg' }]; %>
+        <img src="<%= images[0].url %>" alt="<%= esc(product.name) %>" id="zurion-gallery-main" data-zurion-gallery-main>
+        <% if (product.oldPrice && product.oldPrice > product.price) { %>
+          <span class="zurion-badge zurion-badge--discount zurion-badge--gallery">-<%= discountPercent(product.oldPrice, product.price) %>%</span>
+        <% } %>
+      </div>
+      <% if (images.length > 1) { %>
+        <div class="zurion-gallery__thumbs">
+          <% images.forEach((img, i) => { %>
+            <button type="button" class="<%= i === 0 ? 'is-active' : '' %>" data-zurion-gallery-thumb="<%= img.url %>" aria-label="Voir l’image <%= i + 1 %>">
+              <img src="<%= img.url %>" alt="">
+            </button>
+          <% }) %>
+        </div>
+      <% } %>
+    </div>
+
+    <!-- Infos -->
+    <div class="zurion-product__info">
+      <p class="zurion-product__category"><%= esc(product.category ? product.category.name : '') %></p>
+      <h1><%= esc(product.name) %></h1>
+
+      <div class="zurion-product__rating">
+        <span class="zurion-stars" data-rating="<%= averageRating %>">★</span>
+        <span><%= averageRating ? averageRating.toFixed(1) : '—' %> (<%= reviewCount %> avis)</span>
+      </div>
+
+      <p class="zurion-product__price">
+        <strong><%= money(product.price) %></strong>
+        <% if (product.oldPrice && product.oldPrice > product.price) { %>
+          <s><%= money(product.oldPrice) %></s>
+          <span class="zurion-badge zurion-badge--discount">Économisez <%= money(product.oldPrice - product.price) %></span>
+        <% } %>
+      </p>
+
+      <% var stockBadge = stockLabel(product); %>
+      <p class="zurion-product__stock <%= stockBadge.cls %>"><i class="icon-circle"></i> <%= stockBadge.text %></p>
+
+      <p class="zurion-product__desc"><%= esc(product.description) %></p>
+
+      <div class="zurion-product__buy">
+        <div class="zurion-qty">
+          <button type="button" data-qty-minus aria-label="Diminuer">−</button>
+          <input type="number" value="1" min="1" max="<%= Math.max(product.stock, 1) %>" inputmode="numeric" data-qty-input>
+          <button type="button" data-qty-plus aria-label="Augmenter">+</button>
+        </div>
+        <button class="btn btn-primary btn-lg zurion-product__cta" data-add-to-cart="<%= product.id %>" data-qty-cart <%= product.stock <= 0 ? 'disabled' : '' %>>
+          <i class="icon-shopping-cart"></i> Ajouter au panier
+        </button>
+        <button class="zurion-fav zurion-fav--lg" data-wishlist-toggle="<%= product.id %>" aria-label="Ajouter aux favoris">
+          <i class="icon-heart-o"></i>
+        </button>
+      </div>
+
+      <ul class="zurion-product__assurance">
+        <li><i class="icon-truck"></i> Livraison suivie 2–5 jours</li>
+        <li><i class="icon-shield"></i> Garantie 12 mois</li>
+        <li><i class="icon-refresh"></i> Retours sous 7 jours</li>
+      </ul>
+    </div>
+<!-- Caractéristiques -->
+  <% if (product.specs && product.specs.length) { %>
+    <section class="zurion-section">
+      <div class="zurion-section__head"><div><h2>Caractéristiques techniques</h2></div></div>
+      <table class="zurion-specs">
+        <% product.specs.forEach(s => { %>
+          <tr><th><%= esc(s.label) %></th><td><%= esc(s.value) %></td></tr>
+        <% }) %>
+      </table>
+    </section>
+  <% } %>
+
+  <!-- Avis -->
+  <section class="zurion-section">
+    <div class="zurion-section__head">
+      <div><h2>Avis clients</h2><p><%= reviewCount %> avis sur ce produit.</p></div>
+    </div>
+    <% if (currentUser) { %>
+      <form action="/produit/<%= product.slug %>/avis" method="post" class="zurion-review-form">
+        <label for="rating">Ma note</label>
+        <select name="rating" id="rating" class="form-control">
+          <option value="5">5 — Excellent</option>
+          <option value="4">4 — Très bien</option>
+          <option value="3">3 — Bien</option>
+          <option value="2">2 — Moyen</option>
+          <option value="1">1 — Décevant</option>
+        </select>
+        <label for="comment">Mon commentaire</label>
+        <textarea name="comment" id="comment" rows="3" class="form-control" placeholder="Partagez votre expérience…"></textarea>
+        <button type="submit" class="btn btn-primary">Publier mon avis</button>
+      </form>
+    <% } else { %>
+      <p class="zurion-muted"><a href="/connexion?next=/produit/<%= product.slug %>">Connectez-vous</a> pour laisser un avis.</p>
+    <% } %>
+
+    <div class="zurion-reviews">
+      <% if (product.reviews && product.reviews.length) { %>
+        <% product.reviews.forEach(r => { %>
+          <article class="zurion-review">
+            <div class="zurion-review__head">
+              <strong><%= esc(r.user ? r.user.firstName + ' ' + r.user.lastName.charAt(0) + '.' : 'Client ZURION') %></strong>
+              <span class="zurion-stars" data-rating="<%= r.rating %>">★</span>
+              <% if (r.verified) { %><span class="zurion-badge zurion-badge--verified">Achat vérifié</span><% } %>
+            </div>
+            <% if (r.comment) { %><p><%= esc(r.comment) %></p><% } %>
+            <time><%= r.createdAt ? new Date(r.createdAt).toLocaleDateString('fr-FR') : '' %></time>
+          </article>
+        <% }) %>
+      <% } else { %>
+        <p class="zurion-muted">Aucun avis pour le moment. Soyez le premier !</p>
+      <% } %>
+    </div>
+  </section>
+
+  <!-- Similaires -->
+  <% if (related && related.length) { %>
+    <section class="zurion-section">
+      <div class="zurion-section__head">
+        <div><h2>Vous aimerez aussi</h2></div>
+        <a href="/catalogue?category=<%= product.category ? product.category.slug : '' %>">Voir la catégorie <i class="icon-long-arrow-right"></i></a>
+      </div>
+      <div class="zurion-grid zurion-grid--4">
+        <% related.forEach(p => { %>
+          <%- include('partials/product-card', { product: p }) %>
+        <% }) %>
+      </div>
+    </section>
+  <% } %>
+</div>
+  </div>

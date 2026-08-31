@@ -1,0 +1,89 @@
+<%
+  const STATUS_LABELS = {
+    'créée': 'Créée',
+    'paiement_confirmé': 'Paiement confirmé',
+    'préparation': 'En préparation',
+    'expédition': 'En expédition',
+    'livraison': 'En livraison',
+    'terminée': 'Terminée',
+  };
+  const STATUS_CLS = {
+    'créée': 'is-info',
+    'paiement_confirmé': 'is-success',
+    'préparation': 'is-warning',
+    'expédition': 'is-warning',
+    'livraison': 'is-warning',
+    'terminée': 'is-success',
+  };
+  const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+%>
+<div class="container">
+  <div class="zurion-page-head">
+    <nav class="zurion-breadcrumb" aria-label="Fil d’Ariane">
+      <a href="/">Accueil</a><span>/</span><span>Mon compte</span>
+    </nav>
+    <h1>Bonjour, <%= esc(currentUser.firstName) %> 👋</h1>
+    <p>Suivez ici vos commandes et vos informations.</p>
+  </div>
+
+  <div class="zurion-compte">
+    <aside class="zurion-compte__aside">
+      <div class="zurion-section-block">
+        <h2>Mes informations</h2>
+        <p><strong><%= esc(currentUser.firstName + ' ' + currentUser.lastName) %></strong></p>
+        <p class="zurion-muted"><%= esc(currentUser.email) %></p>
+        <p><span class="zurion-status <%= currentUser.role === 'admin' ? 'is-primary' : 'is-info' %>"><%= currentUser.role === 'admin' ? 'Administrateur' : 'Client' %></span></p>
+        <form method="post" action="/deconnexion" class="zurion-compte__logout">
+          <button type="submit" class="btn btn-outline btn-sm">Se déconnecter</button>
+        </form>
+      </div>
+      <div class="zurion-section-block">
+        <h2>Mes favoris</h2>
+        <p class="zurion-muted">Retrouvez vos produits coups de cœur.</p>
+        <a href="/favoris" class="btn btn-outline btn-sm">Voir mes favoris</a>
+      </div>
+    </aside>
+
+    <section class="zurion-compte__orders">
+      <h2>Mes commandes <span class="zurion-muted">(<%= orders.length %>)</span></h2>
+
+      <% if (!orders.length) { %>
+        <div class="zurion-empty">
+          <i class="icon-truck" style="font-size:4rem"></i>
+          <h3>Aucune commande pour le moment</h3>
+          <p>Vos futures commandes apparaîtront ici avec leur suivi en temps réel.</p>
+          <a href="/catalogue" class="btn btn-primary">Découvrir le catalogue</a>
+        </div>
+      <% } else { %>
+        <% orders.forEach((order) => { const idx = orderStatuses.indexOf(order.status); const step = idx < 0 ? 0 : idx + 1; %>
+          <article class="zurion-order">
+            <header class="zurion-order__head">
+              <div>
+                <strong class="zurion-order__ref"><%= esc(order.reference) %></strong>
+                <span class="zurion-muted"> · <%= fmtDate(order.createdAt) %></span>
+              </div>
+              <span class="zurion-status <%= STATUS_CLS[order.status] || 'is-info' %>"><%= STATUS_LABELS[order.status] || esc(order.status) %></span>
+            </header>
+
+            <ol class="zurion-steps">
+              <% orderStatuses.forEach((s, i) => { %>
+                <li class="<%= i < step ? 'is-done' : (i === step - 1 ? 'is-current' : '') %>"><%= STATUS_LABELS[s] %></li>
+              <% }) %>
+            </ol>
+
+            <ul class="zurion-order__items">
+              <% order.items.forEach((it) => { %>
+                <li><%= esc(it.nameSnapshot) %> <span class="zurion-muted">× <%= it.quantity %></span></li>
+              <% }) %>
+            </ul>
+
+            <footer class="zurion-order__foot">
+              <strong>Total : <%= money(order.total) %></strong>
+              <a href="/commande/confirmation/<%= encodeURIComponent(order.reference) %>" class="btn btn-outline btn-sm">Voir le détail</a>
+            </footer>
+          </article>
+        <% }) %>
+      <% } %>
+    </section>
+  </div>
+</div>

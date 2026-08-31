@@ -1,0 +1,30 @@
+# Dépendances
+node_modules/
+
+# Environnement & secrets
+.env
+.env.local
+.env.*.local
+
+# Base de données locale
+*.sqlite
+*.sqlite-journal
+*.db
+
+# Fichiers uploadés (contenus clients)
+public/uploads/
+uploads/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+.idea/
+*.suo
+
+# Tests / couverture
+coverage/
+.nyc_output/

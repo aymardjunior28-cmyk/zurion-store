@@ -1,0 +1,49 @@
+<% const isActive = (p) => p === currentPath; %>
+<header class="zurion-header">
+  <div class="container zurion-header__row">
+    <a href="/" class="zurion-logo" aria-label="ZURION Store">
+      <img src="/images/Zurion/SVG/Zurion Black.svg" alt="ZURION" width="150" height="44">
+    </a>
+
+    <button class="zurion-burger" data-zurion-burger aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+
+    <nav class="zurion-nav" data-zurion-menu aria-label="Navigation principale">
+      <ul>
+        <li><a href="/" class="<%= isActive('/') ? 'is-active' : '' %>">Accueil</a></li>
+        <li><a href="/catalogue" class="<%= isActive('/catalogue') ? 'is-active' : '' %>">Catalogue</a></li>
+        <% (categories || []).slice(0, 5).forEach(c => { %>
+          <li><a href="/catalogue?category=<%= c.slug %>"><%= esc(c.name) %></a></li>
+        <% }) %>
+      </ul>
+    </nav>
+
+    <div class="zurion-header__actions">
+      <a href="/catalogue" class="zurion-icon-btn" aria-label="Rechercher" data-zurion-search-toggle>
+        <i class="icon-search"></i>
+      </a>
+      <a href="<%= currentUser ? '/compte' : '/connexion' %>" class="zurion-icon-btn" aria-label="Mon compte">
+        <i class="icon-user"></i>
+      </a>
+      <a href="/favoris" class="zurion-icon-btn" aria-label="Favoris">
+        <i class="icon-heart-o"></i>
+        <span class="zurion-count" data-zurion-wish-count>0</span>
+      </a>
+      <a href="/panier" class="zurion-icon-btn" aria-label="Panier">
+        <i class="icon-shopping-cart"></i>
+        <span class="zurion-count" data-zurion-cart-count><%= cartCount || 0 %></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="zurion-search-bar" data-zurion-search hidden>
+    <div class="container">
+      <form action="/catalogue" method="get" class="zurion-search-form">
+        <input type="search" name="q" placeholder="Rechercher un produit…" autocomplete="off" data-zurion-search-input>
+        <button type="submit" class="btn btn-primary">Rechercher</button>
+      </form>
+      <div class="zurion-suggestions" data-zurion-suggestions hidden></div>
+    </div>
+  </div>
+</header>

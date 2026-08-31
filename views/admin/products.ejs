@@ -1,0 +1,88 @@
+<%- include('../partials/admin/nav') %>
+
+<div class="zurion-section-block">
+  <h2>Ajouter un produit</h2>
+  <% if (error) { %><div class="zurion-form-error"><%= esc(error) %></div><% } %>
+  <form method="post" action="/admin/produits" class="zurion-admin-create">
+    <div class="zurion-form-grid">
+      <label>Nom du produit
+        <input type="text" name="name" class="form-control" required placeholder="Ex : Écouteurs ZURION Air Pro">
+      </label>
+      <label>Catégorie
+        <select name="categoryId" class="form-control" required>
+          <option value="">— Choisir —</option>
+          <% categories.forEach(c => { %>
+            <option value="<%= c.id %>"><%= esc(c.name) %></option>
+          <% }) %>
+        </select>
+      </label>
+      <label>Prix (FCFA)
+        <input type="number" name="price" class="form-control" min="0" step="1" required placeholder="15000">
+      </label>
+      <label>Ancien prix — promo (optionnel)
+        <input type="number" name="oldPrice" class="form-control" min="0" step="1" placeholder="20000">
+      </label>
+      <label>Stock
+        <input type="number" name="stock" class="form-control" min="0" step="1" required placeholder="25">
+      </label>
+      <label>Image (URL ou chemin)
+        <input type="text" name="imageUrl" class="form-control" placeholder="/images/demos/demo-3/products/product-3.jpg">
+      </label>
+      <label class="zurion-form-grid__full">Description
+        <textarea name="description" class="form-control" rows="3" placeholder="Points clés du produit…"></textarea>
+      </label>
+    </div>
+    <div class="zurion-check-row">
+      <label class="zurion-check"><input type="checkbox" name="featured"> Produit mis en avant (accueil)</label>
+      <label class="zurion-check"><input type="checkbox" name="active" checked> Produit actif (visible en boutique)</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Créer le produit</button>
+  </form>
+</div>
+
+<div class="zurion-section-block">
+  <h2>Gestion des produits (<%= products.length %>)</h2>
+  <table class="zurion-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Produit</th>
+        <th>Prix (FCFA)</th>
+        <th>Ancien prix</th>
+        <th>Stock</th>
+        <th>En avant</th>
+        <th>Actif</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% products.forEach(p => { %>
+        <tr>
+          <td><%= p.id %></td>
+          <td>
+            <strong><%= esc(p.name) %></strong><br>
+            <small class="zurion-muted"><%= esc(p.slug) %></small>
+          </td>
+          <td colspan="6" style="padding:0">
+            <form method="post" action="/admin/produits/<%= p.id %>" style="display:grid;grid-template-columns:repeat(4,11rem) auto auto 1fr;gap:.8rem;align-items:center;padding:1rem 1.4rem">
+              <input type="number" name="price" class="zurion-input-inline" min="0" step="1" value="<%= p.price %>" aria-label="Prix">
+              <input type="number" name="oldPrice" class="zurion-input-inline" min="0" step="1" value="<%= p.oldPrice || '' %>" placeholder="—" aria-label="Ancien prix">
+              <input type="number" name="stock" class="zurion-input-inline" min="0" step="1" value="<%= p.stock %>" aria-label="Stock">
+              <span class="zurion-check"><label><input type="checkbox" name="featured" <%= p.featured ? 'checked' : '' %>> En avant</label></span>
+              <span class="zurion-check"><label><input type="checkbox" name="active" <%= p.active ? 'checked' : '' %>> Actif</label></span>
+              <button type="submit" class="btn btn-primary btn-sm">Enregistrer</button>
+            </form>
+          </td>
+        </tr>
+        <tr>
+          <td></td>
+          <td colspan="7" style="border-top:0;padding-top:0">
+            <form method="post" action="/admin/produits/<%= p.id %>/supprimer" data-confirm="Supprimer définitivement « <%= esc(p.name) %> » ?">
+              <button type="submit" class="btn btn-sm zurion-btn-danger">Supprimer</button>
+            </form>
+          </td>
+        </tr>
+      <% }) %>
+    </tbody>
+  </table>
+</div>

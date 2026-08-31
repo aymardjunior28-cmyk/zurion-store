@@ -1,0 +1,97 @@
+<div class="container">
+  <div class="zurion-page-head">
+    <nav class="zurion-breadcrumb" aria-label="Fil d’Ariane">
+      <a href="/">Accueil</a><span>/</span><span>Catalogue</span>
+    </nav>
+    <h1><%= categoryName ? categoryName : 'Catalogue' %> <%= q ? '— « ' + esc(q) + ' »' : '' %></h1>
+    <p><%= meta.total %> produit(s)</p>
+  </div>
+
+  <div class="zurion-catalog">
+    <!-- Filtres -->
+    <aside class="zurion-filters">
+      <form action="/catalogue" method="get" class="zurion-filters__form" data-catalog-form>
+        <input type="hidden" name="category" value="<%= currentCategory %>">
+        <input type="hidden" name="q" value="<%= esc(q) %>">
+        <% const sortNames = { popular: 'Popularité', price_asc: 'Prix croissant', price_desc: 'Prix décroissant', newest: 'Nouveautés' }; %>
+        <input type="hidden" name="sort" value="<%= currentSort %>">
+
+        <div class="zurion-filter-group">
+          <h3>Catégories</h3>
+          <ul class="zurion-filter-list">
+            <li>
+              <a href="/catalogue<%= q ? '?q=' + encodeURIComponent(q) : '' %>" class="<%= !currentCategory ? 'is-active' : '' %>">Tous</a>
+            </li>
+            <% categories.forEach(c => { %>
+              <li>
+                <a href="/catalogue?category=<%= c.slug %><%= q ? '&q=' + encodeURIComponent(q) : '' %>" class="<%= c.slug === currentCategory ? 'is-active' : '' %>">
+                  <%= esc(c.name) %>
+                </a>
+              </li>
+            <% }) %>
+          </ul>
+        </div>
+
+        <div class="zurion-filter-group">
+          <h3>Prix max</h3>
+          <select name="max" class="form-control" data-filter-submit>
+            <option value="">Tous les prix</option>
+            <% [5000, 10000, 15000, 20000, 30000, 50000].forEach(m => { %>
+              <option value="<%= m %>" <%= String(m) === String(currentMax) ? 'selected' : '' %>><%= money(m) %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <label class="zurion-check">
+          <input type="checkbox" name="inStock" value="1" <%= inStock ? 'checked' : '' %> data-filter-submit>
+          <span>En stock uniquement</span>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block">Appliquer</button>
+        <a href="/catalogue" class="btn btn-outline-secondary btn-block">Réinitialiser</a>
+      </form>
+    </aside>
+
+    <!-- Grille produits -->
+    <div class="zurion-catalog__main">
+      <div class="zurion-sortbar">
+        <span class="zurion-sortbar__count"><%= meta.total %> produit(s)</span>
+        <form action="/catalogue" method="get" class="zurion-sort">
+          <input type="hidden" name="category" value="<%= currentCategory %>">
+          <input type="hidden" name="q" value="<%= esc(q) %>">
+          <% if (currentMax) { %><input type="hidden" name="max" value="<%= currentMax %>"><% } %>
+          <% if (inStock) { %><input type="hidden" name="inStock" value="1"><% } %>
+          <label for="sort">Trier :</label>
+          <select name="sort" id="sort" class="form-control" data-sort-submit>
+            <% Object.entries(sortNames).forEach(([k, label]) => { %>
+              <option value="<%= k %>" <%= k === currentSort ? 'selected' : '' %>><%= label %></option>
+            <% }) %>
+          </select>
+        </form>
+      </div>
+
+      <% if (products.length) { %>
+        <div class="zurion-grid zurion-grid--3">
+          <% products.forEach(p => { %>
+            <%- include('partials/product-card', { product: p }) %>
+          <% }) %>
+        </div>
+
+        <% if (meta.pages > 1) { %>
+          <nav class="zurion-pagination" aria-label="Pagination">
+            <% for (let i = 1; i <= meta.pages; i++) { %>
+              <a href="/catalogue?page=<%= i %><%= currentCategory ? '&category=' + currentCategory : '' %><%= q ? '&q=' + encodeURIComponent(q) : '' %><%= currentSort !== 'popular' ? '&sort=' + currentSort : '' %>" class="<%= i === meta.page ? 'is-active' : '' %>"><%= i %></a>
+            <% } %>
+          </nav>
+        <% } %>
+      <% } else { %>
+        <div class="zurion-empty">
+          <i class="icon-search" style="font-size:4rem"></i>
+          <h2>Aucun produit trouvé</h2>
+          <p>Essayez une autre recherche ou réinitialisez les filtres.</p>
+          <a href="/catalogue" class="btn btn-primary">Voir tout le catalogue</a>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,145 @@
+/* ZURION — brand layer shared by every storefront page.
+   Primary blue: #2A7CBE | Ink: #231F20 */
+:root {
+    --zurion-primary: #2a7cbe;
+    --zurion-primary-dark: #1d5d91;
+    --zurion-ink: #231f20;
+    --zurion-surface: #f4f8fb;
+}
+
+::selection { background: var(--zurion-primary); color: #fff; }
+a, .text-primary, .product-price, .product-label-text { color: var(--zurion-primary) !important; }
+.bg-primary, .btn-primary, .product-label.label-primary,
+.cart-dropdown .cart-count, .wishlist a .wishlist-count { background-color: var(--zurion-primary) !important; border-color: var(--zurion-primary) !important; }
+.btn-primary:hover, .btn-primary:focus, .btn-primary:not(:disabled):not(.disabled):active,
+.btn-product-icon:hover, .btn-product-icon:focus { background-color: var(--zurion-primary-dark) !important; border-color: var(--zurion-primary-dark) !important; }
+.btn-outline-primary, .product-details-action .btn-cart { color: var(--zurion-primary) !important; border-color: var(--zurion-primary) !important; }
+.btn-outline-primary:hover, .btn-outline-primary:focus,
+.product-details-action .btn-cart:hover, .product-details-action .btn-cart:focus { background-color: var(--zurion-primary) !important; border-color: var(--zurion-primary) !important; color: #fff !important; }
+.header-top { background: var(--zurion-ink); color: #fff; }
+.header-top a { color: #fff; }
+.header-3 .header-search-extended .btn { color: var(--zurion-primary); }
+.header-bottom .menu > li > a:before, .nav.nav-pills .nav-link.active,
+.nav.nav-pills .nav-link:hover, .nav.nav-pills .nav-link:focus { background-color: var(--zurion-primary) !important; border-color: var(--zurion-primary) !important; }
+.logo img, .footer-logo { width: 150px; height: auto; max-height: 44px; object-fit: contain; }
+.footer-logo { content: url("../images/Zurion/SVG/Zurion%20Black.svg"); }
+.footer-dark { background-color: var(--zurion-ink); }
+.icon-box-icon, .feature-box i { color: var(--zurion-primary) !important; }
+.zurion-assurance { background: var(--zurion-surface); border-top: 1px solid #dfeaf2; border-bottom: 1px solid #dfeaf2; }
+.zurion-assurance .icon-box { padding: 2.2rem 1rem; margin: 0; }
+.zurion-assurance .icon-box-title { color: var(--zurion-ink); font-weight: 700; }
+@media (max-width: 575px) {
+    .logo img { width: 126px; }
+    .header-top { font-size: 1.2rem; }
+}
+
+/* Interactive storefront screens */
+.zurion-app { padding: 5rem 0 7rem; }
+.zurion-app__heading { display:flex; align-items:end; justify-content:space-between; gap:2rem; margin-bottom:2.5rem; }
+.zurion-app__heading h1 { color:var(--zurion-ink); margin:0; }
+.zurion-toolbar { display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:2.5rem; }
+.zurion-toolbar .form-control { min-width:220px; }
+.zurion-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:2rem; }
+.zurion-card { border:1px solid #e2eaf0; background:#fff; border-radius:.8rem; overflow:hidden; display:flex; flex-direction:column; }
+.zurion-card img { width:100%; height:210px; object-fit:contain; padding:1.5rem; background:#f7fafc; }
+.zurion-card__body { padding:1.5rem; display:flex; flex:1; flex-direction:column; }
+.zurion-card__category { color:#688093; font-size:1.25rem; margin-bottom:.5rem; }
+.zurion-card h3 { font-size:1.55rem; line-height:1.35; color:var(--zurion-ink); flex:1; }
+.zurion-card__price { color:var(--zurion-primary); font-weight:700; font-size:1.8rem; margin:1rem 0; }
+.zurion-card__actions { display:flex; gap:.8rem; }
+.zurion-card__actions .btn { flex:1; min-width:0; font-size:1.2rem; padding:.9rem .5rem; }
+.zurion-summary { background:var(--zurion-surface); padding:2.5rem; border-radius:.8rem; }
+.zurion-summary h2 { color:var(--zurion-ink); font-size:2rem; }
+.zurion-cart-row { display:grid; grid-template-columns:80px 1fr 115px 110px 40px; gap:1.5rem; align-items:center; padding:1.5rem 0; border-bottom:1px solid #e5edf2; }
+.zurion-cart-row img { width:80px; height:70px; object-fit:contain; }
+.zurion-qty { width:80px; padding:.6rem; border:1px solid #c7d7e2; border-radius:.4rem; }
+.zurion-empty { padding:5rem 2rem; text-align:center; background:var(--zurion-surface); border-radius:.8rem; }
+.zurion-checkout { display:grid; grid-template-columns:1.35fr .85fr; gap:3rem; }
+.zurion-form label { display:block; color:var(--zurion-ink); font-weight:600; margin:0 0 .6rem; }
+.zurion-form .form-control { margin-bottom:1.6rem; }
+.zurion-notice { padding:1.4rem 1.7rem; margin:0 0 2rem; border-radius:.5rem; background:#e6f3fc; color:#14517e; }
+.zurion-status { display:inline-block; padding:.35rem .8rem; border-radius:999px; background:#e6f3fc; color:#14517e; font-size:1.2rem; font-weight:700; }
+.zurion-order { border:1px solid #dfeaf2; border-radius:.6rem; padding:1.8rem; margin-bottom:1.4rem; }
+.zurion-admin-grid { display:grid; grid-template-columns:1fr 1fr; gap:2rem; }
+@media (max-width: 991px) { .zurion-grid { grid-template-columns:repeat(2, minmax(0,1fr)); } .zurion-checkout { grid-template-columns:1fr; } }
+@media (max-width: 575px) { .zurion-app { padding:3rem 0 5rem; } .zurion-grid { grid-template-columns:1fr; } .zurion-cart-row { grid-template-columns:65px 1fr 75px 30px; gap:1rem; } .zurion-cart-row .zurion-line-price { display:none; } .zurion-cart-row img { width:65px; } .zurion-app__heading { align-items:start; flex-direction:column; } }
+
+/* Application visual system */
+body { background:#fff; color:#304250; }
+.header { box-shadow:0 1px 0 rgba(35,31,32,.07); }
+.header-middle { min-height:86px; }
+.header-bottom { border-top:1px solid #eef3f7; border-bottom:1px solid #e8f0f5; }
+.header-bottom .container { justify-content:center; }
+.category-dropdown, .main-nav .megamenu, .main-nav > .menu ul,
+.mobile-menu .megamenu, .mobile-menu ul, .menu .sf-with-ul::after,
+.menu-vertical .sf-with-ul::after, .sf-arrows .sf-with-ul::after,
+.mmenu-btn { display:none !important; }
+.header .dropdown-menu, .compare-dropdown { display:none !important; }
+.zurion-top-message { color:#d9edfa; font-size:1.2rem; font-weight:700; letter-spacing:.02em; }
+.zurion-nav { display:flex; align-items:center; justify-content:center; gap:3.2rem; min-height:52px; padding:0; margin:0; list-style:none; }
+.zurion-nav a { position:relative; color:var(--zurion-ink) !important; font-size:1.35rem; font-weight:700; letter-spacing:.01em; padding:1.75rem 0 1.55rem; text-decoration:none; }
+.zurion-nav a::after { content:""; position:absolute; left:0; right:0; bottom:0; height:3px; border-radius:3px 3px 0 0; background:var(--zurion-primary); transform:scaleX(0); transition:transform .2s ease; }
+.zurion-nav a:hover, .zurion-nav a:focus, .zurion-nav a.zurion-nav__active { color:var(--zurion-primary) !important; }
+.zurion-nav a:hover::after, .zurion-nav a:focus::after, .zurion-nav a.zurion-nav__active::after { transform:scaleX(1); }
+.zurion-app { padding:6.5rem 0 8rem; }
+.zurion-app::before { content:""; display:block; position:absolute; width:440px; height:440px; top:165px; right:-220px; border-radius:50%; background:radial-gradient(circle, rgba(42,124,190,.11), transparent 68%); pointer-events:none; }
+.zurion-app__heading { position:relative; margin-bottom:3.2rem; }
+.zurion-app__heading p { font-size:1.15rem; font-weight:800; letter-spacing:.14em; }
+.zurion-app__heading h1 { font-size:3.8rem; letter-spacing:-.045em; font-weight:800; }
+.zurion-toolbar { position:relative; padding:1.2rem; margin-bottom:3rem; background:#f4f8fb; border:1px solid #e1ebf1; border-radius:1.2rem; }
+.zurion-toolbar .form-control { height:46px; background:#fff; border-color:#dbe7ef; border-radius:.7rem; box-shadow:none; }
+.zurion-toolbar .btn { border-radius:.7rem; padding:0 2rem; }
+.zurion-grid { position:relative; gap:2.4rem; }
+.zurion-card { border:1px solid #e2eaf0; border-radius:1.2rem; box-shadow:0 10px 25px rgba(20,57,82,.045); transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+.zurion-card:hover { transform:translateY(-7px); border-color:#c5dfea; box-shadow:0 20px 38px rgba(20,57,82,.12); }
+.zurion-card img { height:238px; padding:2.4rem; background:linear-gradient(145deg,#f6fafc,#e8f3f8); }
+.zurion-card__body { padding:1.8rem; }
+.zurion-card__category { font-size:1.1rem; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:#618196; }
+.zurion-card h3 { font-size:1.65rem; font-weight:700; letter-spacing:-.02em; }
+.zurion-card h3 a { color:var(--zurion-ink) !important; }
+.zurion-card__price { font-size:1.95rem; letter-spacing:-.02em; margin:1.25rem 0 .5rem; }
+.zurion-card__actions { margin-top:1.3rem; }
+.zurion-card__actions .btn { border-radius:.6rem; font-weight:700; }
+.btn { border-radius:.6rem; font-weight:700; transition:transform .2s ease, background-color .2s ease, box-shadow .2s ease; }
+.btn-primary { box-shadow:0 8px 16px rgba(42,124,190,.17); }
+.btn-primary:hover { transform:translateY(-1px); }
+.zurion-summary, .zurion-empty { border:1px solid #dfeaf2; border-radius:1.2rem; background:linear-gradient(145deg,#f8fbfd,#edf6fa); }
+.zurion-summary { padding:2.8rem; }
+.zurion-summary h2 { font-size:2.15rem; font-weight:800; letter-spacing:-.035em; }
+.zurion-cart-row, .zurion-order { border-color:#dfeaf2; }
+.zurion-order { border-radius:1rem; box-shadow:0 4px 15px rgba(20,57,82,.035); }
+.zurion-status { background:#e2f2fb; color:#17669d; padding:.45rem 1rem; }
+.zurion-empty { padding:6.5rem 2rem; }
+.zurion-home { padding:4rem 0 8rem; overflow:hidden; }
+.zurion-hero { position:relative; overflow:hidden; min-height:480px; padding:6.5rem; border-radius:2rem; color:#fff; background:linear-gradient(125deg,#113851 0%,#1e699d 53%,#2a7cbe 100%); box-shadow:0 24px 50px rgba(19,72,108,.22); }
+.zurion-hero::before, .zurion-hero::after { content:""; position:absolute; border:1px solid rgba(255,255,255,.16); border-radius:50%; pointer-events:none; }
+.zurion-hero::before { width:560px; height:560px; right:-190px; top:-210px; }
+.zurion-hero::after { width:360px; height:360px; right:75px; bottom:-275px; }
+.zurion-hero__content { position:relative; z-index:1; width:57%; }
+.zurion-eyebrow { margin-bottom:1.7rem; color:#bfe7ff; font-size:1.2rem; font-weight:800; letter-spacing:.16em; }
+.zurion-hero h1 { color:#fff; font-size:5.8rem; line-height:.98; font-weight:800; letter-spacing:-.065em; margin-bottom:2rem; }
+.zurion-hero p:not(.zurion-eyebrow) { color:#d9edfa; max-width:500px; font-size:1.75rem; line-height:1.55; }
+.zurion-hero .btn { margin-top:1.4rem; padding:1.3rem 2.3rem; background:#fff; color:#17669d; border-color:#fff; box-shadow:none; }
+.zurion-hero .btn:hover { background:#dff2fc; border-color:#dff2fc; }
+.zurion-home-section { margin-top:7rem; }
+.zurion-section-head { display:flex; justify-content:space-between; gap:2rem; align-items:end; margin-bottom:2.5rem; }
+.zurion-section-head h2 { margin:0; color:var(--zurion-ink); font-size:3rem; font-weight:800; letter-spacing:-.045em; }
+.zurion-section-head p { margin:.6rem 0 0; color:#648094; }
+.zurion-section-head a { font-weight:800; text-decoration:none; }
+.zurion-category-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1.5rem; }
+.zurion-category { min-height:180px; display:flex; flex-direction:column; justify-content:end; padding:2rem; border-radius:1.2rem; background:linear-gradient(145deg,#f6fafc,#e8f3f8); border:1px solid #e1ebf1; color:var(--zurion-ink) !important; text-decoration:none; transition:all .25s ease; }
+.zurion-category i { margin-bottom:auto; font-size:3.4rem; color:var(--zurion-primary); }
+.zurion-category strong { font-size:1.7rem; }
+.zurion-category span { margin-top:.4rem; color:#648094; }
+.zurion-category:hover { transform:translateY(-5px); border-color:#9ac8e4; box-shadow:0 14px 28px rgba(20,57,82,.1); }
+.zurion-trust { display:grid; grid-template-columns:repeat(3,1fr); margin-top:6rem; border:1px solid #dce9f0; border-radius:1.2rem; overflow:hidden; }
+.zurion-trust div { padding:2.2rem 2.5rem; display:flex; align-items:center; gap:1.5rem; background:#fff; }
+.zurion-trust div + div { border-left:1px solid #dce9f0; }
+.zurion-trust i { color:var(--zurion-primary); font-size:3rem; }
+.zurion-trust strong { display:block; color:var(--zurion-ink); font-size:1.5rem; }
+.zurion-trust span { color:#688093; font-size:1.25rem; }
+.footer-middle { border-top-color:#dbe8ef; }
+.footer .widget-title { color:var(--zurion-ink); font-weight:800; }
+.footer-bottom { border-top:1px solid #e1ebf1; }
+@media (max-width:991px) { .zurion-nav { gap:2rem; } .zurion-hero { padding:4.5rem; } .zurion-hero__content { width:75%; } .zurion-hero h1 { font-size:4.8rem; } .zurion-category-grid { grid-template-columns:repeat(2,1fr); } }
+@media (max-width:575px) { .header-bottom { overflow-x:auto; } .zurion-nav { justify-content:flex-start; width:max-content; gap:2.1rem; padding:0 1.5rem; } .zurion-nav a { font-size:1.25rem; } .zurion-app__heading h1 { font-size:3.1rem; } .zurion-home { padding:2rem 0 5rem; } .zurion-hero { min-height:440px; padding:3.5rem 2.6rem; border-radius:1.2rem; } .zurion-hero__content { width:100%; } .zurion-hero h1 { font-size:4.1rem; } .zurion-hero p:not(.zurion-eyebrow) { font-size:1.55rem; } .zurion-section-head { align-items:start; flex-direction:column; } .zurion-section-head h2 { font-size:2.7rem; } .zurion-category-grid, .zurion-trust { grid-template-columns:1fr; } .zurion-trust div + div { border-left:0; border-top:1px solid #dce9f0; } }

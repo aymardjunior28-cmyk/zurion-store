@@ -1,0 +1,21 @@
+<div class="container">
+  <div class="zurion-auth">
+    <h1>Connexion</h1>
+    <p class="zurion-muted">Accédez à vos commandes, favoris et informations.</p>
+
+    <% if (error) { %><div class="zurion-form-error"><%= esc(error) %></div><% } %>
+
+    <form method="post" action="/connexion" novalidate>
+      <label>E-mail
+        <input type="email" name="email" class="form-control" required autocomplete="email"
+               value="<%= esc(values.email || '') %>" placeholder="vous@exemple.com">
+      </label>
+      <label>Mot de passe
+        <input type="password" name="password" class="form-control" required autocomplete="current-password" placeholder="••••••••">
+      </label>
+      <button type="submit" class="btn btn-primary btn-block">Se connecter</button>
+    </form>
+
+    <p class="zurion-auth__alt">Pas encore de compte ? <a href="/inscription">Créer un compte</a></p>
+  </div>
+</div>

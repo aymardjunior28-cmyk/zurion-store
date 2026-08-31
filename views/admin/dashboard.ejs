@@ -1,0 +1,68 @@
+<%- include('../partials/admin/nav') %>
+
+<div class="zurion-stats">
+  <div class="zurion-stat is-accent">
+    <small>Chiffre d'affaires</small>
+    <strong><%= money(stats.revenue) %></strong>
+  </div>
+  <div class="zurion-stat">
+    <small>Commandes</small>
+    <strong><%= stats.orderCount %></strong>
+  </div>
+  <div class="zurion-stat">
+    <small>Produits actifs</small>
+    <strong><%= stats.productCount %></strong>
+  </div>
+  <div class="zurion-stat">
+    <small>Stocks faibles</small>
+    <strong class="<%= stats.lowStockCount ? 'zurion-text-danger' : '' %>"><%= stats.lowStockCount %></strong>
+  </div>
+</div>
+
+<div class="zurion-section-block">
+  <h2>Commandes récentes</h2>
+  <% const statusLabels = { 'créée': 'Créée', 'paiement_confirmé': 'Paiement confirmé', 'préparation': 'Préparation', 'expédition': 'Expédition', 'livraison': 'Livraison', 'terminée': 'Terminée' }; %>
+  <% if (recentOrders.length) { %>
+    <table class="zurion-table">
+      <thead>
+        <tr><th>Référence</th><th>Date</th><th>Total</th><th>Statut</th></tr>
+      </thead>
+      <tbody>
+        <% recentOrders.forEach(o => { %>
+          <tr>
+            <td><strong><%= esc(o.reference) %></strong></td>
+            <td><%= new Date(o.createdAt).toLocaleDateString('fr-FR') %></td>
+            <td><%= money(o.total) %></td>
+            <td><%= esc(statusLabels[o.status] || o.status) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+    <p style="margin-top:1.2rem"><a href="/admin/commandes">Gérer toutes les commandes <i class="icon-long-arrow-right"></i></a></p>
+  <% } else { %>
+    <p class="zurion-muted">Aucune commande pour le moment.</p>
+  <% } %>
+</div>
+
+<div class="zurion-section-block">
+  <h2>Stocks à réapprovisionner (&lt; 5 unités)</h2>
+  <% if (lowStockProducts.length) { %>
+    <table class="zurion-table">
+      <thead>
+        <tr><th>Produit</th><th>Prix</th><th>Stock</th><th></th></tr>
+      </thead>
+      <tbody>
+        <% lowStockProducts.forEach(p => { %>
+          <tr>
+            <td><%= esc(p.name) %></td>
+            <td><%= money(p.price) %></td>
+            <td><span class="zurion-badge <%= p.stock <= 0 ? 'zurion-badge-danger' : 'zurion-badge-warning' %>"><%= p.stock <= 0 ? 'Rupture' : p.stock + ' restant(s)' %></span></td>
+            <td><a href="/admin/produits">Réapprovisionner</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+    <p class="zurion-muted">Tous les stocks sont corrects. 👍</p>
+  <% } %>
+</div>

@@ -1,0 +1,46 @@
+{
+  "name": "zurion-store",
+  "version": "1.0.0",
+  "description": "ZURION Store — MVP e-commerce (Express + API REST + SQLite/PostgreSQL + EJS)",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "dev": "node --watch server.js",
+    "start": "node server.js",
+    "migrate": "node scripts/migrate.js",
+    "seed": "node scripts/seed.js",
+    "test": "node --test tests/"
+  },
+  "keywords": [
+    "e-commerce",
+    "zurion",
+    "express",
+    "sequelize",
+    "api"
+  ],
+  "author": "Flashart — Junior Dev",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "dotenv": "^16.4.5",
+    "ejs": "^3.1.10",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.4.0",
+    "express-validator": "^7.2.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "lodash.includes": "^4.3.0",
+    "lodash.once": "^4.1.1",
+    "multer": "^1.4.5-lts.1",
+    "pg": "^8.12.0",
+    "sequelize": "^6.37.3",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0"
+  }
+}
