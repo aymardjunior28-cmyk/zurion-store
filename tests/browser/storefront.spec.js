@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const AxeBuilder = require('@axe-core/playwright').default;
 
 test('storefront navigation and catalogue work', async ({ page }) => {
   await page.goto('/');
@@ -29,4 +30,13 @@ test('public pages expose basic accessible names and images', async ({ page }) =
       || control.getAttribute('title')
       || control.querySelector('img[alt]'))
   )).toBe(true);
+});
+
+test('public pages pass automated WCAG serious-impact checks', async ({ page }) => {
+  for (const path of ['/', '/catalogue', '/faq', '/contact', '/cgu', '/confidentialite', '/cookies', '/mentions-legales']) {
+    await page.goto(path);
+    const results = await new AxeBuilder({ page }).analyze();
+    const blocking = results.violations.filter((violation) => ['critical', 'serious'].includes(violation.impact));
+    expect(blocking, `${path} has serious accessibility violations: ${blocking.map((item) => item.id).join(', ')}`).toEqual([]);
+  }
 });

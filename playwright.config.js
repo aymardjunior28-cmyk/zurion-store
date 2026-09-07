@@ -4,7 +4,7 @@ const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests/browser',
-  timeout: 30_000,
+  timeout: 60_000,
   fullyParallel: true,
   reporter: process.env.CI ? 'github' : 'list',
   use: {

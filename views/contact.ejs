@@ -69,7 +69,8 @@
           </label>
         </div>
         <label>Objet
-          <select name="subject" class="form-control" required style="margin-bottom:1.6rem">
+          <label for="contact-subject">Sujet</label>
+          <select name="subject" id="contact-subject" class="form-control" required style="margin-bottom:1.6rem">
             <option value="" <%= !values.subject ? 'selected' : '' %>>Choisissez un objet…</option>
             <% [
               'Question sur un produit',

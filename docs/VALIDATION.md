@@ -12,8 +12,8 @@ npm test
 
 Résultat :
 
-- 12 tests exécutés ;
-- 12 tests réussis ;
+- 13 tests exécutés ;
+- 13 tests réussis ;
 - 0 échec ;
 - 0 test annulé.
 
@@ -32,6 +32,7 @@ Scénarios couverts :
 11. CRUD SSR des catégories et coupons
 12. présence et fonctionnement des pages légales
 13. CRUD API admin produits, catégories et coupons, plus lecture commandes/livraisons
+14. CRUD SSR produit et parcours SSR commande → expédition → livraison
 
 Les scénarios de gestion regroupent plusieurs assertions dans un seul test.
 
@@ -99,17 +100,19 @@ retournées par l’API.
 - Le démarrage en mode production avec PostgreSQL a été validé sur le port
   `4181`. Pour cette instance locale sans TLS, `DB_SSL_ENABLED=false` est
   requis ; il doit rester à `true` sur une base hébergée avec TLS.
-- Playwright : **9 tests réussis sur 9** sur Chromium desktop, mobile et tablette
-  (viewport tactile 1024 × 1366).
+- Playwright : **12 tests réussis sur 12** sur Chromium desktop, mobile et tablette
+  (viewport tactile 1024 × 1366), dont l'audit Axe des violations critiques/sérieuses
+  sur les pages publiques.
 - Benchmark local sans erreur sur 10 connexions pendant 10 secondes par route
   (dernière exécution) : `/health` 1 009 req/s, `/` 47 req/s,
   `/catalogue` 61 req/s, `/api/products` 1 350 req/s.
 
 ## Limites de cette validation
 
-- La couverture de code n’est pas calculée.
-- Les parcours SSR de produits et de livraisons restent à automatiser intégralement ;
-  les catégories, coupons et livreurs sont couverts.
+- La couverture Node mesurée est de 68,56 % lignes, 50,58 % branches et 56,41 %
+  fonctions ; aucun seuil de couverture n'est encore imposé par le projet.
+- Les parcours SSR produits et livraison sont désormais couverts par le test
+  d'intégration dédié ; une recette manuelle sur navigateur reste recommandée.
 - La recette tablette automatisée couvre le rendu et les contrôles publics ; une
   recette manuelle complète sur appareil réel reste recommandée.
 - Le benchmark est local et indicatif ; il ne remplace pas un test de charge
@@ -117,6 +120,9 @@ retournées par l’API.
 - PostgreSQL 18.6 local est validé. Le serveur écoute sur `127.0.0.1:5432` et
   l’application utilise le rôle/base dédiés `zurion`.
 - Le paiement réel n’est pas intégré.
+- L'audit Axe automatisé est vert sur les impacts critiques et sérieux ; cela ne
+  remplace pas une revue manuelle WCAG (clavier, focus, lecteur d'écran, zoom,
+  formulaires et contenus).
 - Un fournisseur PostgreSQL hébergé et son certificat TLS n’ont pas été testés.
 - En production, les moyens Mobile Money et carte simulés sont désormais
   refusés par défaut (`ALLOW_SIMULATED_PAYMENTS=false`). L'intégration réelle
@@ -138,9 +144,9 @@ retournées par l’API.
 | Panier et commande | Validé sur scénario nominal | smoke + scénario métier |
 | Stock et coupon | Validé sur scénario nominal | scénario métier documenté |
 | Produits, catégories, commandes admin | Produits API, catégories/coupons SSR validés | smoke + scénario SSR |
-| Livreurs et livraisons | Livreurs validés, livraisons partiel | smoke + service métier |
+| Livreurs et livraisons | Validé sur parcours SSR/API nominal | smoke + scénario SSR |
 | Authentification et sécurité | Validé partiellement | smoke + inspection configuration |
-| Responsive/accessibilité | Validé partiellement | Playwright desktop/mobile/tablette + contrôles de base |
+| Responsive/accessibilité | Automatisé validé, revue manuelle restante | Playwright desktop/mobile/tablette + Axe |
 | Performance | Indicatif | benchmark local |
 | Paiement réel | Non livré | intégration opérateur requise |
 
@@ -153,7 +159,7 @@ Ces limites sont volontairement documentées pour éviter de présenter le MVP c
 
 Les tâches suivantes ne peuvent pas être finalisées uniquement dans le dépôt :
 
-- créer/configurer le dépôt et les workflows GitHub ;
+- configurer les workflows GitHub et pousser les derniers commits si nécessaire ;
 - provisionner l’hébergement public, le domaine, le TLS et les sauvegardes ;
 - fournir les coordonnées légales définitives de l’exploitant ;
 - fournir les identifiants marchands et le contrat d’un prestataire de paiement réel ;

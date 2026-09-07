@@ -6,7 +6,7 @@ const request = require('supertest');
 
 const app = require('../src/app');
 const { connectDatabase, sequelize } = require('../src/config/db');
-const { Courier, Category, Coupon } = require('../src/models');
+const { Courier, Category, Coupon, Product, Order, Livraison } = require('../src/models');
 
 /** Extrait la valeur du cookie CSRF d'une réponse (pattern double-soumission). */
 function csrfTokenFrom(res) {
@@ -262,6 +262,100 @@ test('admin SSR category and coupon management supports create, update, toggle a
     .send({ _csrf: csrfTokenFromHtml((await admin.get('/admin/codes-promo')).text) });
   assert.equal(couponDeleted.status, 302);
   assert.equal(await Coupon.count({ where: { id: coupon.id } }), 0);
+});
+
+test('admin SSR product and delivery workflows support create, update and shipment', async () => {
+  const admin = request.agent(app);
+  const pre = await admin.get('/api/health');
+  const csrfToken = csrfTokenFrom(pre);
+  const login = await admin
+    .post('/api/auth/login')
+    .set('X-CSRF-Token', csrfToken)
+    .send({ email: 'admin@zurion.store', password: 'Admin1234!' });
+  assert.equal(login.status, 200);
+
+  const productsPage = await admin.get('/admin?tab=products');
+  const productToken = csrfTokenFromHtml(productsPage.text);
+  const name = `SSR Product ${Date.now()}`;
+  const created = await admin
+    .post('/admin/produits')
+    .type('form')
+    .send({
+      _csrf: productToken,
+      name,
+      price: '2400',
+      oldPrice: '3000',
+      stock: '4',
+      description: 'Produit SSR de test',
+      active: 'on',
+    });
+  assert.equal(created.status, 302);
+  const product = await Product.findOne({ where: { name } });
+  assert.ok(product);
+
+  const editPage = await admin.get(`/admin/produits/${product.id}`);
+  assert.equal(editPage.status, 200);
+  const updated = await admin
+    .post(`/admin/produits/${product.id}`)
+    .type('form')
+    .send({
+      _csrf: csrfTokenFromHtml(editPage.text),
+      name: `${name} Updated`,
+      price: '2600',
+      stock: '3',
+      specs: 'Couleur: Bleu',
+      active: 'on',
+    });
+  assert.equal(updated.status, 302);
+  await product.reload();
+  assert.equal(product.name, `${name} Updated`);
+  assert.equal(product.price, 2600);
+
+  const customer = request.agent(app);
+  const customerPre = await customer.get('/api/health');
+  const customerCsrf = csrfTokenFrom(customerPre);
+  const available = (await customer.get('/api/products?limit=50')).body.products.find((item) => item.stock >= 1);
+  assert.ok(available);
+  const cartToken = `ssr-delivery-${Date.now()}`;
+  const added = await customer
+    .post('/api/cart/items')
+    .set('X-Cart-Token', cartToken)
+    .set('X-CSRF-Token', customerCsrf)
+    .send({ productId: available.id, quantity: 1 });
+  assert.equal(added.status, 201);
+  const orderRes = await customer
+    .post('/api/orders')
+    .set('X-Cart-Token', cartToken)
+    .set('X-CSRF-Token', customerCsrf)
+    .send({
+      paymentMethod: 'Paiement à la livraison',
+      deliveryMode: 'standard',
+      address: { fullName: 'SSR Delivery', phone: '0123456789', line1: 'Rue SSR', city: 'Yaoundé', region: 'Centre' },
+    });
+  assert.equal(orderRes.status, 201);
+  const order = await Order.findOne({ where: { reference: orderRes.body.reference } });
+
+  for (let i = 0; i < 4 && order.status !== 'expédition'; i += 1) {
+    const ordersPage = await admin.get('/admin/commandes');
+    const statusRes = await admin
+      .post(`/admin/commandes/${order.reference}/statut`)
+      .type('form')
+      .send({ _csrf: csrfTokenFromHtml(ordersPage.text) });
+    assert.equal(statusRes.status, 302);
+    await order.reload();
+  }
+  assert.equal(order.status, 'expédition');
+  const delivery = await Livraison.findOne({ where: { orderId: order.id } });
+  assert.ok(delivery, 'A delivery must be created when the order is shipped');
+  const deliveriesPage = await admin.get('/admin/livraisons');
+  assert.equal(deliveriesPage.status, 200);
+
+  const deleted = await admin
+    .post(`/admin/produits/${product.id}/supprimer`)
+    .type('form')
+    .send({ _csrf: csrfTokenFromHtml(await admin.get('/admin?tab=products').then((res) => res.text)) });
+  assert.equal(deleted.status, 302);
+  assert.equal(await Product.count({ where: { id: product.id } }), 0);
 });
 
 test('legal pages are reachable and linked from the footer', async () => {
