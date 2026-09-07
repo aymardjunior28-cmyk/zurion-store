@@ -45,3 +45,14 @@ Le benchmark est indicatif et doit être exécuté sur une base de test.
 Les paiements Mobile Money et carte restent simulés tant qu’un adaptateur
 marchand réel n’est pas configuré. La checklist détaillée et les limites
 connues sont dans [docs/VALIDATION.md](docs/VALIDATION.md).
+
+### Démonstration permanente avec Render
+
+Le fichier `render.yaml` permet de créer l’application web et sa base
+PostgreSQL depuis le dépôt GitHub. Dans Render : **New → Blueprint**, sélectionnez
+`aymardjunior28-cmyk/zurion-store`, puis déployez le blueprint. Render attribuera
+une URL stable de la forme `https://zurion-store.onrender.com`.
+
+Cette URL reste la même après les redéploiements. Le plan gratuit peut toutefois
+mettre le service en veille et les offres gratuites de base de données ont leurs
+propres limites ; une disponibilité permanente nécessite un plan payant.

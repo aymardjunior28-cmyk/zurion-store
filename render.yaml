@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: zurion-store
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SESSION_MAX_AGE_DAYS
+        value: "7"
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "900000"
+      - key: RATE_LIMIT_MAX
+        value: "200"
+      - key: DB_SSL_ENABLED
+        value: "true"
+      - key: DB_SSL_REJECT_UNAUTHORIZED
+        value: "true"
+      - key: ALLOW_SIMULATED_PAYMENTS
+        value: "false"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: zurion-postgres
+          property: connectionString
+
+databases:
+  - name: zurion-postgres
+    plan: free
+    region: frankfurt
