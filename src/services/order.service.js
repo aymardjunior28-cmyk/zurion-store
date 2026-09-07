@@ -160,6 +160,21 @@ async function advanceStatus(order) {
   return order;
 }
 
+/** Applique uniquement la transition immédiatement suivante. */
+async function transitionStatus(order, status) {
+  const currentIndex = ORDER_STATUSES.indexOf(order.status);
+  const nextStatusValue = currentIndex >= 0 ? ORDER_STATUSES[currentIndex + 1] : null;
+  if (!nextStatusValue || status !== nextStatusValue) {
+    throw Object.assign(
+      new Error(`Transition invalide : « ${order.status} » → « ${status} ».`),
+      { status: 400 }
+    );
+  }
+  order.status = status;
+  await order.save();
+  return order;
+}
+
 /** Statut d'après pour l'affichage du bouton admin. */
 function nextStatus(order) {
   const index = ORDER_STATUSES.indexOf(order.status);
@@ -307,6 +322,7 @@ module.exports = {
   listOrders,
   getOrderForUser,
   advanceStatus,
+  transitionStatus,
   nextStatus,
   cancelOrder,
   clearHistory,

@@ -269,14 +269,7 @@ async function setOrderStatus(req, res, next) {
     const order = await Order.findByPk(Number(req.params.id));
     if (!order) return res.status(404).json({ error: 'Commande introuvable.' });
 
-    // Machine d'état : interdit tout retour en arrière (ex. « terminée » → « créée »).
-    const currentIndex = ORDER_STATUSES.indexOf(order.status);
-    const nextIndex = ORDER_STATUSES.indexOf(status);
-    if (nextIndex < currentIndex) {
-      return res.status(400).json({ error: `Impossible de passer de « ${order.status} » à « ${status} » (statut antérieur).` });
-    }
-
-    await order.update({ status });
+    await orderService.transitionStatus(order, status);
     if (status === 'expédition') {
       await deliveryService.autoCreateForOrder(order);
     }

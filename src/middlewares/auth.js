@@ -58,6 +58,27 @@ async function requireAuth(req, res, next) {
   }
 }
 
+/** Charge l'utilisateur si le cookie de session est valide, sans bloquer un invité. */
+async function optionalAuth(req, res, next) {
+  try {
+    const token = req.cookies[COOKIE_NAME];
+    if (!token) return next();
+    let payload;
+    try {
+      payload = jwt.verify(token, env.jwtSecret);
+    } catch (_) {
+      return next();
+    }
+    const user = await User.findByPk(payload.sub);
+    if (!user) return next();
+    const changedAt = user.passwordChangedAt ? Math.floor(new Date(user.passwordChangedAt).getTime() / 1000) : null;
+    if ((payload.pwc || null) === changedAt) req.user = user;
+    return next();
+  } catch (err) {
+    return next(err);
+  }
+}
+
 /** Middleware : exige le rôle admin (à placer APRÈS requireAuth). */
 function requireAdmin(req, res, next) {
   if (!req.user || req.user.role !== 'admin') {
@@ -66,4 +87,4 @@ function requireAdmin(req, res, next) {
   return next();
 }
 
-module.exports = { signToken, cookieOptions, COOKIE_NAME, requireAuth, requireAdmin };
+module.exports = { signToken, cookieOptions, COOKIE_NAME, requireAuth, optionalAuth, requireAdmin };

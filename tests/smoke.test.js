@@ -154,6 +154,110 @@ test('cart flow can add an item and create an order', async () => {
   assert.equal(orderRes.body.status, 'créée');
 });
 
+test('order lifecycle is isolated per user and controlled by admin', async () => {
+  const suffix = Date.now();
+  const customer = request.agent(app);
+  const customerPre = await customer.get('/api/health');
+  const customerCsrf = csrfTokenFrom(customerPre);
+  const customerEmail = `lifecycle-${suffix}@example.test`;
+  const registered = await customer
+    .post('/api/auth/register')
+    .set('X-CSRF-Token', customerCsrf)
+    .send({
+      firstName: 'Lifecycle',
+      lastName: 'Customer',
+      email: customerEmail,
+      phone: '699000001',
+      password: 'Test1234!',
+    });
+  assert.equal(registered.status, 201);
+
+  const product = (await customer.get('/api/products?limit=50')).body.products.find((item) => item.stock >= 1);
+  assert.ok(product, 'A product is required for the lifecycle flow');
+  const added = await customer
+    .post('/api/cart/items')
+    .set('X-CSRF-Token', customerCsrf)
+    .send({ productId: product.id, quantity: 1 });
+  assert.equal(added.status, 201);
+
+  const created = await customer
+    .post('/api/orders')
+    .set('X-CSRF-Token', customerCsrf)
+    .send({
+      paymentMethod: 'Paiement à la livraison',
+      deliveryMode: 'standard',
+      address: { fullName: 'Lifecycle Customer', phone: '699000001', line1: 'Rue lifecycle', city: 'Yaoundé', region: 'Centre' },
+    });
+  assert.equal(created.status, 201);
+  const reference = created.body.reference;
+
+  const customerOrders = await customer.get('/api/orders');
+  assert.equal(customerOrders.status, 200);
+  assert.ok(customerOrders.body.orders.some((order) => order.reference === reference && order.status === 'créée'));
+  const customerPage = await customer.get('/compte');
+  assert.equal(customerPage.status, 200);
+  assert.match(customerPage.text, new RegExp(reference));
+
+  const otherCustomer = request.agent(app);
+  const otherPre = await otherCustomer.get('/api/health');
+  const otherCsrf = csrfTokenFrom(otherPre);
+  const otherRegistered = await otherCustomer
+    .post('/api/auth/register')
+    .set('X-CSRF-Token', otherCsrf)
+    .send({
+      firstName: 'Other',
+      lastName: 'Customer',
+      email: `other-${suffix}@example.test`,
+      password: 'Test1234!',
+    });
+  assert.equal(otherRegistered.status, 201);
+  assert.equal((await otherCustomer.get(`/api/orders/${reference}`)).status, 404);
+
+  const admin = request.agent(app);
+  const adminPre = await admin.get('/api/health');
+  const adminCsrf = csrfTokenFrom(adminPre);
+  const login = await admin
+    .post('/api/auth/login')
+    .set('X-CSRF-Token', adminCsrf)
+    .send({ email: 'admin@zurion.store', password: 'Admin1234!' });
+  assert.equal(login.status, 200);
+  const order = await Order.findOne({ where: { reference } });
+  assert.ok(order);
+
+  const invalidSkip = await admin
+    .patch(`/api/admin/orders/${order.id}/status`)
+    .set('X-CSRF-Token', adminCsrf)
+    .send({ status: 'expédition' });
+  assert.equal(invalidSkip.status, 400);
+  assert.match(invalidSkip.body.error, /Transition invalide/i);
+
+  const transitions = ['paiement_confirmé', 'préparation', 'expédition', 'livraison', 'terminée'];
+  for (const status of transitions) {
+    const response = await admin
+      .patch(`/api/admin/orders/${order.id}/status`)
+      .set('X-CSRF-Token', adminCsrf)
+      .send({ status });
+    assert.equal(response.status, 200);
+    assert.equal(response.body.order.status, status);
+
+    const visibleToCustomer = await customer.get(`/api/orders/${reference}`);
+    assert.equal(visibleToCustomer.status, 200);
+    assert.equal(visibleToCustomer.body.order.status, status);
+  }
+
+  const reverse = await admin
+    .patch(`/api/admin/orders/${order.id}/status`)
+    .set('X-CSRF-Token', adminCsrf)
+    .send({ status: 'livraison' });
+  assert.equal(reverse.status, 400);
+
+  const missing = await admin
+    .patch('/api/admin/orders/999999999/status')
+    .set('X-CSRF-Token', adminCsrf)
+    .send({ status: 'terminée' });
+  assert.equal(missing.status, 404);
+});
+
 test('FAQ page and product image endpoint are available', async () => {
   const faq = await request(app).get('/faq');
   assert.equal(faq.status, 200);

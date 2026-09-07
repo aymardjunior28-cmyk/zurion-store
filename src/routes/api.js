@@ -59,18 +59,18 @@ router.post(
 );
 
 // ── Panier (invité via X-Cart-Token, connecté via cookie) ────────────────
-router.get('/cart', cartController.getCart);
-router.post('/cart/items', [
+router.get('/cart', auth.optionalAuth, cartController.getCart);
+router.post('/cart/items', auth.optionalAuth, [
   body('productId').isInt(),
   body('quantity').optional().isInt({ min: 1 }),
 ], handleValidation, cartController.addItem);
-router.put('/cart/items/:productId(\\d+)', [
+router.put('/cart/items/:productId(\\d+)', auth.optionalAuth, [
   body('quantity').isInt({ min: 1 }),
 ], handleValidation, cartController.updateItem);
-router.delete('/cart/items/:productId(\\d+)', cartController.removeItem);
+router.delete('/cart/items/:productId(\\d+)', auth.optionalAuth, cartController.removeItem);
 
 // ── Commandes ─────────────────────────────────────────────────────────────
-router.post('/orders', [
+router.post('/orders', auth.optionalAuth, [
   body('paymentMethod').isString().notEmpty(),
   body('deliveryMode').isString().notEmpty(),
   body('couponCode').optional({ nullable: true, checkFalsy: true }).isString().isLength({ min: 2, max: 40 }),
