@@ -2,6 +2,7 @@
 
 const catalogService = require('../services/catalog.service');
 const { money, discountPercent } = require('../utils/money');
+const { Product, ProductImage } = require('../models');
 
 /** GET /api/categories */
 async function listCategories(req, res, next) {
@@ -47,7 +48,6 @@ async function getProduct(req, res, next) {
     const product = await catalogService.getProductBySlug(req.params.slug);
     if (!product) return res.status(404).json({ error: 'Produit introuvable.' });
 
-    const related = await catalogService.getRelatedProducts(product);
     const average = product.reviews && product.reviews.length
       ? product.reviews.reduce((s, r) => s + r.rating, 0) / product.reviews.length
       : 0;
@@ -78,14 +78,6 @@ async function getProduct(req, res, next) {
         averageRating: Math.round(average * 10) / 10,
         reviewCount: product.reviews ? product.reviews.length : 0,
       },
-      related: related.map((p) => ({
-        id: p.id,
-        slug: p.slug,
-        name: p.name,
-        price: p.price,
-        priceFormatted: money(p.price),
-        image: null,
-      })),
     });
   } catch (err) {
     return next(err);
@@ -104,4 +96,37 @@ async function suggestions(req, res, next) {
   }
 }
 
-module.exports = { listCategories, listProducts, getProduct, suggestions };
+/** GET /api/product-images?slug=... ou ?productId=... */
+async function listProductImages(req, res, next) {
+  try {
+    const where = {};
+    if (req.query.productId) {
+      const productId = Number(req.query.productId);
+      if (!Number.isInteger(productId) || productId < 1) return res.status(400).json({ error: 'Identifiant produit invalide.' });
+      where.id = productId;
+    } else if (req.query.slug) {
+      where.slug = String(req.query.slug).trim();
+    } else {
+      return res.status(400).json({ error: 'Le slug ou productId est requis.' });
+    }
+
+    const product = await Product.findOne({
+      where: { ...where, active: true },
+      include: [{ model: ProductImage, as: 'images', order: [['position', 'ASC']] }],
+    });
+    if (!product) return res.status(404).json({ error: 'Produit introuvable.' });
+    return res.json({
+      productId: product.id,
+      slug: product.slug,
+      images: (product.images || []).map((image) => ({
+        id: image.id,
+        url: image.url,
+        position: image.position,
+      })),
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+module.exports = { listCategories, listProducts, getProduct, suggestions, listProductImages };

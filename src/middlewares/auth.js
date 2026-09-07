@@ -6,9 +6,10 @@ const { User } = require('../models');
 
 const COOKIE_NAME = 'zurion_token';
 
-/** Signe un JWT pour un utilisateur (sub = id, role). */
+/** Signe un JWT pour un utilisateur (sub = id, role, pwc = dernière date de MDP). */
 function signToken(user) {
-  return jwt.sign({ sub: user.id, role: user.role }, env.jwtSecret, {
+  const passwordChanged = user.passwordChangedAt ? Math.floor(new Date(user.passwordChangedAt).getTime() / 1000) : null;
+  return jwt.sign({ sub: user.id, role: user.role, pwc: passwordChanged }, env.jwtSecret, {
     expiresIn: `${env.sessionMaxAgeDays}d`,
   });
 }
@@ -43,6 +44,12 @@ async function requireAuth(req, res, next) {
     const user = await User.findByPk(payload.sub);
     if (!user) {
       return res.status(401).json({ error: 'Compte introuvable.' });
+    }
+    // Invalidation de session : un token signé AVANT un changement de mot de passe
+    // (même utilisateur, même secret) est refusé.
+    const changedAt = user.passwordChangedAt ? Math.floor(new Date(user.passwordChangedAt).getTime() / 1000) : null;
+    if ((payload.pwc || null) !== changedAt) {
+      return res.status(401).json({ error: 'Session expirée ou invalide.' });
     }
     req.user = user;
     return next();

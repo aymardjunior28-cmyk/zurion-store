@@ -1,0 +1,32 @@
+<section class="container zurion-page">
+  <nav class="zurion-breadcrumb" aria-label="Fil d’Ariane"><a href="/">Accueil</a><span aria-hidden="true">/</span><span><%= title %></span></nav>
+  <article class="zurion-prose">
+    <h1><%= title %></h1>
+    <p class="zurion-muted">Dernière mise à jour : 4 septembre 2026.</p>
+    <% if (kind === 'legal') { %>
+      <h2>Éditeur</h2>
+      <p>ZURION Store est un projet e-commerce exploité par son équipe éditrice. Pour toute demande, utilisez le <a href="/contact">formulaire de contact</a>.</p>
+      <h2>Hébergement</h2>
+      <p>L’hébergement, le nom de domaine et les coordonnées de l’hébergeur seront complétés avant la mise en production publique.</p>
+    <% } else if (kind === 'privacy') { %>
+      <h2>Données collectées</h2>
+      <p>Le service traite les données nécessaires au compte, à la commande, à la livraison et au support : identité, contact, adresse et historique d’achat.</p>
+      <h2>Utilisation et conservation</h2>
+      <p>Ces données servent uniquement à fournir le service, assurer la sécurité et répondre aux demandes. Elles sont conservées pendant la durée nécessaire aux obligations légales et au suivi client.</p>
+      <h2>Vos droits</h2>
+      <p>Vous pouvez demander l’accès, la rectification ou la suppression de vos données via le <a href="/contact">contact</a>, sous réserve des obligations de conservation.</p>
+    <% } else if (kind === 'cookies') { %>
+      <h2>Cookies nécessaires</h2>
+      <p>ZURION utilise des cookies techniques pour la session, la protection CSRF et le panier invité. Ils ne servent pas à la publicité ciblée.</p>
+      <h2>Gestion</h2>
+      <p>La désactivation des cookies techniques peut empêcher la connexion, le panier ou la commande de fonctionner.</p>
+    <% } else { %>
+      <h2>Commande et paiement</h2>
+      <p>Les prix sont affichés en FCFA. Le paiement à la livraison est disponible. Les moyens Mobile Money et carte sont simulés dans ce MVP et ne constituent pas un paiement réel.</p>
+      <h2>Livraison et retours</h2>
+      <p>Les modes et délais sont affichés au checkout. Toute demande de retour ou de remboursement doit être adressée au support avec la référence de commande.</p>
+      <h2>Compte</h2>
+      <p>Le client doit fournir des informations exactes et protéger ses identifiants. Les commandes peuvent être annulées tant qu’elles ne sont pas prises en charge.</p>
+    <% } %>
+  </article>
+</section>

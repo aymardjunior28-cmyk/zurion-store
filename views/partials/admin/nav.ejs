@@ -1,6 +1,13 @@
-<nav class="zurion-admin-nav">
-  <a href="/admin" class="<%= currentPath === '/admin' ? 'is-active' : '' %>"><i class="icon-bars"></i> Tableau de bord</a>
-  <a href="/admin/produits" class="<%= currentPath === '/admin/produits' ? 'is-active' : '' %>"><i class="icon-box"></i> Produits</a>
-  <a href="/admin/commandes" class="<%= currentPath === '/admin/commandes' ? 'is-active' : '' %>"><i class="icon-truck"></i> Commandes</a>
-  <a href="/" class="zurion-admin-nav__back"><i class="icon-long-arrow-left"></i> Retour à la boutique</a>
-</nav>
+<aside class="zurion-admin__side">
+  <nav class="zurion-admin__nav" aria-label="Navigation d'administration">
+    <a href="/admin?tab=overview" class="<%= currentPath === '/admin' && (typeof activeTab === 'undefined' || activeTab === 'overview') ? 'is-active' : '' %>"><i class="fa-solid fa-gauge-high"></i> Tableau de bord</a>
+    <a href="/admin?tab=products" class="<%= typeof activeTab !== 'undefined' && activeTab === 'products' ? 'is-active' : '' %>"><i class="fa-solid fa-box"></i> Marchandise</a>
+    <a href="/admin?tab=categories" class="<%= typeof activeTab !== 'undefined' && activeTab === 'categories' ? 'is-active' : '' %>"><i class="fa-regular fa-folder-open"></i> Catégories</a>
+    <a href="/admin?tab=orders" class="<%= typeof activeTab !== 'undefined' && activeTab === 'orders' ? 'is-active' : '' %>"><i class="fa-solid fa-truck-fast"></i> Commandes</a>
+    <a href="/admin?tab=livraisons" class="<%= typeof activeTab !== 'undefined' && activeTab === 'livraisons' ? 'is-active' : '' %>"><i class="fa-solid fa-truck-ramp-box"></i> Livraisons</a>
+    <a href="/admin?tab=couriers" class="<%= typeof activeTab !== 'undefined' && activeTab === 'couriers' ? 'is-active' : '' %>"><i class="fa-solid fa-user-tie"></i> Livreurs</a>
+    <a href="/admin?tab=coupons" class="<%= typeof activeTab !== 'undefined' && activeTab === 'coupons' ? 'is-active' : '' %>"><i class="fa-solid fa-tags"></i> Codes promo</a>
+    <a href="/admin?tab=users" class="<%= typeof activeTab !== 'undefined' && activeTab === 'users' ? 'is-active' : '' %>"><i class="fa-solid fa-users"></i> Utilisateurs</a>
+  </nav>
+  <a href="/" class="zurion-admin__back"><i class="fa-solid fa-arrow-left-long"></i> Retour à la boutique</a>
+</aside>

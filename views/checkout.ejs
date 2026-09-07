@@ -8,6 +8,7 @@
 
   <div class="zurion-checkout">
     <form action="/commande" method="post" class="zurion-checkout__form" data-checkout-form>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="zurion-stepper">
         <span class="is-active">1. Livraison</span>
         <span>2. Paiement</span>
@@ -52,20 +53,31 @@
         </label>
       <% }) %>
 
-      <button type="submit" class="btn btn-primary btn-lg btn-block">Confirmer la commande <i class="icon-long-arrow-right"></i></button>
+      <h2>Code promo (optionnel)</h2>
+      <label class="zurion-radio">
+        <span>
+          <input type="text" name="couponCode" class="form-control" maxlength="40" placeholder="Ex : BIENVENUE10" value="<%- esc(values.couponCode || '') %>">
+          <small>La remise sera appliquée au total dans la confirmation.</small>
+        </span>
+      </label>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-block">Confirmer la commande <i class="fa-solid fa-arrow-right-long"></i></button>
     </form>
 
     <aside class="zurion-cart__summary">
       <h2>Votre commande</h2>
       <% cart.items.forEach(line => { const p = line.product; %>
         <p class="d-flex justify-content-between">
-          <span><%= esc(p.name) %> × <%= line.quantity %></span>
+          <span><%- esc(p.name) %> × <%= line.quantity %></span>
           <strong><%= money(p.price * line.quantity) %></strong>
         </p>
       <% }) %>
       <hr>
       <p class="d-flex justify-content-between"><span>Sous-total</span><strong><%= money(totals.subtotal) %></strong></p>
       <p class="d-flex justify-content-between"><span>Livraison</span><strong id="zurion-delivery-fee"><%= money(0) %></strong></p>
+      <% if (error) { %>
+        <p class="zurion-form-error"><%- esc(error) %></p>
+      <% } %>
       <p class="d-flex justify-content-between zurion-cart__grand"><span>Total</span><strong id="zurion-order-total"><%= money(totals.subtotal) %></strong></p>
       <p class="zurion-muted small">Paiement simulé pour cette démonstration. Aucun débit réel ne sera effectué.</p>
     </aside>

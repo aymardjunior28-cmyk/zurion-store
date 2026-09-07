@@ -1,9 +1,21 @@
-<%- include('../partials/admin/nav') %>
+<div class="zurion-admin__layout">
+  <%- include('../partials/admin/nav') %>
+  <main class="zurion-admin__main">
+    <header class="zurion-admin__head">
+      <div>
+        <h1>Produits</h1>
+        <p>Créez, modifiez et gérez le catalogue ZURION.</p>
+      </div>
+      <span class="zurion-admin__date"><i class="fa-solid fa-box"></i> <%= products.length %> produit(s)</span>
+    </header>
 
-<div class="zurion-section-block">
-  <h2>Ajouter un produit</h2>
-  <% if (error) { %><div class="zurion-form-error"><%= esc(error) %></div><% } %>
-  <form method="post" action="/admin/produits" class="zurion-admin-create">
+    <div class="zurion-section-block">
+      <div class="zurion-admin__title">
+        <h2><i class="fa-solid fa-plus" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Ajouter un produit</h2>
+      </div>
+  <% if (error) { %><div class="zurion-form-error"><%- esc(error) %></div><% } %>
+  <form method="post" action="/admin/produits" enctype="multipart/form-data" class="zurion-admin-create">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <div class="zurion-form-grid">
       <label>Nom du produit
         <input type="text" name="name" class="form-control" required placeholder="Ex : Écouteurs ZURION Air Pro">
@@ -12,7 +24,7 @@
         <select name="categoryId" class="form-control" required>
           <option value="">— Choisir —</option>
           <% categories.forEach(c => { %>
-            <option value="<%= c.id %>"><%= esc(c.name) %></option>
+            <option value="<%= c.id %>"><%- esc(c.name) %></option>
           <% }) %>
         </select>
       </label>
@@ -25,7 +37,10 @@
       <label>Stock
         <input type="number" name="stock" class="form-control" min="0" step="1" required placeholder="25">
       </label>
-      <label>Image (URL ou chemin)
+      <label>Image — fichier (optionnel)
+        <input type="file" name="imageFile" class="form-control" accept="image/png,image/jpeg,image/webp,image/gif">
+      </label>
+      <label class="zurion-form-grid__full">Ou image par URL (optionnel)
         <input type="text" name="imageUrl" class="form-control" placeholder="/images/demos/demo-3/products/product-3.jpg">
       </label>
       <label class="zurion-form-grid__full">Description
@@ -41,48 +56,52 @@
 </div>
 
 <div class="zurion-section-block">
-  <h2>Gestion des produits (<%= products.length %>)</h2>
-  <table class="zurion-table">
-    <thead>
-      <tr>
-        <th>#</th>
-        <th>Produit</th>
-        <th>Prix (FCFA)</th>
-        <th>Ancien prix</th>
-        <th>Stock</th>
-        <th>En avant</th>
-        <th>Actif</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% products.forEach(p => { %>
+      <div class="zurion-admin__title">
+        <h2><i class="fa-solid fa-boxes-stacked" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Gestion des produits</h2>
+        <span class="zurion-muted"><%= products.length %> au catalogue</span>
+      </div>
+  <% if (products.length) { %>
+    <table class="zurion-table">
+      <thead>
         <tr>
-          <td><%= p.id %></td>
-          <td>
-            <strong><%= esc(p.name) %></strong><br>
-            <small class="zurion-muted"><%= esc(p.slug) %></small>
-          </td>
-          <td colspan="6" style="padding:0">
-            <form method="post" action="/admin/produits/<%= p.id %>" style="display:grid;grid-template-columns:repeat(4,11rem) auto auto 1fr;gap:.8rem;align-items:center;padding:1rem 1.4rem">
-              <input type="number" name="price" class="zurion-input-inline" min="0" step="1" value="<%= p.price %>" aria-label="Prix">
-              <input type="number" name="oldPrice" class="zurion-input-inline" min="0" step="1" value="<%= p.oldPrice || '' %>" placeholder="—" aria-label="Ancien prix">
-              <input type="number" name="stock" class="zurion-input-inline" min="0" step="1" value="<%= p.stock %>" aria-label="Stock">
-              <span class="zurion-check"><label><input type="checkbox" name="featured" <%= p.featured ? 'checked' : '' %>> En avant</label></span>
-              <span class="zurion-check"><label><input type="checkbox" name="active" <%= p.active ? 'checked' : '' %>> Actif</label></span>
-              <button type="submit" class="btn btn-primary btn-sm">Enregistrer</button>
-            </form>
-          </td>
+          <th>#</th>
+          <th>Produit</th>
+          <th>Prix (FCFA)</th>
+          <th>Stock</th>
+          <th>En avant</th>
+          <th>Actif</th>
+          <th>Actions</th>
         </tr>
-        <tr>
-          <td></td>
-          <td colspan="7" style="border-top:0;padding-top:0">
-            <form method="post" action="/admin/produits/<%= p.id %>/supprimer" data-confirm="Supprimer définitivement « <%= esc(p.name) %> » ?">
-              <button type="submit" class="btn btn-sm zurion-btn-danger">Supprimer</button>
-            </form>
-          </td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <% products.forEach(p => { %>
+          <tr>
+            <td><%= p.id %></td>
+            <td>
+              <strong><%- esc(p.name) %></strong><br>
+              <small class="zurion-muted"><%- esc(p.slug) %><%= p.stock < 5 ? ' · <span class="zurion-text-danger">stock faible</span>' : '' %></small>
+            </td>
+            <td>
+              <strong><%= money(p.price) %></strong>
+              <% if (p.oldPrice && p.oldPrice > p.price) { %><br><small class="zurion-muted" style="text-decoration:line-through"><%= money(p.oldPrice) %></small><% } %>
+            </td>
+            <td><span class="zurion-badge <%= p.stock <= 0 ? 'zurion-badge-danger' : (p.stock < 5 ? 'zurion-badge-warning' : 'zurion-badge-success') %>"><%= p.stock <= 0 ? 'Rupture' : p.stock + ' unité(s)' %></span></td>
+            <td><%= p.featured ? '★' : '—' %></td>
+            <td><span class="zurion-badge <%= p.active ? 'zurion-badge-success' : 'zurion-badge-danger' %>"><%= p.active ? 'Oui' : 'Non' %></span></td>
+            <td>
+              <a class="btn btn-outline btn-sm" href="/admin/produits/<%= p.id %>">Modifier</a>
+              <form method="post" action="/admin/produits/<%= p.id %>/supprimer" style="display:inline" data-confirm="Supprimer définitivement « <%- esc(p.name) %> » ?">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn btn-sm zurion-btn-danger">Supprimer</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+      <p class="zurion-muted">Aucun produit. Créez-en un avec le formulaire ci-dessus.</p>
+    <% } %>
+    </div>
+  </main>
 </div>

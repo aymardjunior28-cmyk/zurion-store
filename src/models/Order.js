@@ -19,7 +19,8 @@ const Order = sequelize.define(
         'préparation',
         'expédition',
         'livraison',
-        'terminée'
+        'terminée',
+        'annulée'
       ),
       allowNull: false,
       defaultValue: 'créée',
@@ -30,6 +31,10 @@ const Order = sequelize.define(
     deliveryMode: { type: DataTypes.STRING(60), allowNull: false },
     // Instantané des données de livraison au moment de la commande
     addressSnapshot: { type: DataTypes.TEXT, allowNull: false },
+    // Code promo appliqué (si le client en a saisi un au checkout)
+    couponCode: { type: DataTypes.STRING(40), allowNull: true },
+    discount: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 }, // remise en FCFA
+    cancelledAt: { type: DataTypes.DATE, allowNull: true },
   },
   {
     tableName: 'orders',

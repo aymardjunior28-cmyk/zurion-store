@@ -1,0 +1,98 @@
+<div class="container">
+  <div class="zurion-page-head">
+    <nav class="zurion-breadcrumb" aria-label="Fil d’Ariane">
+      <a href="/">Accueil</a><span>/</span><span>Contact</span>
+    </nav>
+    <h1>Contactez-nous</h1>
+    <p>Une question, un conseil, un souci de commande&nbsp;? Notre équipe est là pour vous.</p>
+  </div>
+
+  <% if (error) { %><div class="zurion-form-error"><%- esc(error) %></div><% } %>
+  <% if (success) { %><div class="zurion-form-success"><%- esc(success) %></div><% } %>
+
+  <div class="zurion-contact-layout">
+    <!-- Coordonnées -->
+    <div class="zurion-contact-info">
+      <h2>Nos coordonnées</h2>
+      <div class="zurion-info-grid">
+        <div class="zurion-info-card">
+          <i class="fa-solid fa-location-dot zurion-info-card__icon"></i>
+          <h3>Adresse</h3>
+          <p>ZURION Store<br>Boulevard de la Technologie<br>Abidjan, Côte d’Ivoire</p>
+        </div>
+        <div class="zurion-info-card">
+          <i class="fa-solid fa-phone zurion-info-card__icon"></i>
+          <h3>Téléphone</h3>
+          <p>
+            <a href="tel:+2250700000000">+225 07 00 00 00 00</a><br>
+            <span class="small zurion-muted">Lun–Sam · 8&nbsp;h–18&nbsp;h</span>
+          </p>
+        </div>
+        <div class="zurion-info-card">
+          <i class="fa-solid fa-envelope zurion-info-card__icon"></i>
+          <h3>E-mail</h3>
+          <p>
+            <a href="mailto:support@zurion.store">support@zurion.store</a><br>
+            <span class="small zurion-muted">Réponse sous 24&nbsp;h ouvrées</span>
+          </p>
+        </div>
+        <div class="zurion-info-card">
+          <i class="fa-solid fa-headset zurion-info-card__icon"></i>
+          <h3>Support</h3>
+          <p>
+            <a href="/faq">Consultez la FAQ</a><br>
+            <a href="/livraison">Livraison &amp; retours</a>
+          </p>
+        </div>
+      </div>
+
+      <div class="zurion-contact-note">
+        <i class="fa-solid fa-circle-info"></i>
+        <p>Vous êtes déjà client&nbsp;? Connectez-vous pour accélérer le traitement de votre demande grâce à vos informations de commande.</p>
+      </div>
+    </div>
+
+    <!-- Formulaire -->
+    <div class="zurion-contact-form">
+      <h2>Envoyez-nous un message</h2>
+      <form method="post" action="/contact" novalidate>
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="zurion-form-grid">
+          <label>Nom complet
+            <input type="text" name="name" class="form-control" required
+                   value="<%- esc(values.name || '') %>" placeholder="Votre nom" autocomplete="name">
+          </label>
+          <label>Adresse e-mail
+            <input type="email" name="email" class="form-control" required
+                   value="<%- esc(values.email || (currentUser && currentUser.email) || '') %>"
+                   placeholder="vous@exemple.com" autocomplete="email">
+          </label>
+        </div>
+        <label>Objet
+          <select name="subject" class="form-control" required style="margin-bottom:1.6rem">
+            <option value="" <%= !values.subject ? 'selected' : '' %>>Choisissez un objet…</option>
+            <% [
+              'Question sur un produit',
+              'Suivi de commande',
+              'Livraison / retours',
+              'Paiement / facturation',
+              'Service après-vente',
+              'Autre demande'
+            ].forEach(function (s) { %>
+              <option value="<%- esc(s) %>" <%= values.subject === s ? 'selected' : '' %>><%- esc(s) %></option>
+            <% }) %>
+          </select>
+        </label>
+        <label>Message
+          <textarea name="message" class="form-control" rows="6" required
+                    placeholder="Décrivez votre demande…"><%- esc(values.message || '') %></textarea>
+        </label>
+        <div class="zurion-contact-form__actions">
+          <button type="submit" class="btn btn-primary btn-lg">Envoyer le message
+            <i class="fa-solid fa-paper-plane" style="font-size:1.3rem"></i>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

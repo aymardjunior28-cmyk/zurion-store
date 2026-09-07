@@ -2,14 +2,17 @@
 
 const bcrypt = require('bcryptjs');
 
-const SALT_ROUNDS = 10;
+// 12 rounds : compromis raisonnable entre sécurité et perf
+// (le coût CPU est déporté hors de l'event loop grâce aux versions async).
+const SALT_ROUNDS = 12;
 
-function hashPassword(plain) {
-  return bcrypt.hashSync(plain, SALT_ROUNDS);
+async function hashPassword(plain) {
+  return bcrypt.hash(plain, SALT_ROUNDS);
 }
 
-function comparePassword(plain, hash) {
-  return bcrypt.compareSync(plain, hash);
+async function comparePassword(plain, hash) {
+  if (!plain || !hash) return false;
+  return bcrypt.compare(plain, hash);
 }
 
 module.exports = { hashPassword, comparePassword };

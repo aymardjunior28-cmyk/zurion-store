@@ -16,21 +16,20 @@
 
   window.ZURION = window.ZURION || {};
 
-  function readCookie(name) {
-    var m = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
-    return m ? decodeURIComponent(m[1]) : null;
+  // Le token du panier invité est fourni par le serveur (window.ZURION.cartToken),
+  // rendu depuis le cookie httpOnly `zurion_cart` — le JS ne lit plus document.cookie.
+  if (!window.ZURION.cartToken) {
+    // Dernier recours (page sans layout) : token local unique.
+    window.ZURION.cartToken = localStorage.getItem(TOKEN_KEY) || ('ct_' + Math.random().toString(36).slice(2) + Date.now().toString(36));
   }
-
-  // Le cookie `zurion_cart` (même nom côté serveur SSR) fait foi ; sinon on
-  // réutilise/regénère un token et on le synchronise vers le cookie.
-  var existing = readCookie('zurion_cart') || localStorage.getItem(TOKEN_KEY);
-  var token = existing || ('ct_' + Math.random().toString(36).slice(2) + Date.now().toString(36));
-  localStorage.setItem(TOKEN_KEY, token);
-  document.cookie = 'zurion_cart=' + encodeURIComponent(token) + ';path=/;max-age=2592000;SameSite=Lax';
-  window.ZURION.cartToken = token;
+  localStorage.setItem(TOKEN_KEY, window.ZURION.cartToken);
 
   function apiHeaders() {
-    return { 'Content-Type': 'application/json', 'X-Cart-Token': window.ZURION.cartToken };
+    return {
+      'Content-Type': 'application/json',
+      'X-Cart-Token': window.ZURION.cartToken,
+      'X-CSRF-Token': (window.ZURION && window.ZURION.csrfToken) || ''
+    };
   }
 
   /* ── Toast ───────────────────────────────────────────────────── */
@@ -256,8 +255,40 @@
   var burger = document.querySelector('[data-zurion-burger]');
   var menu = document.querySelector('[data-zurion-menu]');
   if (burger && menu) {
-    burger.addEventListener('click', function () { menu.classList.toggle('is-open'); });
+    burger.addEventListener('click', function () {
+      menu.classList.toggle('is-open');
+      if (!menu.classList.contains('is-open')) closeDropdowns();
+    });
   }
+
+  /* ── Dropdown Catalogue ─────────────────────────────────────── */
+  document.querySelectorAll('[data-zurion-dropdown]').forEach(function (item) {
+    var toggle = item.querySelector('[data-zurion-dropdown-toggle]');
+    if (!toggle) return;
+    toggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var isOpen = item.classList.toggle('is-open');
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+  });
+
+  function closeDropdowns() {
+    document.querySelectorAll('[data-zurion-dropdown].is-open').forEach(function (item) {
+      item.classList.remove('is-open');
+      var t = item.querySelector('[data-zurion-dropdown-toggle]');
+      if (t) t.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var open = document.querySelector('[data-zurion-dropdown].is-open');
+    if (open && !open.contains(e.target)) closeDropdowns();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeDropdowns();
+  });
 
   /* ── Démarrage ──────────────────────────────────────────────── */
   refreshCartCount();

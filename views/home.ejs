@@ -1,20 +1,21 @@
 <section class="zurion-hero">
+  <video class="zurion-hero__video" autoplay muted loop playsinline preload="metadata" aria-hidden="true" tabindex="-1">
+    <source src="/Video3.mp4" type="video/mp4">
+    Votre navigateur ne supporte pas la lecture de vidéos.
+  </video>
   <div class="container zurion-hero__inner">
     <div class="zurion-hero__content">
       <p class="zurion-eyebrow">TECHNOLOGIE, SANS COMPLICATION</p>
       <h1>Le quotidien,<br>en mieux connecté.</h1>
       <p>Une sélection ZURION pensée pour mieux écouter, travailler, jouer et rester en mouvement.</p>
-      <a href="/catalogue" class="btn btn-primary zurion-hero__cta">Explorer le store <i class="icon-long-arrow-right"></i></a>
-    </div>
-    <div class="zurion-hero__visual">
-      <img src="<%= productImage(promos[0]) %>" alt="<%= esc(promos[0].name) %>" loading="eager">
+      <a href="/catalogue" class="btn btn-primary zurion-hero__cta">Explorer le store</a>
     </div>
   </div>
   <div class="zurion-trustbar container">
-    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 8h13v9H1zM14 11h4l4 3v3h-8z"/><circle cx="6" cy="19" r="1.6"/><circle cx="17" cy="19" r="1.6"/></svg><p><strong>Livraison suivie</strong><span>De la commande à la réception.</span></p></div>
-    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg><p><strong>Paiement sécurisé</strong><span>Des options adaptées à vos usages.</span></p></div>
-    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 13a8 8 0 0 1 16 0"/><rect x="3" y="13" width="4" height="7" rx="1.5"/><rect x="17" y="13" width="4" height="7" rx="1.5"/><path d="M20 19v1a2 2 0 0 1-2 2h-4"/></svg><p><strong>Support ZURION</strong><span>Une équipe disponible pour vous aider.</span></p></div>
-    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg><p><strong>Garantie 12 mois</strong><span>Sur toute la boutique.</span></p></div>
+    <div><i class="fa-solid fa-truck-fast"></i><p><strong>Livraison suivie</strong><span>De la commande à la réception.</span></p></div>
+    <div><i class="fa-solid fa-shield-halved"></i><p><strong>Paiement sécurisé</strong><span>Des options adaptées à vos usages.</span></p></div>
+    <div><i class="fa-solid fa-headset"></i><p><strong>Support ZURION</strong><span>Une équipe disponible pour vous aider.</span></p></div>
+    <div><i class="fa-solid fa-certificate"></i><p><strong>Garantie 12 mois</strong><span>Sur toute la boutique.</span></p></div>
   </div>
 </section>
 
@@ -26,13 +27,13 @@
         <h2>Choisissez votre univers</h2>
         <p>Les essentiels technologiques pour chaque moment.</p>
       </div>
-      <a href="/catalogue">Voir tout <i class="icon-long-arrow-right"></i></a>
+      <a href="/catalogue">Voir tout <i class="fa-solid fa-arrow-right-long"></i></a>
     </div>
     <div class="zurion-categories">
       <% categories.forEach(c => { %>
         <a href="/catalogue?category=<%= c.slug %>" class="zurion-category">
-          <img src="<%= esc(c.image) %>" alt="<%= esc(c.name) %>" loading="lazy">
-          <strong><%= esc(c.name) %></strong>
+          <img src="<%= safeImageUrl(c.image) %>" alt="<%- esc(c.name) %>" loading="lazy">
+          <strong><%- esc(c.name) %></strong>
           <span><%= (c.description || '').slice(0, 60) %></span>
         </a>
       <% }) %>
@@ -46,7 +47,7 @@
         <h2>Offres du moment</h2>
         <p>Des prix ZURION sur les essentiels.</p>
       </div>
-      <a href="/catalogue">Toute la sélection <i class="icon-long-arrow-right"></i></a>
+      <a href="/catalogue">Toute la sélection <i class="fa-solid fa-arrow-right-long"></i></a>
     </div>
     <div class="zurion-grid zurion-grid--4">
       <% promos.forEach(p => { %>
@@ -62,7 +63,7 @@
         <h2>Nouveautés</h2>
         <p>Les derniers arrivés dans le store.</p>
       </div>
-      <a href="/catalogue?sort=newest">Découvrir <i class="icon-long-arrow-right"></i></a>
+      <a href="/catalogue?sort=newest">Découvrir <i class="fa-solid fa-arrow-right-long"></i></a>
     </div>
     <div class="zurion-grid zurion-grid--4">
       <% newArrivals.forEach(p => { %>
@@ -72,16 +73,40 @@
   </section>
 
   <!-- Bannière réassurance type Oraimo -->
-  <section class="zurion-banner">
-    <div class="zurion-banner__text">
-      <h2>Confiance ZURION</h2>
-      <p>Plus de 50&nbsp;000 clients équipés · Produits garantis 12 mois · SAV réactif</p>
-      <a href="/catalogue" class="btn btn-light">Découvrir la boutique</a>
+  <section class="zurion-banner" aria-label="Pourquoi nous faire confiance">
+    <div class="zurion-banner__content">
+      <p class="zurion-banner__eyebrow"><i class="fa-solid fa-shield-heart"></i> Votre confiance, notre priorité</p>
+      <h2>La technologie ZURION,<br>une confiance qui se construit</h2>
+      <p class="zurion-banner__lead">
+        Des produits rigoureusement sélectionnés, livrés partout en Côte d’Ivoire et protégés par une garantie de 12&nbsp;mois.
+        Plus qu’une boutique, ZURION est un partenaire qui vous accompagne avant, pendant et après chaque achat.
+      </p>
+      <div class="zurion-banner__cta">
+        <a href="/catalogue" class="btn btn-light btn-lg">Découvrir la boutique <i class="fa-solid fa-arrow-right-long"></i></a>
+        <a href="/livraison" class="zurion-banner__link">Livraison &amp; retours <i class="fa-solid fa-angle-right"></i></a>
+      </div>
     </div>
     <div class="zurion-banner__stats">
-      <div><strong>50K+</strong><span>Clients</span></div>
-      <div><strong>8</strong><span>Univers produits</span></div>
-      <div><strong>12 mois</strong><span>Garantie</span></div>
+      <div class="zurion-banner__stat">
+        <span class="zurion-banner__stat-icon"><i class="fa-solid fa-users"></i></span>
+        <strong>50&nbsp;000+</strong>
+        <span>Clients équipés</span>
+      </div>
+      <div class="zurion-banner__stat">
+        <span class="zurion-banner__stat-icon"><i class="fa-solid fa-layer-group"></i></span>
+        <strong>8</strong>
+        <span>Univers produits</span>
+      </div>
+      <div class="zurion-banner__stat">
+        <span class="zurion-banner__stat-icon"><i class="fa-solid fa-certificate"></i></span>
+        <strong>12&nbsp;mois</strong>
+        <span>De garantie</span>
+      </div>
+      <div class="zurion-banner__stat">
+        <span class="zurion-banner__stat-icon"><i class="fa-solid fa-star"></i></span>
+        <strong>4.8/5</strong>
+        <span>Satisfaction client</span>
+      </div>
     </div>
   </section>
 </div>

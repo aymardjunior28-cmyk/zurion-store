@@ -1,23 +1,18 @@
 'use strict';
 
 /**
- * Migrations/synchronisation du schéma.
- * - SQLite (dev) : sequelize.sync()
- * - PostgreSQL (prod) : commande sequelize-cli (db:migrate) à configurer.
+ * Exécute les migrations versionnées sur la base configurée.
  */
 const { sequelize } = require('../src/config/db');
-const env = require('../src/config/env');
+const { runMigrations } = require('../src/config/migrations');
 
 (async () => {
   try {
     await sequelize.authenticate();
     console.log(`[migrate] Connexion OK (${sequelize.getDialect()})`);
-    if (sequelize.getDialect() === 'postgres') {
-      // En production : utiliser sequelize-cli avec des migrations fichier.
-      console.log('[migrate] PostgreSQL détecté — utilisez : npx sequelize-cli db:migrate');
-    }
-    await sequelize.sync({ alter: true });
-    console.log('[migrate] Schéma synchronisé.');
+    require('../src/models');
+    await runMigrations(sequelize);
+    console.log('[migrate] Schéma à jour.');
     process.exit(0);
   } catch (err) {
     console.error('[migrate] Erreur :', err);

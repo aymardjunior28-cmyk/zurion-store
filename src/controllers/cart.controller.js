@@ -45,7 +45,9 @@ async function getCart(req, res, next) {
 async function addItem(req, res, next) {
   try {
     const ctx = guestContext(req);
-    const cart = await cartService.addItem({ ...ctx, ...req.body });
+    const productId = Number(req.body.productId);
+    const quantity = req.body.quantity !== undefined ? Number(req.body.quantity) : 1;
+    const cart = await cartService.addItem({ ...ctx, productId, quantity });
     return res.status(201).json(serializeCart(cart));
   } catch (err) {
     return next(err);
@@ -56,7 +58,7 @@ async function addItem(req, res, next) {
 async function updateItem(req, res, next) {
   try {
     const ctx = guestContext(req);
-    const cart = await cartService.updateItem({ ...ctx, productId: req.params.productId, quantity: req.body.quantity });
+    const cart = await cartService.updateItem({ ...ctx, productId: Number(req.params.productId), quantity: Number(req.body.quantity) });
     return res.json(serializeCart(cart));
   } catch (err) {
     return next(err);
@@ -67,7 +69,7 @@ async function updateItem(req, res, next) {
 async function removeItem(req, res, next) {
   try {
     const ctx = guestContext(req);
-    const cart = await cartService.removeItem({ ...ctx, productId: req.params.productId });
+    const cart = await cartService.removeItem({ ...ctx, productId: Number(req.params.productId) });
     return res.json(serializeCart(cart));
   } catch (err) {
     return next(err);

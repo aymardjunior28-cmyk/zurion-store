@@ -12,10 +12,10 @@
         <% cart.items.forEach(line => { const p = line.product; %>
           <div class="zurion-cart-row" data-cart-row="<%= p.id %>">
             <a href="/produit/<%= p.slug %>" class="zurion-cart-row__media">
-              <img src="<%= productImage(p) %>" alt="<%= esc(p.name) %>">
+              <img src="<%= productImage(p) %>" alt="<%- esc(p.name) %>">
             </a>
             <div class="zurion-cart-row__info">
-              <a href="/produit/<%= p.slug %>"><strong><%= esc(p.name) %></strong></a>
+              <a href="/produit/<%= p.slug %>"><strong><%- esc(p.name) %></strong></a>
               <span class="zurion-cart-row__price"><%= money(p.price) %></span>
             </div>
             <div class="zurion-qty">
@@ -25,13 +25,16 @@
             </div>
             <strong class="zurion-cart-row__total"><%= money(p.price * line.quantity) %></strong>
             <button class="zurion-cart-row__remove" data-cart-remove="<%= p.id %>" aria-label="Retirer">
-              <i class="icon-close"></i>
+              <i class="fa-solid fa-xmark"></i>
             </button>
           </div>
         <% }) %>
         <div class="zurion-cart__foot">
-          <a href="/catalogue" class="btn btn-outline-secondary"><i class="icon-long-arrow-left"></i> Continuer mes achats</a>
-          <a href="/panier/vider" class="btn btn-link zurion-muted" data-cart-clear>Vider le panier</a>
+          <a href="/catalogue" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left-long"></i> Continuer mes achats</a>
+          <form method="post" action="/panier/vider" style="display:inline">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-link zurion-muted" data-cart-clear>Vider le panier</button>
+          </form>
         </div>
       </div>
 
@@ -41,13 +44,13 @@
         <p class="d-flex justify-content-between"><span>Livraison</span><strong class="zurion-muted">Calculée à l’étape suivante</strong></p>
         <hr>
         <p class="d-flex justify-content-between zurion-cart__grand"><span>Total</span><strong id="zurion-grand-total"><%= money(totals.subtotal) %></strong></p>
-        <a href="/commande" class="btn btn-primary btn-lg btn-block"><i class="icon-check-circle"></i> Passer la commande</a>
+        <a href="/commande" class="btn btn-primary btn-lg btn-block"><i class="fa-solid fa-circle-check"></i> Passer la commande</a>
         <p class="zurion-muted small text-center mt-2">Paiement sécurisé · Livraison suivie</p>
       </aside>
     </div>
   <% } else { %>
     <div class="zurion-empty">
-      <i class="icon-shopping-cart" style="font-size:4rem"></i>
+      <i class="fa-solid fa-cart-shopping" style="font-size:4rem"></i>
       <h2>Votre panier est vide</h2>
       <p>Explorez notre sélection technologique et ajoutez vos produits préférés.</p>
       <a href="/catalogue" class="btn btn-primary">Voir le catalogue</a>

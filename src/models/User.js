@@ -21,6 +21,9 @@ const User = sequelize.define(
     },
     phone: { type: DataTypes.STRING(30), allowNull: true },
     passwordHash: { type: DataTypes.STRING(100), allowNull: false },
+    // Date du dernier changement de mot de passe : permet d'invalider
+    // les sessions JWT antérieures au changement.
+    passwordChangedAt: { type: DataTypes.DATE, allowNull: true },
     role: {
       type: DataTypes.ENUM('customer', 'admin'),
       allowNull: false,

@@ -47,7 +47,7 @@ router.get('/categories', catalogController.listCategories);
 router.get('/suggestions', catalogController.suggestions);
 router.get('/products', catalogController.listProducts);
 router.get('/products/:slug', catalogController.getProduct);
-router.get('/product-images', (req, res) => res.status(404).json({ error: 'inconnu' }));
+router.get('/product-images', catalogController.listProductImages);
 
 // ── Avis (authentifié) ────────────────────────────────────────────────────
 router.post(
@@ -73,14 +73,20 @@ router.delete('/cart/items/:productId(\\d+)', cartController.removeItem);
 router.post('/orders', [
   body('paymentMethod').isString().notEmpty(),
   body('deliveryMode').isString().notEmpty(),
+  body('couponCode').optional({ nullable: true, checkFalsy: true }).isString().isLength({ min: 2, max: 40 }),
   body('address').isObject(),
+  body('address.fullName').trim().isLength({ min: 2, max: 120 }),
+  body('address.phone').trim().isLength({ min: 5, max: 30 }),
+  body('address.line1').trim().isLength({ min: 3, max: 180 }),
+  body('address.city').trim().isLength({ min: 2, max: 80 }),
+  body('address.region').optional({ checkFalsy: true }).trim().isLength({ max: 80 }),
 ], handleValidation, orderController.createOrder);
 router.get('/orders', auth.requireAuth, orderController.listOrders);
 router.get('/orders/:reference', auth.requireAuth, orderController.getOrder);
 
 // ── Favoris (nécessite un compte) ─────────────────────────────────────────
 router.get('/wishlist', auth.requireAuth, wishlistController.getWishlist);
-router.post('/wishlist', auth.requireAuth, wishlistController.addWishlist);
+router.post('/wishlist', auth.requireAuth, [body('productId').isInt({ min: 1 })], handleValidation, wishlistController.addWishlist);
 router.delete('/wishlist/:productId(\\d+)', auth.requireAuth, wishlistController.removeWishlist);
 
 // ── Admin (auth + rôle) ───────────────────────────────────────────────────
@@ -96,16 +102,41 @@ adminRouter.post('/products', [
   body('price').isInt({ min: 0 }),
   body('stock').optional().isInt({ min: 0 }),
 ], handleValidation, adminController.createProduct);
-adminRouter.put('/products/:id(\\d+)', adminController.updateProduct);
+adminRouter.put('/products/:id(\\d+)', [
+  body('name').optional().trim().isLength({ min: 2, max: 180 }),
+  body('price').optional().isInt({ min: 0 }),
+  body('oldPrice').optional({ nullable: true, checkFalsy: true }).isInt({ min: 0 }),
+  body('stock').optional().isInt({ min: 0 }),
+  body('categoryId').optional().isInt({ min: 1 }),
+  body('featured').optional().isBoolean().toBoolean(),
+  body('active').optional().isBoolean().toBoolean(),
+], handleValidation, adminController.updateProduct);
 adminRouter.delete('/products/:id(\\d+)', adminController.deleteProduct);
 
 adminRouter.post('/categories', [body('name').isLength({ min: 2 })], handleValidation, adminController.createCategory);
-adminRouter.put('/categories/:id(\\d+)', adminController.updateCategory);
+adminRouter.put('/categories/:id(\\d+)', [
+  body('name').optional().trim().isLength({ min: 2, max: 120 }),
+  body('sortOrder').optional().isInt({ min: 0 }),
+  body('active').optional().isBoolean().toBoolean(),
+], handleValidation, adminController.updateCategory);
 adminRouter.delete('/categories/:id(\\d+)', adminController.deleteCategory);
 
 adminRouter.get('/orders', adminController.adminOrders);
 adminRouter.patch('/orders/:id(\\d+)/status', [body('status').isString()], handleValidation, adminController.setOrderStatus);
+adminRouter.post('/orders/:id(\\d+)/cancel', adminController.adminCancelOrder);
 adminRouter.get('/users', adminController.adminUsers);
+
+adminRouter.get('/coupons', adminController.listCoupons);
+adminRouter.post('/coupons', [
+  body('code').trim().isLength({ min: 2, max: 40 }),
+  body('value').isInt({ min: 1 }),
+], handleValidation, adminController.createCoupon);
+adminRouter.patch('/coupons/:id(\\d+)/toggle', adminController.toggleCoupon);
+adminRouter.delete('/coupons/:id(\\d+)', adminController.deleteCoupon);
+
+adminRouter.get('/livraisons', adminController.adminLivraisons);
+adminRouter.patch('/livraisons/:id(\\d+)/status', [body('status').isIn(['en_cours', 'livrée', 'annulée'])], handleValidation, adminController.setLivraisonStatus);
+adminRouter.post('/livraisons/:id(\\d+)/annuler', adminController.cancelLivraison);
 
 router.use('/admin', adminRouter);
 

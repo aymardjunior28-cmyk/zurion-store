@@ -17,7 +17,11 @@ const Cart = require('./Cart');
 const CartItem = require('./CartItem');
 const Order = require('./Order');
 const OrderItem = require('./OrderItem');
+const Coupon = require('./Coupon');
+const Livraison = require('./Livraison');
 const Wishlist = require('./Wishlist');
+const Courier = require('./Courier');
+const ContactMessage = require('./ContactMessage');
 
 // ── Associations ──────────────────────────────────────────────────────────
 
@@ -54,12 +58,22 @@ Order.hasMany(OrderItem, { as: 'items', foreignKey: 'orderId', onDelete: 'CASCAD
 OrderItem.belongsTo(Order, { foreignKey: 'orderId' });
 OrderItem.belongsTo(Product, { foreignKey: 'productId', onDelete: 'SET NULL' });
 
+// Commande → livraisons (livreurs)
+Order.hasMany(Livraison, { as: 'livraisons', foreignKey: 'orderId', onDelete: 'CASCADE' });
+Livraison.belongsTo(Order, { as: 'order', foreignKey: 'orderId' });
+
+// Coupon → commandes (aucune FK : historique de code conservé sur la commande)
+
 // Favoris (unique par couple)
 User.belongsToMany(Product, { through: Wishlist, as: 'wishlistProducts', foreignKey: 'userId', otherKey: 'productId' });
 Product.belongsToMany(User, { through: Wishlist, as: 'usersWhoWishlist', foreignKey: 'productId', otherKey: 'userId' });
 // Associations directes (requêtes Wishlist.findAll + include Product)
 Wishlist.belongsTo(User, { as: 'user', foreignKey: 'userId' });
 Wishlist.belongsTo(Product, { as: 'product', foreignKey: 'productId' });
+
+// Messages de contact (utilisateur optionnel — conservé si connecté)
+User.hasMany(ContactMessage, { as: 'contactMessages', foreignKey: 'userId', onDelete: 'SET NULL' });
+ContactMessage.belongsTo(User, { as: 'user', foreignKey: 'userId' });
 
 module.exports = {
   sequelize,
@@ -74,5 +88,9 @@ module.exports = {
   CartItem,
   Order,
   OrderItem,
+  Coupon,
+  Livraison,
   Wishlist,
+  Courier,
+  ContactMessage,
 };

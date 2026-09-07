@@ -1,0 +1,120 @@
+/* ═══════════════════════════════════════════════════════════════════
+   ZURION — Liquid Glass (couche finale appliquée à tout le store)
+   Halos d'arrière-plan + surfaces translucides floutées, assorties
+   à la palette bleue ZURION (blue → cyan → violet pastel).
+   ═══════════════════════════════════════════════════════════════════ */
+
+:root {
+  --gl-blur: blur(22px)saturate(175%);
+  --gl-blur-md: blur(14px)saturate(160%);
+  --gl-blur-sm: blur(10px)saturate(150%);
+  --gl-bg: rgba(255,255,255,.62);
+  --gl-bg-strong: rgba(255,255,255,.78);
+  --gl-bg-soft: rgba(255,255,255,.45);
+  --gl-border: rgba(255,255,255,.75);
+  --gl-border-soft: rgba(255,255,255,.5);
+  --gl-highlight: inset 0 1px 0 rgba(255,255,255,.85);
+  --gl-shadow: 0 10px 34px rgba(23,64,94,.12);
+}
+
+/* ── Halos d'arrière-plan (aurora) ───────────────────────────── */
+body { position: relative; isolation: isolate; }
+body::before {
+  content: "";
+  position: fixed;
+  inset:  ́0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 42% 34% at 8% 18%, rgba(42,124,190,.28), transparent 62%),
+    radial-gradient(ellipse 36% 30% at 88% 12%, rgba(124,89,220,.20), transparent 62%),
+    radial-gradient(ellipse 46% 36% at 92% 78%, rgba(40,172,180,.22), transparent 64%),
+    radial-gradient(ellipse 40% 32% at 6% 88%, rgba(42,124,190,.18), transparent 62%),
+    radial-gradient(ellipse 60% 50% at 50% 50%, rgba(255,255,255,.0), transparent 58%);
+  transition: opacity .8s ease;
+}
+
+/* ── Surfaces principales ────────────────────────────────────────── */
+.zurion-header {
+  background: rgba(255,255,255,.68);
+  backdrop-filter: var(--gl-blur);
+  -webkit-backdrop-filter: var(--gl-blur);
+  border-bottom: 1px solid var(--gl-border);
+  box-shadow: 0 6px 24px rgba(23,64,94,.08), var(--gl-highlight);
+}
+
+.zurion-dropdown,
+.zurion-suggestions,
+.zurion-search-bar {
+  background: var(--gl-bg-strong);
+  backdrop-filter: var(--gl-blur-md);
+  -webkit-backdrop-filter: var(--gl-blur-md);
+  border-color: var(--gl-border);
+}
+
+.zurion-nav__mobile {
+  background: rgba(255,255,255,.85);
+  backdrop-filter: var(--gl-blur-md);
+  -webkit-backdrop-filter: var(--gl-blur-md);
+}
+
+.zurion-hero__cta {
+  background: rgba(255,255,255,.82);
+  backdrop-filter: var(--gl-blur-sm);
+  -webkit-backdrop-filter: var(--gl-blur-sm);
+  color: #17669d !important;
+}
+
+/* ── Cartes & blocs (storefront) ─────────────────────────────── */
+.zurion-product-card,
+.zurion-category,
+.zurion-filters,
+.zurion-gallery__main,
+.zurion-review-form,
+.zurion-cart__summary,
+.zurion-stepper,
+.zurion-auth,
+.zurion-empty,
+.zurion-admin-create {
+  background-color: var(--gl-bg);
+  background-image: linear-gradient(165deg, rgba(255,255,255,.5) 0%, rgba(255,255,255,.10) 40%, transparent 62%);
+  backdrop-filter: var(--gl-blur-md);
+  -webkit-backdrop-filter: var(--gl-blur-md);
+  border: 1px solid var(--gl-border);
+  box-shadow: var(--gl-shadow), var(--gl-highlight);
+}
+
+.zurion-product-card { box-shadow: 0 12px 30px rgba(23,64,94,.10), var(--gl-highlight); }
+.zurion-product-card:hover { box-shadow: 0 20px 44px rgba(23,64,94,.16), var(--gl-highlight); transform: translateY(-4px; }
+
+.zurion-product-card__media,
+.zurion-cart-row__media img,
+.zurion-category img {
+ {
+  background: rgba(255,255,255,.42);
+  backdrop-filter: var(--gl-blur-sm);
+  -webkit-backdrop-filter: var(--gl-blur-sm);
+}
+
+.zurion-trustbar div {
+ {
+  background: rgba(255,255,255,.72);
+  backdrop-filter: var(--gl-blur-md);
+  -webkit-backdrop-filter: var(--gl-blur-md);
+  box-shadow: var(--gl-highlight);
+}
+
+.zurion-fav {
+ {
+  background: rgba(255,255,255,.7);
+  backdrop-filter: var(--gl-blur-sm);
+  -webkit-backdrop-filter: var(--gl-blur-sm);
+}
+
+.zurion-banner__stat {
+ {
+  background: rgba(255,255,255,.86);
+  backdrop-filter: var(--gl-blur-sm);
+  -webkit-backdrop-filter: var(--gl-blur-sm);
+  box-shadow: var(--gl-shadow), var(--gl-highlight);
+}

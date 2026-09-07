@@ -19,15 +19,23 @@ function viewsHelpers(app) {
   app.locals.appName = 'ZURION Store';
   app.locals.year = new Date().getFullYear();
 
+  /** N'autorise que des URLs http(s) ou locales pour les images. */
+  app.locals.safeImageUrl = (url) => {
+    const value = url == null ? '' : String(url).trim();
+    if (!value) return '';
+    if (/^(https?:\/\/|\/)/i.test(value)) return value;
+    return '/assets/images/products/placeholder.jpg';
+  };
+
   /**
    * Rendu de l'attribut <img> d'un produit (première image ou fallback).
    * Utilisé partout où une carte produit s'affiche.
    */
   app.locals.productImage = (product) => {
     if (!product) return '';
-    if (product.images && product.images.length) return product.images[0].url;
-    if (product.image) return product.image;
-    return '/assets/images/demos/demo-3/products/product-1.jpg';
+    if (product.images && product.images.length) return app.locals.safeImageUrl(product.images[0].url);
+    if (product.image) return app.locals.safeImageUrl(product.image);
+    return '/assets/images/products/placeholder.jpg';
   };
 
   /** Classe CSS pour une carte produit selon son état de stock. */

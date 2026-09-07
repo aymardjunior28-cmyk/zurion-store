@@ -28,3 +28,9 @@ Thumbs.db
 # Tests / couverture
 coverage/
 .nyc_output/
+test-results/
+playwright-report/
+
+# Artefacts temporaires locaux
+_clean_test.js
+*.bak

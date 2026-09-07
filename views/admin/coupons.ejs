@@ -1,0 +1,92 @@
+<div class="zurion-admin__layout">
+  <%- include('../partials/admin/nav') %>
+  <main class="zurion-admin__main">
+    <header class="zurion-admin__head">
+      <div>
+        <h1>Codes promo</h1>
+        <p>Créez et gérez vos codes de réduction.</p>
+      </div>
+      <span class="zurion-admin__date"><i class="fa-solid fa-tags"></i> <%= coupons.length %> code(s)</span>
+    </header>
+
+    <div class="zurion-section-block">
+      <div class="zurion-admin__title">
+        <h2><i class="fa-solid fa-plus" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Créer un code promo</h2>
+      </div>
+  <% if (error) { %><div class="zurion-form-error"><%- esc(error) %></div><% } %>
+  <form method="post" action="/admin/codes-promo" class="zurion-form-grid">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Code
+      <input class="form-control" name="code" required minlength="2" maxlength="40" placeholder="EX : BIENVENUE10">
+    </label>
+    <label>Type
+      <select class="form-control" name="type">
+        <option value="percent">Pourcentage (%)</option>
+        <option value="fixed">Montant fixe (FCFA)</option>
+      </select>
+    </label>
+    <label>Valeur
+      <input class="form-control" name="value" type="number" min="1" step="1" required placeholder="10 ou 5000">
+    </label>
+    <label>Panier minimum (FCFA, optionnel)
+      <input class="form-control" name="minAmount" type="number" min="0" step="1" placeholder="—">
+    </label>
+    <label>Utilisations max (optionnel)
+      <input class="form-control" name="maxUses" type="number" min="1" step="1" placeholder="—">
+    </label>
+    <label>Début de validité
+      <input class="form-control" name="validFrom" type="date">
+    </label>
+    <label>Fin de validité
+      <input class="form-control" name="validUntil" type="date">
+    </label>
+    <div class="zurion-check-row zum">
+      <label class="zurion-check"><input type="checkbox" name="active" checked> Actif immédiatement</label>
+    </div>
+    <button class="btn btn-primary" type="submit">Créer le code</button>
+  </form>
+</div>
+
+<div class="zurion-section-block">
+      <div class="zurion-admin__title">
+        <h2><i class="fa-solid fa-list-ul" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Codes promo</h2>
+        <span class="zurion-muted"><%= coupons.length %> au total</span>
+      </div>
+  <% if (coupons.length) { %>
+    <table class="zurion-table">
+      <thead>
+        <tr><th>Code</th><th>Remise</th><th>Panier min.</th><th>Utilisations</th><th>Validité</th><th>État</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        <% coupons.forEach(c => { %>
+          <tr>
+            <td><strong><%- esc(c.code) %></strong></td>
+            <td><%= c.type === 'percent' ? c.value + '%' : money(c.value) %></td>
+            <td><%= c.minAmount ? money(c.minAmount) : '—' %></td>
+            <td><%= c.maxUses ? c.usedCount + ' / ' + c.maxUses : c.usedCount + ' (illimité)' %></td>
+            <td>
+              <% if (c.validFrom || c.validUntil) { %>
+                <small class="zurion-muted"><%= c.validFrom ? new Date(c.validFrom).toLocaleDateString('fr-FR') : '…' %> → <%= c.validUntil ? new Date(c.validUntil).toLocaleDateString('fr-FR') : '∞' %></small>
+              <% } else { %>—<% } %>
+            </td>
+            <td><span class="zurion-badge <%= c.active ? 'zurion-badge-success' : 'zurion-badge-danger' %>"><%= c.active ? 'Actif' : 'Inactif' %></span></td>
+            <td>
+              <form method="post" action="/admin/codes-promo/<%= c.id %>/toggle" style="display:inline">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-outline btn-sm" type="submit" title="Activer / désactiver"><%= c.active ? 'Désactiver' : 'Activer' %></button>
+              </form>
+              <form method="post" action="/admin/codes-promo/<%= c.id %>/supprimer" style="display:inline" data-confirm="Supprimer le code « <%- esc(c.code) %> » ?">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-sm zurion-btn-danger" type="submit">Supprimer</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+      <p class="zurion-muted">Aucun code promo pour le moment.</p>
+    <% } %>
+    </div>
+  </main>
+</div>

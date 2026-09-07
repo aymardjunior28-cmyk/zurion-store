@@ -1,0 +1,85 @@
+<div class="zurion-admin__layout">
+  <%- include('../partials/admin/nav') %>
+  <main class="zurion-admin__main">
+    <header class="zurion-admin__head">
+      <div>
+        <h1>Produit · <%- esc(product.name) %></h1>
+        <p>Modifiez les informations de la fiche produit.</p>
+      </div>
+      <a class="btn btn-outline" href="/admin/produits"><i class="fa-solid fa-arrow-left-long"></i> Retour à la liste</a>
+    </header>
+
+    <div class="zurion-section-block">
+      <div class="zurion-admin__title">
+        <h2><i class="fa-solid fa-pen" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Informations générales</h2>
+      </div>
+  <% if (error) { %><div class="zurion-form-error"><%- esc(error) %></div><% } %>
+  <% if (success) { %><div class="zurion-form-success">Modifications enregistrées.</div><% } %>
+
+  <form method="post" action="/admin/produits/<%= product.id %>" enctype="multipart/form-data" class="zurion-form-grid">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Nom du produit
+      <input class="form-control" name="name" required minlength="2" maxlength="180" value="<%- esc(product.name) %>">
+    </label>
+    <label>Catégorie
+      <select class="form-control" name="categoryId">
+        <option value="">— Aucune —</option>
+        <% categories.forEach(c => { %>
+          <option value="<%= c.id %>" <%= Number(product.categoryId) === Number(c.id) ? 'selected' : '' %>><%- esc(c.name) %></option>
+        <% }) %>
+      </select>
+    </label>
+    <label>Prix (FCFA)
+      <input class="form-control" name="price" type="number" min="0" step="1" required value="<%= product.price %>">
+    </label>
+    <label>Ancien prix — promo (optionnel)
+      <input class="form-control" name="oldPrice" type="number" min="0" step="1" value="<%= product.oldPrice || '' %>">
+    </label>
+    <label>Stock
+      <input class="form-control" name="stock" type="number" min="0" step="1" required value="<%= product.stock %>">
+    </label>
+    <label>Référence interne (SKU)
+      <input class="form-control" name="sku" maxlength="40" value="<%- esc(product.sku || '') %>">
+    </label>
+    <label class="zurion-form-grid__full">Description
+      <textarea class="form-control" name="description" rows="5"><%- esc(product.description || '') %></textarea>
+    </label>
+    <label class="zurion-form-grid__full">Spécifications (une ligne « Label: valeur » par entrée)
+      <textarea class="form-control" name="specs" rows="4" placeholder="Marque: Zurion&#10;Couleur: Noir"><% (product.specs || []).forEach(s => { %><%- esc(s.label + ': ' + s.value) %>
+<% }) %></textarea>
+    </label>
+    <label class="zurion-form-grid__full">Nouvelle image principale (remplace la 1re)
+      <input class="form-control" type="file" name="imageFile" accept="image/png,image/jpeg,image/webp,image/gif">
+    </label>
+    <div class="zurion-check-row">
+      <label class="zurion-check"><input type="checkbox" name="featured" <%= product.featured ? 'checked' : '' %>> Produit en avant</label>
+      <label class="zurion-check"><input type="checkbox" name="active" <%= product.active ? 'checked' : '' %>> Produit actif</label>
+    </div>
+    <button class="btn btn-primary" type="submit"><i class="fa-solid fa-floppy-disk"></i> Enregistrer</button>
+  </form>
+</div>
+
+<div class="zurion-section-block">
+      <div class="zurion-admin__title">
+        <h2><i class="fa-solid fa-images" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Galerie d'images</h2>
+        <span class="zurion-muted"><%= (product.images || []).length %> image(s)</span>
+      </div>
+      <% if (product.images && product.images.length) { %>
+        <div style="display:flex;flex-wrap:wrap;gap:1.2rem">
+          <% product.images.forEach(img => { %>
+            <div style="width:9.6rem;border:1px solid var(--zurion-border);border-radius:var(--zurion-radius);padding:.8rem;background:#fff">
+              <img src="<%= safeImageUrl(img.url) %>" alt="" style="width:100%;height:7rem;object-fit:cover;border-radius:.5rem">
+              <small class="zurion-muted">position <%= img.position %></small>
+              <form method="post" action="/admin/produits/<%= product.id %>/delete-image/<%= img.id %>" data-confirm="Supprimer cette image ?">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="btn btn-sm zurion-btn-danger" type="submit" style="width:100%;margin-top:.5rem">Supprimer</button>
+              </form>
+            </div>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p class="zurion-muted">Aucune image — ajoutez-en une avec le champ « Nouvelle image principale ».</p>
+      <% } %>
+    </div>
+  </main>
+</div>

@@ -5,10 +5,27 @@
  * Dev    : SQLite (fichier local ./data/zurion.sqlite) — aucune installation.
  * Prod   : PostgreSQL via DATABASE_URL.
  */
-const { Sequelize } = require('sequelize');
+const { Sequelize, DataTypes } = require('sequelize');
 const path = require('path');
 const fs = require('fs');
 const env = require('./env');
+const { runMigrations } = require('./migrations');
+
+/**
+ * SQLite : sync() crée les tables manquantes mais ne modifie PAS les tables
+ * existantes. Ce patch ciblé ajoute les colonnes introduites par de nouvelles
+ * versions du modèle (ex. Order.couponCode) sans toucher aux autres colonnes.
+ */
+async function patchSchema(sequelize) {
+  const qi = sequelize.getQueryInterface();
+  const table = await qi.describeTable('orders');
+  const add = async (column, def) => {
+    if (!table[column]) await qi.addColumn('orders', column, def);
+  };
+  await add('couponCode', { type: DataTypes.STRING(40), allowNull: true });
+  await add('discount', { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 });
+  await add('cancelledAt', { type: DataTypes.DATE, allowNull: true });
+}
 
 function buildSequelize() {
   if (env.databaseUrl.startsWith('sqlite')) {
@@ -27,6 +44,12 @@ function buildSequelize() {
     dialect: 'postgres',
     logging: false,
     pool: { max: 10, min: 0, acquire: 30000, idle: 10000 },
+    // En production, chiffre la connexion et vérifie le certificat par défaut.
+    // Les hébergeurs utilisant un certificat privé peuvent désactiver cette
+    // vérification explicitement avec DB_SSL_REJECT_UNAUTHORIZED=false.
+    dialectOptions: env.isProd && env.dbSslEnabled
+      ? { ssl: { require: true, rejectUnauthorized: env.dbSslRejectUnauthorized } }
+      : undefined,
   });
 }
 
@@ -37,11 +60,13 @@ async function connectDatabase() {
   const dialect = sequelize.getDialect();
   console.log(`[db] Connexion OK (${dialect})`);
   if (dialect === 'postgres') {
-    // En PostgreSQL, on utilise les vraies migrations (sequelize-cli) en prod.
+    // En PostgreSQL, seules les migrations versionnées créent/évoluent le schéma.
+    await runMigrations(sequelize);
     return;
   }
   // En dev (SQLite) : synchronisation automatique du schéma.
   await sequelize.sync();
+  await patchSchema(sequelize);
   console.log('[db] Schéma synchronisé (SQLite)');
 }
 

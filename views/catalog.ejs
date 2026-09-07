@@ -3,7 +3,7 @@
     <nav class="zurion-breadcrumb" aria-label="Fil d’Ariane">
       <a href="/">Accueil</a><span>/</span><span>Catalogue</span>
     </nav>
-    <h1><%= categoryName ? categoryName : 'Catalogue' %> <%= q ? '— « ' + esc(q) + ' »' : '' %></h1>
+    <h1><%= categoryName ? esc(categoryName) : 'Catalogue' %> <%= q ? '— « ' + esc(q) + ' »' : '' %></h1>
     <p><%= meta.total %> produit(s)</p>
   </div>
 
@@ -12,7 +12,7 @@
     <aside class="zurion-filters">
       <form action="/catalogue" method="get" class="zurion-filters__form" data-catalog-form>
         <input type="hidden" name="category" value="<%= currentCategory %>">
-        <input type="hidden" name="q" value="<%= esc(q) %>">
+        <input type="hidden" name="q" value="<%- esc(q) %>">
         <% const sortNames = { popular: 'Popularité', price_asc: 'Prix croissant', price_desc: 'Prix décroissant', newest: 'Nouveautés' }; %>
         <input type="hidden" name="sort" value="<%= currentSort %>">
 
@@ -25,7 +25,7 @@
             <% categories.forEach(c => { %>
               <li>
                 <a href="/catalogue?category=<%= c.slug %><%= q ? '&q=' + encodeURIComponent(q) : '' %>" class="<%= c.slug === currentCategory ? 'is-active' : '' %>">
-                  <%= esc(c.name) %>
+                  <%- esc(c.name) %>
                 </a>
               </li>
             <% }) %>
@@ -58,7 +58,7 @@
         <span class="zurion-sortbar__count"><%= meta.total %> produit(s)</span>
         <form action="/catalogue" method="get" class="zurion-sort">
           <input type="hidden" name="category" value="<%= currentCategory %>">
-          <input type="hidden" name="q" value="<%= esc(q) %>">
+          <input type="hidden" name="q" value="<%- esc(q) %>">
           <% if (currentMax) { %><input type="hidden" name="max" value="<%= currentMax %>"><% } %>
           <% if (inStock) { %><input type="hidden" name="inStock" value="1"><% } %>
           <label for="sort">Trier :</label>
@@ -86,7 +86,7 @@
         <% } %>
       <% } else { %>
         <div class="zurion-empty">
-          <i class="icon-search" style="font-size:4rem"></i>
+          <i class="fa-solid fa-magnifying-glass" style="font-size:4rem"></i>
           <h2>Aucun produit trouvé</h2>
           <p>Essayez une autre recherche ou réinitialisez les filtres.</p>
           <a href="/catalogue" class="btn btn-primary">Voir tout le catalogue</a>

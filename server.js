@@ -8,7 +8,14 @@ const env = require('./src/config/env');
 
 (async () => {
   try {
+    // Charge les modèles AVANT la synchronisation du schéma pour que
+    // sequelize.sync() crée aussi les tables ajoutées récemment (couriers…).
+    require('./src/models');
     await connectDatabase();
+    // Insère les livreurs partenaires par défaut si la table est vide
+    // (l'administrateur peut ensuite les gérer depuis le back-office).
+    const deliveryService = require('./src/services/delivery.service');
+    await deliveryService.seedCouriersIfEmpty();
     const app = require('./src/app');
     app.listen(env.port, () => {
       console.log(`[zurion] Server prêt sur http://localhost:${env.port}`);

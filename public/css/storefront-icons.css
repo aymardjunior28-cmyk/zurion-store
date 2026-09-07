@@ -1,19 +1,2 @@
-/* Icônes ZURION — police 'molla' du thème (auto-hébergée) */
-@font-face {
-  font-family: 'molla';
-  src: url('/fonts/molla0ab2.woff2') format('woff2'), url('/fonts/molla0ab2.woff') format('woff'), url('/fonts/molla0ab2.ttf') format('truetype');
-  font-weight: normal; font-style: normal; font-display: block;
-}
-[class^='icon-'], [class*=' icon-'] { font-family: 'molla' !important; speak: never; font-style: normal; font-weight: normal; font-variant: normal; text-transform: none; line-height: 1; -webkit-font-smoothing: antialiased; display: inline-block; }
-.icon-bars:before { content: '\f131'; }
-.icon-close:before { content: '\f191'; }
-.icon-headphones:before { content: '\e816'; }
-.icon-heart-o:before { content: '\f234'; }
-.icon-long-arrow-left:before { content: '\f273'; }
-.icon-long-arrow-right:before { content: '\f274'; }
-.icon-phone:before { content: '\e806'; }
-.icon-refresh:before { content: '\e813'; }
-.icon-search:before { content: '\f2eb'; }
-.icon-shopping-cart:before { content: '\f2fa'; }
-.icon-truck:before { content: '\f352'; }
-.icon-user:before { content: '\f364'; }
+/* Icônes ZURION — remplacées par Font Awesome (CDN chargé dans layout.ejs).
+   Ce fichier est conservé pour compatibilité avec l'import CSS. */

@@ -2,27 +2,27 @@
 <% const stockCls = (p) => { if (p.stock <= 0) return 'is-danger'; if (p.stock < 5) return 'is-warning'; return 'is-success'; }; %>
 <article class="zurion-product-card">
   <a href="/produit/<%= product.slug %>" class="zurion-product-card__media">
-    <img src="<%= productImage(product) %>" alt="<%= esc(product.name) %>" loading="lazy">
+    <img src="<%= productImage(product) %>" alt="<%- esc(product.name) %>" loading="lazy">
     <% if (product.oldPrice && product.oldPrice > product.price) { %>
       <span class="zurion-badge zurion-badge--discount">-<%= discountPercent(product.oldPrice, product.price) %>%</span>
     <% } %>
   </a>
   <div class="zurion-product-card__body">
-    <p class="zurion-product-card__category"><%= esc(product.category ? product.category.name : '') %></p>
-    <h3><a href="/produit/<%= product.slug %>"><%= esc(product.name) %></a></h3>
+    <p class="zurion-product-card__category"><%- esc(product.category ? product.category.name : '') %></p>
+    <h3><a href="/produit/<%= product.slug %>"><%- esc(product.name) %></a></h3>
     <p class="zurion-product-card__price">
       <strong><%= money(product.price) %></strong>
       <% if (product.oldPrice && product.oldPrice > product.price) { %>
         <s><%= money(product.oldPrice) %></s>
       <% } %>
     </p>
-    <p class="zurion-product-card__stock <%= stockCls(product) %>"><i class="icon-circle"></i> <%= stockLabel(product) %></p>
+    <p class="zurion-product-card__stock <%= stockCls(product) %>"><i class="fa-solid fa-circle"></i> <%= stockLabel(product) %></p>
     <div class="zurion-product-card__actions">
       <button class="btn btn-primary btn-sm" data-add-to-cart="<%= product.id %>" <%= product.stock <= 0 ? 'disabled' : '' %>>
-        <i class="icon-shopping-cart"></i> Ajouter
+        <i class="fa-solid fa-bag-shopping"></i> Ajouter
       </button>
       <button class="zurion-fav" data-wishlist-toggle="<%= product.id %>" aria-label="Ajouter aux favoris">
-        <i class="icon-heart-o"></i>
+        <i class="fa-regular fa-heart"></i>
       </button>
     </div>
   </div>

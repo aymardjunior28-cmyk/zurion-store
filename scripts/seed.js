@@ -13,6 +13,7 @@ const {
   ProductImage,
   ProductSpec,
   Review,
+  Coupon,
 } = require('../src/models');
 const { hashPassword } = require('../src/utils/password');
 const { CATEGORIES, PRODUCTS } = require('./seed-data-index');
@@ -20,19 +21,33 @@ const { slugify } = require('../src/utils/slugify');
 
 (async () => {
   try {
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[seed] Refusé : ne jamais exécuter le seed en production.');
+      process.exit(1);
+    }
     await sequelize.authenticate();
     console.log(`[seed] Connexion OK (${sequelize.getDialect()})`);
     await sequelize.sync({ force: true });
     console.log('[seed] Base réinitialisée.');
 
-    // ── Compte admin de démonstration ────────────────────────────────────
+    // ── Comptes de démonstration ─────────────────────────────────────
     await User.create({
       firstName: 'Admin',
       lastName: 'ZURION',
       email: 'admin@zurion.store',
       phone: '+237 000 000 000',
-      passwordHash: hashPassword('Admin1234!'),
+      passwordHash: await hashPassword('Admin1234!'),
       role: 'admin',
+    });
+
+    // Le compte client est créé AVANT les produits pour référencer ses avis.
+    const clientUser = await User.create({
+      firstName: 'Client',
+      lastName: 'Démo',
+      email: 'client@zurion.store',
+      phone: '+237 000 000 001',
+      passwordHash: await hashPassword('Client1234!'),
+      role: 'customer',
     });
 
     // ── Catégories ───────────────────────────────────────────────────────
@@ -65,10 +80,12 @@ const { slugify } = require('../src/utils/slugify');
       for (const [i, s] of (p.specs || []).entries()) {
         await ProductSpec.create({ productId: product.id, label: s.label, value: s.value, position: i });
       }
-      for (const r of p.reviews || []) {
+      for (const [i, r] of (p.reviews || []).entries()) {
+        // Un seul avis par (produit, utilisateur) : on alterne entre le client
+        // démo (2) et l'admin démo (1) pour les produits multi-avis.
         await Review.create({
           productId: product.id,
-          userId: 1,
+          userId: i % 2 === 0 ? clientUser.id : 1,
           rating: r.rating,
           comment: r.comment,
           verified: r.verified,
@@ -77,19 +94,27 @@ const { slugify } = require('../src/utils/slugify');
     }
     console.log(`[seed] ${PRODUCTS.length} produits créés.`);
 
-    // ── Compte client de démonstration ───────────────────────────────────
-    await User.create({
-      firstName: 'Client',
-      lastName: 'Démo',
-      email: 'client@zurion.store',
-      phone: '+237 000 000 001',
-      passwordHash: hashPassword('Client1234!'),
-      role: 'customer',
+    // ── Codes promo de démonstration ─────────────────────────────────────
+    await Coupon.create({
+      code: 'BIENVENUE10',
+      type: 'percent',
+      value: 10,
+      minAmount: 10000,
+      maxUses: 500,
+      active: true,
     });
+    await Coupon.create({
+      code: '-FCFA3000',
+      type: 'fixed',
+      value: 3000,
+      minAmount: 25000,
+      maxUses: null,
+      active: true,
+    });
+    console.log('[seed] 2 codes promo créés (BIENVENUE10, -FCFA3000).');
 
-    console.log('[seed] Terminé. Comptes de démo :');
-    console.log('  admin  → admin@zurion.store  / Admin1234!');
-    console.log('  client → client@zurion.store / Client1234!');
+    console.log('[seed] Terminé. Comptes de démonstration créés (voir la documentation du projet).');
+    console.log('[seed] Sensible aux conventions : les identifiants de démo ne sont pas affichés ici.');
     process.exit(0);
   } catch (err) {
     console.error('[seed] Erreur :', err);

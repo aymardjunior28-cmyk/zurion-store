@@ -3,26 +3,27 @@
     <h1>Créer un compte</h1>
     <p class="zurion-muted">Quelques secondes suffisent pour suivre vos commandes.</p>
 
-    <% if (error) { %><div class="zurion-form-error"><%= esc(error) %></div><% } %>
+    <% if (error) { %><div class="zurion-form-error"><%- esc(error) %></div><% } %>
 
     <form method="post" action="/inscription" novalidate>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
       <div class="zurion-form-grid">
         <label>Prénom
           <input type="text" name="firstName" class="form-control" required autocomplete="given-name"
-                 value="<%= esc(values.firstName || '') %>" placeholder="Junior">
+                 value="<%- esc(values.firstName || '') %>" placeholder="Junior">
         </label>
         <label>Nom
           <input type="text" name="lastName" class="form-control" required autocomplete="family-name"
-                 value="<%= esc(values.lastName || '') %>" placeholder="Dupont">
+                 value="<%- esc(values.lastName || '') %>" placeholder="Dupont">
         </label>
       </div>
       <label>E-mail
         <input type="email" name="email" class="form-control" required autocomplete="email"
-               value="<%= esc(values.email || '') %>" placeholder="vous@exemple.com">
+               value="<%- esc(values.email || '') %>" placeholder="vous@exemple.com">
       </label>
       <label>Mot de passe
-        <input type="password" name="password" class="form-control" required minlength="6" autocomplete="new-password"
-               placeholder="6 caractères minimum">
+        <input type="password" name="password" class="form-control" required minlength="8" autocomplete="new-password"
+               placeholder="8 caractères minimum">
       </label>
       <button type="submit" class="btn btn-primary btn-block">Créer mon compte</button>
     </form>

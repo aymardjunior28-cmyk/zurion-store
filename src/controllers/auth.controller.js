@@ -17,7 +17,7 @@ async function register(req, res, next) {
       lastName,
       email,
       phone: phone || null,
-      passwordHash: hashPassword(password),
+      passwordHash: await hashPassword(password),
       role: 'customer',
     });
 
@@ -41,7 +41,8 @@ async function login(req, res, next) {
     const { email, password } = req.body;
     const user = await User.findOne({ where: { email } });
     // Message générique pour ne pas révéler si l'adresse existe
-    if (!user || !comparePassword(password, user.passwordHash)) {
+    const ok = user && (await comparePassword(password, user.passwordHash));
+    if (!ok) {
       return res.status(401).json({ error: 'Identifiants incorrects.' });
     }
     const token = signToken(user);

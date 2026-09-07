@@ -10,7 +10,8 @@ const ORDER_STATUSES_LABELS = orderService.ORDER_STATUSES;
 async function createOrder(req, res, next) {
   try {
     const ctx = req.user ? { userId: req.user.id, cartToken: null } : { userId: null, cartToken: req.headers['x-cart-token'] };
-    const order = await orderService.placeOrder({ ...ctx, ...req.body });
+    const { address, deliveryMode, paymentMethod, couponCode } = req.body;
+    const order = await orderService.placeOrder({ ...ctx, address, deliveryMode, paymentMethod, couponCode });
     return res.status(201).json(serializeOrder(order));
   } catch (err) {
     return next(err);
@@ -30,10 +31,13 @@ async function listOrders(req, res, next) {
 function serializeOrder(order) {
   if (!order) return null;
   return {
+    id: order.id,
     reference: order.reference,
     status: order.status,
     total: order.total,
     shipping: order.shipping,
+    discount: order.discount,
+    couponCode: order.couponCode,
     paymentMethod: order.paymentMethod,
     deliveryMode: order.deliveryMode,
     address: order.addressSnapshot ? JSON.parse(order.addressSnapshot) : null,
@@ -68,12 +72,18 @@ async function addReview(req, res, next) {
     const product = await Product.findOne({ where: { slug } });
     if (!product) return res.status(404).json({ error: 'Produit introuvable.' });
 
-    // Vérifie que le client a bien commandé ce produit
+    const existing = await Review.findOne({ where: { productId: product.id, userId: req.user.id } });
+    if (existing) {
+      return res.status(409).json({ error: 'Vous avez déjà publié un avis pour ce produit.' });
+    }
+
+    // Vérifie que le client a bien commandé ce produit (par ID produit)
+    const { OrderItem } = require('../models');
     const purchased = await Order.findAll({
       where: { userId: req.user.id },
-      include: [{ model: require('../models').OrderItem, as: 'items' }],
+      include: [{ model: OrderItem, as: 'items' }],
     });
-    const owns = purchased.some((o) => (o.items || []).some((it) => it.nameSnapshot === product.name));
+    const owns = purchased.some((o) => (o.items || []).some((it) => Number(it.productId) === Number(product.id)));
 
     const review = await Review.create({
       productId: product.id,

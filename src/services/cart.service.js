@@ -12,7 +12,12 @@ function newToken() {
   return crypto.randomBytes(24).toString('hex');
 }
 
-async function getCart({ userId, token }) {
+async function getCart({ userId, token, transaction } = {}) {
+  // Sans userId ni token, le `where` serait vide et Sequelize
+  // renverrait un panier ARBITRAIRE. On refuse explicitement.
+  if (!userId && !token) {
+    throw Object.assign(new Error('Contexte de panier invalide.'), { status: 400 });
+  }
   const where = {};
   if (userId) where.userId = userId;
   else where.token = token;
@@ -27,6 +32,7 @@ async function getCart({ userId, token }) {
         order: [['id', 'ASC']],
       },
     ],
+    transaction,
   });
   return cart;
 }
@@ -88,25 +94,35 @@ async function removeItem({ userId, token, productId }) {
   return getCart({ userId: cart.userId, token: cart.token });
 }
 
-async function clearCart(cart) {
+async function clearCart(cart, { transaction } = {}) {
   if (!cart) return;
-  await CartItem.destroy({ where: { cartId: cart.id } });
+  await CartItem.destroy({ where: { cartId: cart.id }, transaction });
 }
 
 /** Fusion du panier invité vers le panier du compte à la connexion. */
 async function mergeGuestIntoUser(guestToken, userId) {
-  if (!guestToken) return;
+  if (!guestToken || !userId) return;
   const guestCart = await Cart.findOne({ where: { token: guestToken }, include: [{ model: CartItem, as: 'items' }] });
   if (!guestCart || !guestCart.items.length) return;
 
   const userCart = await getOrCreateCart({ userId, token: null });
   for (const item of guestCart.items) {
+    const product = await Product.findByPk(item.productId);
+    if (!product || !product.active || product.stock <= 0) {
+      await item.destroy();
+      continue;
+    }
+    const qty = Math.min(item.quantity, product.stock);
+    if (qty <= 0) {
+      await item.destroy();
+      continue;
+    }
     const existing = await CartItem.findOne({ where: { cartId: userCart.id, productId: item.productId } });
     if (existing) {
-      existing.quantity = Math.max(existing.quantity, item.quantity);
+      existing.quantity = Math.min(Math.max(existing.quantity, qty), product.stock);
       await existing.save();
     } else {
-      await CartItem.create({ cartId: userCart.id, productId: item.productId, quantity: item.quantity });
+      await CartItem.create({ cartId: userCart.id, productId: item.productId, quantity: qty });
     }
   }
   await guestCart.destroy();

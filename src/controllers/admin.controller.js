@@ -1,8 +1,11 @@
 'use strict';
 
 const { Op } = require('sequelize');
-const { sequelize, User, Category, Product, ProductImage, ProductSpec, Order } = require('../models');
+const { sequelize, User, Category, Product, ProductImage, ProductSpec, Order, Coupon, Livraison } = require('../models');
 const { slugify } = require('../utils/slugify');
+const orderService = require('../services/order.service');
+const couponService = require('../services/coupon.service');
+const deliveryService = require('../services/delivery.service');
 
 /** Statuts autorisés pour le suivi de commande (cycle de vie complet). */
 const ORDER_STATUSES = [
@@ -144,8 +147,8 @@ async function updateProduct(req, res, next) {
     if (oldPrice !== undefined) patch.oldPrice = oldPrice ? Number(oldPrice) : null;
     if (stock !== undefined) patch.stock = Number(stock);
     if (sku !== undefined) patch.sku = sku;
-    if (featured !== undefined) patch.featured = Boolean(featured);
-    if (active !== undefined) patch.active = Boolean(active);
+    if (featured !== undefined) patch.featured = featured === true || featured === 'true' || featured === 1;
+    if (active !== undefined) patch.active = active === true || active === 'true' || active === 1;
     if (categoryId !== undefined) {
       if (!(await Category.findByPk(categoryId))) return res.status(400).json({ error: 'Catégorie invalide.' });
       patch.categoryId = Number(categoryId);
@@ -207,7 +210,7 @@ async function updateCategory(req, res, next) {
     }
     if (description !== undefined) patch.description = description;
     if (image !== undefined) patch.image = image;
-    if (active !== undefined) patch.active = Boolean(active);
+    if (active !== undefined) patch.active = active === true || active === 'true' || active === 1;
     if (sortOrder !== undefined) patch.sortOrder = Number(sortOrder);
 
     await category.update(patch);
@@ -266,7 +269,17 @@ async function setOrderStatus(req, res, next) {
     const order = await Order.findByPk(Number(req.params.id));
     if (!order) return res.status(404).json({ error: 'Commande introuvable.' });
 
+    // Machine d'état : interdit tout retour en arrière (ex. « terminée » → « créée »).
+    const currentIndex = ORDER_STATUSES.indexOf(order.status);
+    const nextIndex = ORDER_STATUSES.indexOf(status);
+    if (nextIndex < currentIndex) {
+      return res.status(400).json({ error: `Impossible de passer de « ${order.status} » à « ${status} » (statut antérieur).` });
+    }
+
     await order.update({ status });
+    if (status === 'expédition') {
+      await deliveryService.autoCreateForOrder(order);
+    }
     return res.json({ order });
   } catch (err) {
     return next(err);
@@ -275,14 +288,133 @@ async function setOrderStatus(req, res, next) {
 
 // ── Utilisateurs ─────────────────────────────────────────────────────────────
 
-/** GET /api/admin/users — liste des comptes (sans hash de mot de passe). */
+/** GET /api/admin/users — liste paginée des comptes (sans hash de mot de passe). */
 async function adminUsers(req, res, next) {
   try {
-    const users = await User.findAll({
+    const page = Math.max(Number(req.query.page) || 1, 1);
+    const limit = Math.min(Math.max(Number(req.query.limit) || 50, 1), 100);
+    const { rows, count } = await User.findAndCountAll({
       attributes: { exclude: ['passwordHash'] },
       order: [['id', 'DESC']],
+      limit,
+      offset: (page - 1) * limit,
     });
-    return res.json({ users });
+    return res.json({ users: rows, total: count, page, limit });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+// ── Codes promo ──────────────────────────────────────────────────────────────
+
+/** GET /api/admin/coupons — liste des codes promo. */
+async function listCoupons(req, res, next) {
+  try {
+    const coupons = await Coupon.findAll({ order: [['id', 'DESC']] });
+    return res.json({ coupons });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/** POST /api/admin/coupons — crée un code promo. */
+async function createCoupon(req, res, next) {
+  try {
+    const { code, type, value, minAmount, maxUses, validFrom, validUntil, active } = req.body;
+    const cleanCode = couponService.normalizeCode(code);
+    const cleanType = type === 'fixed' ? 'fixed' : 'percent';
+    const numValue = Number(value);
+    if (!cleanCode || cleanCode.length < 2) return res.status(400).json({ error: 'Code promo invalide.' });
+    if (!Number.isInteger(numValue) || numValue < 1 || numValue > (cleanType === 'percent' ? 100 : 10_000_000)) {
+      return res.status(400).json({ error: 'Valeur invalide.' });
+    }
+    const coupon = await Coupon.create({
+      code: cleanCode,
+      type: cleanType,
+      value: numValue,
+      minAmount: minAmount != null && minAmount !== '' ? Number(minAmount) : null,
+      maxUses: maxUses != null && maxUses !== '' ? Number(maxUses) : null,
+      validFrom: validFrom || null,
+      validUntil: validUntil || null,
+      active: active !== false,
+    });
+    return res.status(201).json({ coupon });
+  } catch (err) {
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({ error: 'Ce code existe déjà.' });
+    }
+    return next(err);
+  }
+}
+
+/** PATCH /api/admin/coupons/:id — active/désactive un code promo. */
+async function toggleCoupon(req, res, next) {
+  try {
+    const coupon = await Coupon.findByPk(Number(req.params.id));
+    if (!coupon) return res.status(404).json({ error: 'Code promo introuvable.' });
+    await coupon.update({ active: !coupon.active });
+    return res.json({ coupon });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/** DELETE /api/admin/coupons/:id — supprime un code promo. */
+async function deleteCoupon(req, res, next) {
+  try {
+    const deleted = await Coupon.destroy({ where: { id: Number(req.params.id) } });
+    if (!deleted) return res.status(404).json({ error: 'Code promo introuvable.' });
+    return res.json({ ok: true });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+// ── Livraisons ───────────────────────────────────────────────────────────────
+
+/** GET /api/admin/livraisons — liste des livraisons (avec commande associée). */
+async function adminLivraisons(req, res, next) {
+  try {
+    const livraisons = await deliveryService.listDeliveries({ limit: 200 });
+    return res.json({ livraisons, couriers: await deliveryService.listCouriers() });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/** POST /api/admin/livraisons/:id/annuler — annule une livraison non effectuée. */
+async function cancelLivraison(req, res, next) {
+  try {
+    const livraison = await Livraison.findByPk(Number(req.params.id));
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable.' });
+    await deliveryService.cancelDelivery(livraison);
+    return res.json({ livraison });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/** PATCH /api/admin/livraisons/:id/status — met à jour le suivi d'une livraison. */
+async function setLivraisonStatus(req, res, next) {
+  try {
+    const livraison = await Livraison.findByPk(Number(req.params.id));
+    if (!livraison) return res.status(404).json({ error: 'Livraison introuvable.' });
+    await deliveryService.updateDeliveryStatus(livraison, req.body.status);
+    return res.json({ livraison });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+// ── Annulation de commande (admin) ───────────────────────────────────────────
+
+/** POST /api/admin/orders/:id/cancel — annule une commande avant expédition. */
+async function adminCancelOrder(req, res, next) {
+  try {
+    const order = await Order.findByPk(Number(req.params.id));
+    if (!order) return res.status(404).json({ error: 'Commande introuvable.' });
+    await orderService.cancelOrder(order, { by: 'admin' });
+    return res.json({ order });
   } catch (err) {
     return next(err);
   }
@@ -299,4 +431,12 @@ module.exports = {
   adminOrders,
   setOrderStatus,
   adminUsers,
+  listCoupons,
+  createCoupon,
+  toggleCoupon,
+  deleteCoupon,
+  adminLivraisons,
+  cancelLivraison,
+  setLivraisonStatus,
+  adminCancelOrder,
 };

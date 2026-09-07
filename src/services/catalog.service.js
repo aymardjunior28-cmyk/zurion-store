@@ -95,16 +95,6 @@ async function getProductBySlug(slug) {
   });
 }
 
-/** Produits d'une même catégorie (pour « produits similaires »). */
-async function getRelatedProducts(product, limit = 4) {
-  return Product.findAll({
-    where: { categoryId: product.categoryId, id: { [Op.ne]: product.id }, active: true },
-    limit,
-    order: [['id', 'ASC']],
-    include: [{ model: ProductImage, as: 'images' }],
-  });
-}
-
 /** Nouveautés (les plus récents) pour l'accueil. */
 async function getNewProducts(limit = 8) {
   return Product.findAll({
@@ -140,7 +130,6 @@ module.exports = {
   listCategories,
   listProducts,
   getProductBySlug,
-  getRelatedProducts,
   getFeaturedProducts,
   getNewProducts,
   getSuggestions,

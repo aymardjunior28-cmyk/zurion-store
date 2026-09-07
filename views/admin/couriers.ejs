@@ -1,0 +1,65 @@
+<div class="zurion-admin__layout">
+  <%- include('../partials/admin/nav') %>
+  <main class="zurion-admin__main">
+    <header class="zurion-admin__head">
+      <div>
+        <h1>Livreurs</h1>
+        <p>Remplissez vous-même les informations de vos livreurs partenaires.</p>
+      </div>
+      <span class="zurion-admin__date"><i class="fa-solid fa-user-tie"></i> <%= couriers.length %> livreur(s)</span>
+    </header>
+
+    <div class="zurion-section-block">
+      <div class="zurion-admin__title">
+        <h2><i class="fa-solid fa-plus" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Ajouter un livreur</h2>
+      </div>
+      <% if (error) { %><div class="zurion-form-error"><%- esc(error) %></div><% } %>
+      <form method="post" action="/admin/livreurs" class="zurion-form-grid">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Nom du livreur<input class="form-control" name="name" required minlength="2" maxlength="80" placeholder="Ex : Daré Express"></label>
+        <label>Téléphone (optionnel)<input class="form-control" name="phone" maxlength="30" placeholder="Ex : +225 07 00 00 00 00"></label>
+        <div class="zurion-form-grid__full"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Ajouter le livreur</button></div>
+      </form>
+    </div>
+
+    <div class="zurion-section-block">
+      <div class="zurion-admin__title">
+        <h2><i class="fa-solid fa-user-tie" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Livreurs partenaires</h2>
+        <span class="zurion-muted"><%= couriers.length %> au total</span>
+      </div>
+      <% if (couriers.length) { %>
+        <table class="zurion-table">
+          <thead>
+            <tr><th>Nom</th><th>Téléphone</th><th>Actif</th><th>Actions</th></tr>
+          </thead>
+          <tbody>
+            <% couriers.forEach(c => { %>
+              <tr>
+                <form method="post" action="/admin/livreurs/<%= c.id %>">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <td><input class="zurion-input-inline" style="width:14rem" name="name" value="<%- esc(c.name) %>" required minlength="2" maxlength="80"></td>
+                  <td><input class="zurion-input-inline" name="phone" value="<%- esc(c.phone || '') %>" maxlength="30" placeholder="—"></td>
+                  <td><input type="checkbox" name="active" <%= c.active ? 'checked' : '' %>></td>
+                  <td>
+                    <div class="zurion-admin-actions">
+                      <button class="btn btn-primary btn-sm" type="submit">Enregistrer</button>
+                    </div>
+                  </td>
+                </form>
+                <td>
+                  <form method="post" action="/admin/livreurs/<%= c.id %>/supprimer" data-confirm="Supprimer le livreur « <%- esc(c.name) %> » ? Les livraisons passées conserveront son nom.">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <button class="btn btn-sm zurion-btn-danger" type="submit">Supprimer</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      <% } else { %>
+        <p class="zurion-muted">Aucun livreur. Ajoutez-en un avec le formulaire ci-dessus. En attendant, les livreurs par défaut seront utilisés pour les expéditions.</p>
+      <% } %>
+      <p class="zurion-muted" style="margin-top:1.4rem"><i class="fa-solid fa-circle-info"></i> Chaque commande expédiée est automatiquement attribuée au livreur actif le moins chargé.</p>
+    </div>
+  </main>
+</div>

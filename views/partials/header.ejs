@@ -1,4 +1,7 @@
 <% const isActive = (p) => p === currentPath; %>
+<% const pinnedSlugs = ['montres-connectees', 'eclairage', 'audio']; %>
+<% const pinnedCategories = pinnedSlugs.map(slug => (categories || []).find(c => c.slug === slug)).filter(Boolean); %>
+<% const dropdownCategories = (categories || []).filter(c => !pinnedSlugs.includes(c.slug)); %>
 <header class="zurion-header">
   <div class="container zurion-header__row">
     <a href="/" class="zurion-logo" aria-label="ZURION Store">
@@ -12,26 +15,37 @@
     <nav class="zurion-nav" data-zurion-menu aria-label="Navigation principale">
       <ul>
         <li><a href="/" class="<%= isActive('/') ? 'is-active' : '' %>">Accueil</a></li>
-        <li><a href="/catalogue" class="<%= isActive('/catalogue') ? 'is-active' : '' %>">Catalogue</a></li>
-        <% (categories || []).slice(0, 5).forEach(c => { %>
-          <li><a href="/catalogue?category=<%= c.slug %>"><%= esc(c.name) %></a></li>
+        <li class="zurion-nav__item--dropdown" data-zurion-dropdown>
+          <button type="button" class="zurion-nav__dropdown-toggle" aria-haspopup="true" aria-expanded="false" data-zurion-dropdown-toggle>
+            Catalogue
+            <i class="fa-solid fa-chevron-down" aria-hidden="true"></i>
+          </button>
+          <ul class="zurion-dropdown" data-zurion-dropdown-menu>
+            <li><a href="/catalogue" class="<%= isActive('/catalogue') ? 'is-active' : '' %>">Tout le catalogue</a></li>
+            <% dropdownCategories.forEach(c => { %>
+              <li><a href="/catalogue?category=<%= c.slug %>"><%- esc(c.name) %></a></li>
+            <% }) %>
+          </ul>
+        </li>
+        <% pinnedCategories.forEach(c => { %>
+          <li><a href="/catalogue?category=<%= c.slug %>"><%- esc(c.name) %></a></li>
         <% }) %>
       </ul>
     </nav>
 
     <div class="zurion-header__actions">
       <a href="/catalogue" class="zurion-icon-btn" aria-label="Rechercher" data-zurion-search-toggle>
-        <i class="icon-search"></i>
+        <i class="fa-solid fa-magnifying-glass"></i>
       </a>
       <a href="<%= currentUser ? '/compte' : '/connexion' %>" class="zurion-icon-btn" aria-label="Mon compte">
-        <i class="icon-user"></i>
+        <i class="fa-solid fa-user"></i>
       </a>
       <a href="/favoris" class="zurion-icon-btn" aria-label="Favoris">
-        <i class="icon-heart-o"></i>
+        <i class="fa-regular fa-heart"></i>
         <span class="zurion-count" data-zurion-wish-count>0</span>
       </a>
       <a href="/panier" class="zurion-icon-btn" aria-label="Panier">
-        <i class="icon-shopping-cart"></i>
+        <i class="fa-solid fa-cart-shopping"></i>
         <span class="zurion-count" data-zurion-cart-count><%= cartCount || 0 %></span>
       </a>
     </div>

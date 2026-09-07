@@ -11,12 +11,15 @@ function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-va
     return res.status(409).json({ error: 'Un enregistrement existe déjà avec ces informations.' });
   }
   if (err.name === 'SequelizeValidationError') {
-    return res.status(422).json({ error: err.message });
+    // Pas de message interne (colonnes, contraintes…) renvoyé au client.
+    return res.status(422).json({ error: 'Données invalides.' });
   }
   const status = err.status || 500;
   if (status >= 500) {
     return res.status(status).json({ error: 'Erreur interne du serveur.' });
   }
+  // Les erreurs 4xx proviennent du code applicatif (messages explicites) :
+  // on ne renvoie jamais un message non prévu au client.
   return res.status(status).json({ error: err.message });
 }
 

@@ -14,7 +14,11 @@ const Review = sequelize.define(
   },
   {
     tableName: 'reviews',
-    indexes: [{ fields: ['productId'] }],
+    // Un seul avis par client et par produit.
+    indexes: [
+      { fields: ['productId'] },
+      { fields: ['productId', 'userId'], unique: true },
+    ],
   }
 );
 

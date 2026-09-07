@@ -1,0 +1,72 @@
+<div class="zurion-admin__layout">
+  <%- include('../partials/admin/nav') %>
+  <main class="zurion-admin__main">
+    <header class="zurion-admin__head">
+      <div>
+        <h1>Livraisons</h1>
+        <p>Suivez les expéditions et les livreurs partenaires.</p>
+      </div>
+      <span class="zurion-admin__date"><i class="fa-solid fa-truck-ramp-box"></i> <%= livraisons.length %> livraison(s)</span>
+    </header>
+
+    <div class="zurion-section-block">
+      <div class="zurion-admin__title">
+        <h2><i class="fa-solid fa-truck" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Livraisons & livreurs</h2>
+      </div>
+  <% const statusLabels = { 'en_cours': 'En cours', 'livrée': 'Livrée', 'annulée': 'Annulée' }; %>
+  <% const statusClass = { 'en_cours': 'zurion-badge-info', 'livrée': 'zurion-badge-success', 'annulée': 'zurion-badge-danger' }; %>
+  <% if (error) { %><div class="zurion-form-error"><%- esc(error) %></div><% } %>
+  <% if (livraisons.length) { %>
+    <table class="zurion-table">
+      <thead>
+        <tr><th>ID</th><th>Référence</th><th>Commande</th><th>Livreur</th><th>Quantité</th><th>Prix</th><th>Expédiée le</th><th>Statut</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        <% livraisons.forEach(l => { %>
+          <tr>
+            <td><strong>#<%= l.id %></strong></td>
+            <td><%- esc(l.reference) %></td>
+            <td><%- esc((l.order && l.order.reference) || '—') %></td>
+            <td><strong><%- esc(l.courierName) %></strong></td>
+            <td><%= l.quantity %> colis</td>
+            <td><%= money(l.price) %></td>
+            <td><%= l.shippedAt ? new Date(l.shippedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—' %></td>
+            <td><span class="zurion-badge <%= statusClass[l.status] || 'zurion-badge-warning' %>"><%= statusLabels[l.status] || esc(l.status) %></span></td>
+            <td>
+              <% if (l.status === 'en_cours') { %>
+                <form method="post" action="/admin/livraisons/<%= l.id %>/annuler" data-confirm="Annuler la livraison « <%- esc(l.reference) %> » du livreur <%- esc(l.courierName) %> ?">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button class="btn btn-sm zurion-btn-danger" type="submit">Annuler</button>
+                </form>
+              <% } else { %>
+                <span class="zurion-muted">—</span>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+      <p class="zurion-muted">Aucune livraison pour le moment. Elles sont créées automatiquement dès qu'une commande passe au statut « Expédition ».</p>
+    <% } %>
+    </div>
+
+    <div class="zurion-section-block">
+      <div class="zurion-admin__title">
+        <h2><i class="fa-solid fa-user-tie" style="margin-right:.6rem;color:var(--zurion-success)"></i> Livreurs partenaires</h2>
+        <a href="/admin/livreurs">Gérer les livreurs <i class="fa-solid fa-arrow-right-long"></i></a>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:1.2rem">
+        <% couriers.forEach(c => { %>
+          <div class="zurion-stat" style="flex:1;min-width:200px">
+            <i class="fa-solid fa-user-tie zurion-stat__icon"></i>
+            <small>Livreur partenaire</small>
+            <strong style="font-size:1.7rem"><%- esc(c.name) %></strong>
+            <% if (c.phone) { %><small style="text-transform:none;letter-spacing:0"><%- esc(c.phone) %></small><% } %>
+          </div>
+        <% }) %>
+      </div>
+      <p class="zurion-muted" style="margin-top:1.4rem">Chaque commande expédiée est attribuée au livreur actif le moins chargé. <a href="/admin/livreurs">Ajoutez ou modifiez vos livreurs</a>.</p>
+    </div>
+  </main>
+</div>
