@@ -12,8 +12,8 @@ npm test
 
 Résultat :
 
-- 13 tests exécutés ;
-- 13 tests réussis ;
+- 14 tests exécutés ;
+- 14 tests réussis ;
 - 0 échec ;
 - 0 test annulé.
 
@@ -33,6 +33,8 @@ Scénarios couverts :
 12. présence et fonctionnement des pages légales
 13. CRUD API admin produits, catégories et coupons, plus lecture commandes/livraisons
 14. CRUD SSR produit et parcours SSR commande → expédition → livraison
+15. filtre de prix du catalogue, publication d’un avis authentifié et affichage
+    admin du nom/téléphone du client
 
 Les scénarios de gestion regroupent plusieurs assertions dans un seul test.
 

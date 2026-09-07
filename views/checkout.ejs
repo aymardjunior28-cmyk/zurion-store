@@ -57,7 +57,7 @@
       <label class="zurion-radio">
         <span>
           <input type="text" name="couponCode" class="form-control" maxlength="40" placeholder="Ex : BIENVENUE10" value="<%- esc(values.couponCode || '') %>">
-          <small>La remise sera appliquée au total dans la confirmation.</small>
+          <small>La remise est vérifiée et déduite avant validation de la commande.</small>
         </span>
       </label>
 
@@ -74,11 +74,14 @@
       <% }) %>
       <hr>
       <p class="d-flex justify-content-between"><span>Sous-total</span><strong><%= money(totals.subtotal) %></strong></p>
+      <% if (coupon.discount > 0) { %>
+        <p class="d-flex justify-content-between zurion-text-success"><span>Remise (<%- esc(coupon.code) %>)</span><strong id="zurion-discount">-<%= money(coupon.discount) %></strong></p>
+      <% } %>
       <p class="d-flex justify-content-between"><span>Livraison</span><strong id="zurion-delivery-fee"><%= money(0) %></strong></p>
       <% if (error) { %>
         <p class="zurion-form-error"><%- esc(error) %></p>
       <% } %>
-      <p class="d-flex justify-content-between zurion-cart__grand"><span>Total</span><strong id="zurion-order-total"><%= money(totals.subtotal) %></strong></p>
+      <p class="d-flex justify-content-between zurion-cart__grand"><span>Total</span><strong id="zurion-order-total"><%= money(totals.subtotal - coupon.discount) %></strong></p>
       <p class="zurion-muted small">Paiement simulé pour cette démonstration. Aucun débit réel ne sera effectué.</p>
     </aside>
   </div>

@@ -21,6 +21,7 @@ const { slugify } = require('../utils/slugify');
 const { hashPassword, comparePassword } = require('../utils/password');
 
 const router = express.Router();
+const COUPON_COOKIE = 'zurion_coupon_code';
 
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
@@ -32,6 +33,19 @@ async function renderPage(req, res, view, locals = {}) {
     res.app.render(view, { ...res.locals, ...locals }, (err, html) => (err ? reject(err) : resolve(html)));
   });
   res.render('layout', { ...res.locals, ...locals, body });
+}
+
+/** Prévisualise une remise, sans jamais considérer le cookie comme fiable. */
+async function previewCoupon(cart, rawCode) {
+  if (!rawCode || !cart) return { code: null, discount: 0, error: null };
+  const subtotal = cartService.cartTotals(cart).subtotal;
+  try {
+    const coupon = await couponService.validateCoupon(rawCode, subtotal);
+    return { code: coupon.code, discount: couponService.applyDiscount(coupon, subtotal), error: null };
+  } catch (err) {
+    if (err.status === 400) return { code: String(rawCode).trim().toUpperCase(), discount: 0, error: err.message };
+    throw err;
+  }
 }
 
 /** Contexte partagé de toutes les pages. */
@@ -182,8 +196,32 @@ router.get('/panier', async (req, res, next) => {
       userId: res.locals.currentUser ? res.locals.currentUser.id : null,
       token: res.locals.currentUser ? null : res.locals.cartToken,
     });
-    return renderPage(req, res, 'cart', { title: 'Panier', cart: cart || null, totals: cartService.cartTotals(cart, 0) });
+    const coupon = await previewCoupon(cart, req.cookies[COUPON_COOKIE]);
+    return renderPage(req, res, 'cart', { title: 'Panier', cart: cart || null, totals: cartService.cartTotals(cart, 0), coupon });
   } catch (err) { return next(err); }
+});
+
+// Applique une promotion au panier. Elle sera toujours revérifiée à la commande.
+router.post('/panier/code-promo', async (req, res, next) => {
+  try {
+    const cart = res.locals.cart;
+    const coupon = await previewCoupon(cart, req.body.couponCode);
+    if (coupon.error) {
+      return renderPage(req, res, 'cart', {
+        title: 'Panier',
+        cart,
+        totals: cartService.cartTotals(cart, 0),
+        coupon,
+      });
+    }
+    res.cookie(COUPON_COOKIE, coupon.code, { ...cookieOptions(), maxAge: 30 * 24 * 60 * 60 * 1000 });
+    return res.redirect('/panier');
+  } catch (err) { return next(err); }
+});
+
+router.post('/panier/code-promo/supprimer', (req, res) => {
+  res.clearCookie(COUPON_COOKIE, cookieOptions());
+  return res.redirect('/panier');
 });
 
 // Vider le panier : mutation uniquement par POST (jamais via un lien GET).
@@ -206,14 +244,16 @@ router.get('/commande', async (req, res, next) => {
       token: res.locals.currentUser ? null : res.locals.cartToken,
     });
     if (!cart || !cart.items.length) return res.redirect('/panier');
-    return renderPage(req, res, 'checkout', { title: 'Commande', cart, totals: cartService.cartTotals(cart, 0), error: null, values: {} });
+    const coupon = await previewCoupon(cart, req.cookies[COUPON_COOKIE]);
+    return renderPage(req, res, 'checkout', { title: 'Commande', cart, totals: cartService.cartTotals(cart, 0), coupon, error: null, values: { couponCode: coupon.code || '' } });
   } catch (err) { return next(err); }
 });
 
 // Checkout (soumission) — crée la commande puis redirige vers la confirmation
 router.post('/commande', async (req, res, next) => {
   try {
-    const { fullName, phone, line1, line2, city, region, deliveryMode, paymentMethod, couponCode } = req.body;
+    const { fullName, phone, line1, line2, city, region, deliveryMode, paymentMethod } = req.body;
+    const couponCode = req.body.couponCode !== undefined ? req.body.couponCode : req.cookies[COUPON_COOKIE];
     const user = res.locals.currentUser;
     const order = await orderService.placeOrder({
       userId: user ? user.id : null,
@@ -223,13 +263,15 @@ router.post('/commande', async (req, res, next) => {
       address: { fullName, phone, line1, line2, city, region },
       couponCode,
     });
+    res.clearCookie(COUPON_COOKIE, cookieOptions());
     return res.redirect('/commande/confirmation/' + order.reference);
   } catch (err) {
     if (!err.status) return next(err);
     const cart = res.locals.cart;
+    const coupon = await previewCoupon(cart, couponCode);
     return renderPage(req, res, 'checkout', {
       title: 'Commande',
-      cart, totals: cartService.cartTotals(cart, 0),
+      cart, totals: cartService.cartTotals(cart, 0), coupon,
       error: err.message, values: req.body,
     });
   }
@@ -965,12 +1007,24 @@ router.get('/admin/commandes', async (req, res, next) => {
   try {
     const { Order, OrderItem } = require('../models');
     const orders = await Order.findAll({
-      include: [{ model: OrderItem, as: 'items' }],
-      order: [['createdAt', 'DESC']],
-      limit: 60,
-    });
-    return renderPage(req, res, 'admin/orders', { title: 'Commandes · Admin', orders, nextStatus: orderService.nextStatus });
-  } catch (err) { return next(err); }
+    include: [
+      { model: OrderItem, as: 'items' },
+      { model: User, as: 'user', attributes: ['firstName', 'lastName', 'email', 'phone'] },
+    ],
+    order: [['createdAt', 'DESC']],
+    limit: 60,
+  });
+  const orderRows = orders.map((order) => {
+    const address = JSON.parse(order.addressSnapshot);
+    const row = order.toJSON();
+    row.customerName = order.user
+      ? `${order.user.firstName} ${order.user.lastName}`.trim()
+      : address.fullName;
+    row.customerPhone = address.phone || (order.user && order.user.phone) || '';
+    return row;
+  });
+  return renderPage(req, res, 'admin/orders', { title: 'Commandes · Admin', orders: orderRows, nextStatus: orderService.nextStatus });
+} catch (err) { return next(err); }
 });
 
 // Effacement de l'historique des commandes par l'admin

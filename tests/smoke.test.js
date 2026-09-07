@@ -7,6 +7,7 @@ const request = require('supertest');
 const app = require('../src/app');
 const { connectDatabase, sequelize } = require('../src/config/db');
 const { Courier, Category, Coupon, Product, Order, Livraison } = require('../src/models');
+const catalogService = require('../src/services/catalog.service');
 
 /** Extrait la valeur du cookie CSRF d'une réponse (pattern double-soumission). */
 function csrfTokenFrom(res) {
@@ -70,6 +71,42 @@ test('GET /api/products returns product list data', async () => {
   assert.equal(res.status, 200);
   assert.ok(Array.isArray(res.body.products));
   assert.ok(res.body.products.length > 0);
+});
+
+test('catalogue price filter and authenticated product reviews work', async () => {
+  const filtered = await catalogService.listProducts({ max: 5000, limit: 48 });
+  assert.ok(filtered.products.every((product) => Number(product.price) <= 5000));
+
+  const admin = request.agent(app);
+  const pre = await admin.get('/api/health');
+  const csrfToken = csrfTokenFrom(pre);
+  const login = await admin
+    .post('/api/auth/login')
+    .set('X-CSRF-Token', csrfToken)
+    .send({ email: 'admin@zurion.store', password: 'Admin1234!' });
+  assert.equal(login.status, 200);
+  const categoryId = (await admin.get('/api/categories')).body.categories[0].id;
+
+  const created = await admin
+    .post('/api/admin/products')
+    .set('X-CSRF-Token', csrfToken)
+    .send({ name: `Review Product ${Date.now()}`, price: 1800, stock: 2, categoryId });
+  assert.equal(created.status, 201);
+  const product = created.body.product;
+  const productPage = await admin.get(`/produit/${product.slug}`);
+  const formToken = csrfTokenFromHtml(productPage.text);
+  const review = await admin
+    .post(`/produit/${product.slug}/avis`)
+    .type('form')
+    .send({ _csrf: formToken, rating: '5', comment: 'Avis de test authentifié' });
+  assert.equal(review.status, 302);
+  const reviewedPage = await admin.get(`/produit/${product.slug}`);
+  assert.match(reviewedPage.text, /Avis de test authentifié/);
+
+  const deleted = await admin
+    .delete(`/api/admin/products/${product.id}`)
+    .set('X-CSRF-Token', csrfToken);
+  assert.equal(deleted.status, 200);
 });
 
 test('cart flow can add an item and create an order', async () => {
@@ -349,6 +386,9 @@ test('admin SSR product and delivery workflows support create, update and shipme
   assert.ok(delivery, 'A delivery must be created when the order is shipped');
   const deliveriesPage = await admin.get('/admin/livraisons');
   assert.equal(deliveriesPage.status, 200);
+  const ordersPage = await admin.get('/admin/commandes');
+  assert.match(ordersPage.text, /SSR Delivery/);
+  assert.match(ordersPage.text, /0123456789/);
 
   const deleted = await admin
     .post(`/admin/produits/${product.id}/supprimer`)

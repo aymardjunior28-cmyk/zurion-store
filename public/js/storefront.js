@@ -148,6 +148,7 @@
       .then(function (d) {
         if (d.error) { toast(d.error, 'error'); return; }
         setCartCount(d.count || 0);
+        if (document.getElementById('zurion-cart-discount')) { window.location.reload(); return; }
         if (d.subtotalFormatted) {
           var st = document.getElementById('zurion-subtotal'); if (st) st.textContent = d.subtotalFormatted;
           var gt = document.getElementById('zurion-grand-total'); if (gt) gt.textContent = d.subtotalFormatted;
@@ -167,6 +168,7 @@
         .then(function (r) { return r.json(); })
         .then(function (d) {
           if (d.error) { toast(d.error, 'error'); return; }
+          if (document.getElementById('zurion-cart-discount')) { window.location.reload(); return; }
           var row = rm.closest('[data-cart-row]');
           if (row) row.remove();
           setCartCount(d.count || 0);
@@ -188,9 +190,11 @@
     var checked = document.querySelector('[name=deliveryMode]:checked');
     if (checked && checked.getAttribute('data-delivery')) fee = Number(checked.getAttribute('data-delivery'));
     var subtotal = subtotalEl ? parseFloat(String(subtotalEl.textContent).replace(/[^0-9]/g, '')) || 0 : 0;
+    var discountEl = document.getElementById('zurion-discount');
+    var discount = discountEl ? parseFloat(String(discountEl.textContent).replace(/[^0-9]/g, '')) || 0 : 0;
     var fmt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 });
     feeEl.textContent = fmt.format(fee);
-    totalEl.textContent = fmt.format(subtotal + fee);
+    totalEl.textContent = fmt.format(Math.max(0, subtotal + fee - discount));
   }
   document.addEventListener('change', function (e) {
     if (e.target.matches('[name=deliveryMode]')) recomputeTotal();

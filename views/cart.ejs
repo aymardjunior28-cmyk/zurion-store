@@ -41,9 +41,28 @@
       <aside class="zurion-cart__summary">
         <h2>Récapitulatif</h2>
         <p class="d-flex justify-content-between"><span>Sous-total</span><strong id="zurion-subtotal"><%= money(totals.subtotal) %></strong></p>
+        <form method="post" action="/panier/code-promo" class="zurion-promo-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label for="cart-coupon-code">Code promo</label>
+          <div class="d-flex gap-2">
+            <input id="cart-coupon-code" type="text" name="couponCode" class="form-control" maxlength="40" placeholder="Ex : BIENVENUE10" value="<%- esc(coupon.code || '') %>">
+            <button type="submit" class="btn btn-outline-primary">Appliquer</button>
+          </div>
+        </form>
+        <% if (coupon.error) { %>
+          <p class="zurion-form-error"><%- esc(coupon.error) %></p>
+        <% } else if (coupon.discount > 0) { %>
+          <p class="d-flex justify-content-between zurion-text-success">
+            <span>Remise (<%- esc(coupon.code) %>)</span><strong id="zurion-cart-discount">-<%= money(coupon.discount) %></strong>
+          </p>
+          <form method="post" action="/panier/code-promo/supprimer">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-link p-0 zurion-muted small">Retirer le code promo</button>
+          </form>
+        <% } %>
         <p class="d-flex justify-content-between"><span>Livraison</span><strong class="zurion-muted">Calculée à l’étape suivante</strong></p>
         <hr>
-        <p class="d-flex justify-content-between zurion-cart__grand"><span>Total</span><strong id="zurion-grand-total"><%= money(totals.subtotal) %></strong></p>
+        <p class="d-flex justify-content-between zurion-cart__grand"><span>Total estimé</span><strong id="zurion-grand-total"><%= money(totals.subtotal - coupon.discount) %></strong></p>
         <a href="/commande" class="btn btn-primary btn-lg btn-block"><i class="fa-solid fa-circle-check"></i> Passer la commande</a>
         <p class="zurion-muted small text-center mt-2">Paiement sécurisé · Livraison suivie</p>
       </aside>
