@@ -1,5 +1,0 @@
-/* Point d'entrée CSS ZURION — importe le design system complet */
-@import url('storefront-icons.css');
-@import url('storefront-base.css');
-@import url('storefront-components.css');
-@import url('storefront-pages.css');

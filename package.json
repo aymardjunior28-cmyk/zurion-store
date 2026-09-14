@@ -2,11 +2,17 @@
   "name": "zurion-store",
   "version": "1.0.0",
   "description": "ZURION Store — MVP e-commerce (Express + API REST + SQLite/PostgreSQL + EJS)",
-  "main": "server.js",
+  "main": "electron/main.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "node --watch server.js",
-    "start": "node server.js",
+    "dev": "node --watch back/server.js",
+    "start": "node back/server.js",
+    "electron:dev": "concurrently \"node back/server.js\" \"wait-on http://localhost:4173 && electron .\"",
+    "electron:build:linux": "electron-builder --linux",
+    "electron:build:win": "electron-builder --win",
+    "electron:build": "electron-builder --linux --win",
+    "electron:build:portable": "electron-builder --win portable",
+    "electron:build:dir": "electron-builder --win dir",
     "migrate": "node scripts/migrate.js",
     "seed": "node scripts/seed.js",
     "test": "node --test tests/*.test.js",
@@ -26,7 +32,10 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.1",
+    "@choreruiz/capacitor-node-js": "^1.0.2",
     "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^13.0.3",
     "cookie-parser": "^1.4.6",
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
@@ -44,8 +53,15 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
+    "@capacitor/cli": "^8.5.1",
+    "@capacitor/core": "^8.5.1",
+    "@electron/rebuild": "^4.2.0",
     "@playwright/test": "^1.55.0",
     "autocannon": "^8.0.0",
-    "supertest": "^7.0.0"
+    "concurrently": "^10.0.5",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
+    "supertest": "^7.0.0",
+    "wait-on": "^9.1.0"
   }
 }

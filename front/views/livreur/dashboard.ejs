@@ -1,0 +1,195 @@
+<% const _isInternalMsg = (typeof currentUser !== 'undefined' && currentUser && ['superadmin','admin','livreur'].includes(currentUser.role)); %>
+<div class="livreur-dashboard container py-4">
+  <!-- Bandeau d'accueil livreur -->
+  <div class="zurion-livreur-hero mb-4">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:1.5rem;flex-wrap:wrap">
+      <div>
+        <p class="zurion-eyebrow" style="color:#ccfbf1;margin:0 0 .6rem">ESPACE LIVREUR</p>
+        <h2 style="color:#fff;margin:0 0 .4rem;font-size:2.4rem">Bonjour, <%= currentUser.firstName %> <i class="fa-solid fa-motorcycle" style="font-size:1.6rem;vertical-align:middle;margin-left:.4rem"></i></h2>
+        <p style="color:rgba(255,255,255,.9);margin:0">Suivez vos livraisons et échangez avec l'équipe ZURION.</p>
+      </div>
+      <span class="badge bg-white text-dark" style="border-radius:999px;font-size:1.2rem"><i class="fa-solid fa-bell me-1"></i><strong id="unread-count">0</strong> notification(s)</span>
+    </div>
+  </div>
+
+  <!-- Centre de notifications (raccourci rapide) -->
+  <div class="alert alert-info">
+    <i class="fas fa-bell me-2"></i>Centre de notifications.
+    <a href="/notifications" class="float-end">Voir toutes les notifications →</a>
+  </div>
+
+  <!-- Messagerie interne : écrire aux admins (réservé livreur) -->
+  <% if (_isInternalMsg && currentUser.role === 'livreur') { %>
+  <div class="card mb-4">
+    <div class="card-header"><strong><i class="fas fa-envelope me-1"></i>Messages aux administrateurs</strong>
+      <a href="/messages" class="float-end small">Ouvrir la section Messages →</a>
+    </div>
+    <div class="card-body">
+      <div class="mb-2">
+        <label class="form-label" for="liv-admin-select">Administrateur destinataire</label>
+        <select id="liv-admin-select" class="form-select"><option>Chargement…</option></select>
+      </div>
+      <div class="mb-2">
+        <textarea id="liv-msg-text" class="form-control" rows="2" maxlength="2000" placeholder="Écrivez votre message à l'admin…"></textarea>
+      </div>
+      <button id="liv-send-btn" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane me-1"></i>Envoyer à l'admin</button>
+    </div>
+  </div>
+  <% } %>
+
+  <h2 class="mt-5"><i class="fas fa-box-open me-2"></i>Mes livraisons assignées</h2>
+  <div class="zurion-table-wrap">
+    <table class="zurion-table zurion-table--deliveries">
+      <thead>
+        <tr>
+          <th>Référence</th>
+          <th>Commande</th>
+          <th>Contact client</th>
+          <th>Destination</th>
+          <th>Livraison prévue</th>
+          <th>Statut</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="livraisons-list">
+        <% if (livraisons.length === 0) { %>
+          <tr><td colspan="7" class="text-center text-muted py-4" style="text-align:center;padding:3rem;color:var(--zurion-muted)">Aucune livraison ne vous est assignée pour le moment.</td></tr>
+        <% } else { %>
+          <% livraisons.forEach(l => { %>
+            <% const dest = l.destinationParsed || {}; %>
+            <tr data-id="<%= l.id %>" data-ref="<%= l.reference %>">
+              <td><strong><%= l.reference %></strong></td>
+              <td><%= l.order ? l.order.reference : '—' %></td>
+              <td>
+                <% if (dest.fullName || dest.phone) { %>
+                  <strong><%= dest.fullName || '—' %></strong><br>
+                  <small style="color:var(--zurion-muted)"><%= dest.phone || '' %></small>
+                <% } else { %>—<% } %>
+              </td>
+              <td>
+                <% const addrParts = [dest.line1, dest.line2, dest.city, dest.region].filter(Boolean); %>
+                <% if (addrParts.length) { %>
+                  <small><%= addrParts.join(', ') %></small>
+                <% } else { %>—<% } %>
+              </td>
+              <td>
+                <% if (l.scheduledAt) { %>
+                  <strong><%= new Date(l.scheduledAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }) %></strong><br>
+                  <small style="color:var(--zurion-muted)"><%= new Date(l.scheduledAt).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) %></small>
+                <% } else { %>—<% } %>
+              </td>
+              <td>
+                <% const statusColors = { 'livrée': '#157347', 'en_cours': '#17669d', 'annulée': '#a13333' }; %>
+                <% const statusBgs = { 'livrée': '#e3f6ed', 'en_cours': 'var(--zurion-primary-100)', 'annulée': '#fdeeee' }; %>
+                <span style="display:inline-flex;align-items:center;gap:.5rem;padding:.35rem .8rem;border-radius:999px;font-size:1.1rem;font-weight:700;background:<%= statusBgs[l.status] || '#fdf3dd' %>;color:<%= statusColors[l.status] || '#9a6a10' %>">
+                  <span style="width:.7rem;height:.7rem;border-radius:50%;background:<%= statusColors[l.status] || '#9a6a10' %>"></span>
+                  <%= l.status === 'en_cours' ? 'En cours' : (l.status === 'livrée' ? 'Livrée' : 'Annulée') %>
+                </span>
+                <% if (l.lastReportMessage) { %>
+                  <span title="<%= l.lastReportMessage %>" style="display:inline-flex;align-items:center;justify-content:center;width:1.8rem;height:1.8rem;border-radius:50%;background:#fdf3dd;color:#9a6a10;font-size:1rem;margin-left:.3rem;cursor:help">!</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (l.status === 'livrée') { %>
+                  <span style="display:inline-flex;align-items:center;gap:.4rem;color:#157347;font-weight:600"><i class="fas fa-check-circle"></i> Livrée</span>
+                <% } else if (l.status === 'annulée') { %>
+                  <span style="display:inline-flex;align-items:center;gap:.4rem;color:#a13333;font-weight:600"><i class="fas fa-times-circle"></i> Annulée</span>
+                <% } else { %>
+                  <button class="btn btn-sm btn-success liv-action" data-action="livree" data-id="<%= l.id %>" data-confirm="Confirmer la livraison de ce colis ?">
+                    <i class="fas fa-check-double me-1"></i>Confirmer la livraison
+                  </button>
+                  <button class="btn btn-sm btn-warning liv-action" data-action="nonlivree" data-id="<%= l.id %>" data-confirm="Signaler ce colis comme non livré ?">
+                    <i class="fas fa-times me-1"></i>Non livré
+                  </button>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script nonce="<%= nonce %>">
+// Polling du compteur de notifications
+async function updateUnreadCount() {
+  try {
+    const res = await fetch('/api/notifications/unread-count', { credentials: 'include' });
+    const data = await res.json();
+    const el = document.getElementById('unread-count');
+    if (el) el.textContent = data.unreadCount || 0;
+  } catch (e) { console.error('poll error', e); }
+}
+
+// Confirmer la livraison
+async function signalerLivree(id) {
+  if (!confirm('Confirmer la livraison de ce colis ?')) return;
+  const res = await fetch(`/api/livreur/livraisons/${id}/livree`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.ZURION.csrfToken }
+  });
+  if (res.ok) { alert('✅ Livraison confirmée. Les administrateurs ont été notifiés.'); location.reload(); }
+  else { const d = await res.json(); alert('❌ ' + d.error); }
+}
+
+// Signaler un colis comme non livré
+async function signalerNonLivree(id) {
+  const reason = prompt('Raison du non-livraison (optionnel) :');
+  if (reason === null) return;
+  const res = await fetch(`/api/livreur/livraisons/${id}/non-livree`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.ZURION.csrfToken },
+    body: JSON.stringify({ reason: reason.trim() })
+  });
+  if (res.ok) { alert('✅ Signalement enregistré.'); location.reload(); }
+  else { const d = await res.json(); alert('❌ ' + d.error); }
+}
+
+updateUnreadCount();
+setInterval(updateUnreadCount, 30000);
+
+// Messagerie livreur → admin
+async function loadAdminContacts() {
+  try {
+    const res = await fetch('/api/messages/contacts', { credentials: 'include' });
+    const data = await res.json();
+    const sel = document.getElementById('liv-admin-select');
+    if (!sel) return;
+    sel.innerHTML = '';
+    (data.contacts || []).forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.id;
+      o.textContent = `${c.firstName} ${c.lastName} — ${c.email}`;
+      sel.appendChild(o);
+    });
+    if (!data.contacts || !data.contacts.length) sel.innerHTML = '<option>Aucun admin disponible</option>';
+  } catch (e) { console.error('contacts error', e); }
+}
+async function sendLivMsg() {
+  const sel = document.getElementById('liv-admin-select');
+  const txt = document.getElementById('liv-msg-text');
+  const recipientId = sel ? Number(sel.value) : NaN;
+  const message = txt ? txt.value.trim() : '';
+  if (!recipientId || !message) { alert('Choisissez un admin et écrivez un message.'); return; }
+  const res = await fetch('/api/messages', {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.ZURION.csrfToken },
+    body: JSON.stringify({ recipientId, message })
+  });
+  const d = await res.json().catch(() => ({}));
+  if (res.ok) { alert('✅ Message envoyé à l\'admin.'); txt.value = ''; }
+  else alert('❌ ' + (d.error || 'Erreur'));
+}
+loadAdminContacts();
+document.getElementById('liv-send-btn')?.addEventListener('click', sendLivMsg);
+document.querySelectorAll('.liv-action').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = Number(btn.dataset.id);
+    if (btn.dataset.action === 'livree') signalerLivree(id);
+    else if (btn.dataset.action === 'nonlivree') signalerNonLivree(id);
+  });
+});
+</script>

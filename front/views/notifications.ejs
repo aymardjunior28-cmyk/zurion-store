@@ -1,0 +1,89 @@
+<% const _isInternal = (typeof currentUser !== 'undefined' && currentUser && ['superadmin','admin','livreur'].includes(currentUser.role)); %>
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h1><i class="fas fa-bell me-2"></i>Notifications</h1>
+    <div class="d-flex gap-2">
+      <a href="/messages" class="btn btn-outline-primary btn-sm"><i class="fas fa-envelope me-1"></i>Messages</a>
+      <button type="button" id="notif-markall" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-check-double me-1"></i>Tout marquer comme lu
+      </button>
+      <button type="button" id="notif-delall" class="btn btn-outline-danger btn-sm">
+        <i class="fas fa-trash-can me-1"></i>Tout supprimer
+      </button>
+    </div>
+  </div>
+
+  <% if (!notifications || notifications.length === 0) { %>
+    <div class="text-center py-5 text-muted">
+      <i class="fas fa-bell-slash fa-2x mb-3"></i>
+      <p>Aucune notification pour le moment.</p>
+    </div>
+  <% } else { %>
+    <ul class="list-group">
+      <% notifications.forEach(n => { %>
+        <li id="notif-<%= n.id %>" class="list-group-item <%= n.read ? 'list-group-item-light' : 'list-group-item-primary' %>">
+          <div class="d-flex justify-content-between gap-3">
+            <div class="flex-grow-1">
+              <div>
+                <% if (n.type === 'message') { %><span class="badge bg-info text-dark me-1"><i class="fas fa-envelope me-1"></i>Message</span><% } %>
+                <strong><%= n.title %></strong>
+                <% if (n.sender) { %><small class="text-muted"> — de <%= n.sender.firstName %> <%= n.sender.lastName %> (<%= n.sender.role %>)</small><% } %>
+              </div>
+              <div><%= n.message %></div>
+              <small class="text-muted"><%= new Date(n.createdAt).toLocaleString('fr-FR') %></small>
+              <% if (n.link && n.link !== '/messages') { %>
+                <a href="<%= n.link %>" class="ms-2">Voir →</a>
+              <% } else if (n.link === '/messages') { %>
+                <a href="/messages" class="ms-2">Ouvrir Messages →</a>
+              <% } %>
+            </div>
+            <div class="text-end d-flex flex-column gap-1 align-items-end">
+              <% if (!n.read) { %>
+                <span class="badge bg-primary">Nouveau</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary notif-action" data-action="read" data-id="<%= n.id %>">Marquer lu</button>
+              <% } %>
+              <button type="button" class="btn btn-sm btn-outline-danger notif-action" data-action="delete" data-id="<%= n.id %>"><i class="fas fa-trash-can me-1"></i>Supprimer</button>
+            </div>
+          </div>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</div>
+
+<script nonce="<%= nonce %>">
+const CSRF = () => window.ZURION.csrfToken;
+async function markAllRead() {
+  try {
+    await fetch('/api/notifications/read-all', { method: 'PATCH', credentials: 'include', headers: { 'X-CSRF-Token': CSRF() } });
+    location.reload();
+  } catch (e) { alert('❌ Erreur'); }
+}
+async function markOneRead(id) {
+  try {
+    await fetch(`/api/notifications/${id}/read`, { method: 'PATCH', credentials: 'include', headers: { 'X-CSRF-Token': CSRF() } });
+    location.reload();
+  } catch (e) { alert('❌ Erreur'); }
+}
+async function deleteNotif(id) {
+  if (!confirm('Supprimer définitivement cette notification ?')) return;
+  const res = await fetch(`/api/notifications/${id}`, { method: 'DELETE', credentials: 'include', headers: { 'X-CSRF-Token': CSRF() } });
+  if (res.ok) { document.getElementById('notif-' + id)?.remove(); location.reload(); }
+  else { const d = await res.json().catch(() => ({})); alert('❌ ' + (d.error || 'Erreur')); }
+}
+async function deleteAllNotifs() {
+  if (!confirm('Supprimer TOUTES vos notifications ? Action irréversible.')) return;
+  const res = await fetch('/api/notifications', { method: 'DELETE', credentials: 'include', headers: { 'X-CSRF-Token': CSRF() } });
+  if (res.ok) location.reload();
+  else alert('❌ Erreur');
+}
+document.getElementById('notif-markall')?.addEventListener('click', markAllRead);
+document.getElementById('notif-delall')?.addEventListener('click', deleteAllNotifs);
+document.querySelectorAll('.notif-action').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = Number(btn.dataset.id);
+    if (btn.dataset.action === 'read') markOneRead(id);
+    else if (btn.dataset.action === 'delete') deleteNotif(id);
+  });
+});
+</script>

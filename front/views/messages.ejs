@@ -1,0 +1,137 @@
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-1 flex-wrap gap-2">
+    <h1><i class="fas fa-envelope me-2"></i>Messages</h1>
+    <a href="/notifications" class="btn btn-outline-secondary btn-sm"><i class="fas fa-bell me-1"></i>Centre de notifications</a>
+  </div>
+  <p class="text-muted mb-4">
+    <% const _role = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.role : null; %>
+    <% const _admins = (contacts || []).filter(c => c.role === 'admin'); %>
+    <% const _supers = (contacts || []).filter(c => c.role === 'superadmin'); %>
+    <% const _livreurs = (contacts || []).filter(c => c.role === 'livreur'); %>
+    <% if (_role === 'livreur') { %>
+      En tant que livreur, vous pouvez écrire <strong>uniquement aux administrateurs</strong> (liste mise à jour automatiquement). Vos messages n’arrivent que chez l’admin choisi.
+    <% } else if (_role === 'admin') { %>
+      En tant qu’admin, vous pouvez écrire <strong>uniquement aux autres administrateurs</strong> (jamais au super-admin ni aux livreurs).
+    <% } else if (_role === 'superadmin') { %>
+      En tant que super-admin, vous pouvez écrire <strong>aux admins et/ou aux livreurs</strong> (cochez un seul, plusieurs ou les deux groupes). Chaque destinataire choisi reçoit le message directement, les autres ne le voient pas.
+    <% } else { %>
+      Accès réservé aux comptes internes (super-admin, admin, livreur).
+    <% } %>
+  </p>
+
+  <% if (canSend && contacts && contacts.length) { %>
+    <div class="card mb-4">
+      <div class="card-header"><strong><i class="fas fa-pen me-1"></i>Nouveau message — choisissez le(s) destinataire(s)</strong></div>
+      <div class="card-body">
+        <% if (_supers.length) { %>
+          <h3 class="h6 mt-1">Super-admin <button type="button" class="btn btn-sm btn-link toggle-group" data-group="superadmin" data-check="1">tout cocher</button> <button type="button" class="btn btn-sm btn-link toggle-group" data-group="superadmin" data-check="0">tout décocher</button></h3>
+          <% _supers.forEach(c => { %>
+            <label class="d-block"><input type="checkbox" class="msg-dest" data-group="superadmin" value="<%= c.id %>"> <%= c.firstName %> <%= c.lastName %> — <%= c.email %></label>
+          <% }) %>
+        <% } %>
+        <% if (_admins.length) { %>
+          <h3 class="h6 mt-2">Admins <button type="button" class="btn btn-sm btn-link toggle-group" data-group="admin" data-check="1">tout cocher</button> <button type="button" class="btn btn-sm btn-link toggle-group" data-group="admin" data-check="0">tout décocher</button></h3>
+          <% _admins.forEach(c => { %>
+            <label class="d-block"><input type="checkbox" class="msg-dest" data-group="admin" value="<%= c.id %>"> <%= c.firstName %> <%= c.lastName %> — <%= c.email %></label>
+          <% }) %>
+        <% } %>
+        <% if (_livreurs.length) { %>
+          <h3 class="h6 mt-2">Livreurs <button type="button" class="btn btn-sm btn-link toggle-group" data-group="livreur" data-check="1">tout cocher</button> <button type="button" class="btn btn-sm btn-link toggle-group" data-group="livreur" data-check="0">tout décocher</button></h3>
+          <% _livreurs.forEach(c => { %>
+            <label class="d-block"><input type="checkbox" class="msg-dest" data-group="livreur" value="<%= c.id %>"> <%= c.firstName %> <%= c.lastName %> — <%= c.email %></label>
+          <% }) %>
+        <% } %>
+        <div class="mb-2 mt-3">
+          <label class="form-label" for="msg-text">Message (2000 caractères max)</label>
+          <textarea id="msg-text" class="form-control" rows="3" maxlength="2000" placeholder="Écrivez votre message…"></textarea>
+        </div>
+        <button id="msg-send-btn" class="btn btn-primary btn-sm"><i class="fas fa-paper-plane me-1"></i>Envoyer aux destinataires cochés</button>
+      </div>
+    </div>
+  <% } else if (canSend) { %>
+    <div class="alert alert-warning">Aucun destinataire disponible pour le moment.</div>
+  <% } %>
+
+  <div class="row">
+    <div class="col-md-6">
+      <h2 class="h5"><i class="fas fa-inbox me-1"></i>Reçus (<%= received.length %>)</h2>
+      <% if (!received.length) { %><p class="text-muted">Aucun message reçu.</p><% } %>
+      <ul class="list-group mb-4">
+        <% received.forEach(n => { %>
+          <li class="list-group-item <%= n.read ? '' : 'list-group-item-primary' %>">
+            <div><strong><%= n.title %></strong></div>
+            <% if (n.sender) { %><small class="text-muted">De <%= n.sender.firstName %> <%= n.sender.lastName %> (<%= n.sender.role %>) — <%= new Date(n.createdAt).toLocaleString('fr-FR') %></small><% } %>
+            <div class="mt-1"><%= n.message %></div>
+            <div class="mt-2 d-flex gap-1">
+              <% if (!n.read) { %><button class="btn btn-sm btn-outline-secondary msg-action" data-action="read" data-id="<%= n.id %>">Marquer lu</button><% } %>
+              <button class="btn btn-sm btn-outline-danger msg-action" data-action="delete" data-id="<%= n.id %>"><i class="fas fa-trash-can me-1"></i>Supprimer</button>
+            </div>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+    <div class="col-md-6">
+      <h2 class="h5"><i class="fas fa-paper-plane me-1"></i>Envoyés (<%= sent.length %>)</h2>
+      <% if (!sent.length) { %><p class="text-muted">Aucun message envoyé.</p><% } %>
+      <ul class="list-group mb-4">
+        <% sent.forEach(n => { %>
+          <li class="list-group-item">
+            <div><strong>À <%= n.recipient ? (n.recipient.firstName + ' ' + n.recipient.lastName) : '—' %></strong>
+            <small class="text-muted"> — <%= new Date(n.createdAt).toLocaleString('fr-FR') %></small></div>
+            <div class="mt-1"><%= n.message %></div>
+            <div class="mt-2">
+              <button class="btn btn-sm btn-outline-danger sent-delete" data-id="<%= n.id %>"><i class="fas fa-trash-can me-1"></i>Supprimer</button>
+            </div>
+          </li>
+        <% }) %>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script nonce="<%= nonce %>">
+const CSRF = () => window.ZURION.csrfToken;
+function toggleGroup(group, checked) {
+  document.querySelectorAll(`.msg-dest[data-group="${group}"]`).forEach(el => { el.checked = !!checked; });
+}
+async function sendMsg() {
+  const ids = [...document.querySelectorAll('.msg-dest:checked')].map(el => Number(el.value)).filter(Number.isInteger);
+  const message = document.getElementById('msg-text').value.trim();
+  if (!ids.length) { alert('Cochez au moins un destinataire.'); return; }
+  if (!message) { alert('Écrivez un message.'); return; }
+  const res = await fetch('/api/messages', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': CSRF() }, body: JSON.stringify({ recipientIds: ids, message }) });
+  const d = await res.json().catch(() => ({}));
+  if (res.ok) { alert(`✅ Message envoyé à ${d.sent || ids.length} destinataire(s).`); location.reload(); }
+  else alert('❌ ' + (d.error || 'Erreur'));
+}
+async function markRead(id) {
+  await fetch(`/api/notifications/${id}/read`, { method: 'PATCH', credentials: 'include', headers: { 'X-CSRF-Token': CSRF() } });
+  location.reload();
+}
+async function delNotif(id) {
+  if (!confirm('Supprimer ce message ?')) return;
+  await fetch(`/api/notifications/${id}`, { method: 'DELETE', credentials: 'include', headers: { 'X-CSRF-Token': CSRF() } });
+  location.reload();
+}
+async function delSent(id) {
+  if (!confirm('Supprimer ce message envoyé ?\n(Sa suppression est définitive.)')) return;
+  const res = await fetch(`/api/messages/${id}`, { method: 'DELETE', credentials: 'include', headers: { 'X-CSRF-Token': CSRF() } });
+  const d = await res.json().catch(() => ({}));
+  if (res.ok) location.reload();
+  else alert('❌ ' + (d.error || 'Erreur'));
+}
+document.querySelectorAll('.toggle-group').forEach(btn => {
+  btn.addEventListener('click', () => toggleGroup(btn.dataset.group, Number(btn.dataset.check) === 1));
+});
+document.getElementById('msg-send-btn')?.addEventListener('click', sendMsg);
+document.querySelectorAll('.msg-action').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = Number(btn.dataset.id);
+    if (btn.dataset.action === 'read') markRead(id);
+    else if (btn.dataset.action === 'delete') delNotif(id);
+  });
+});
+document.querySelectorAll('.sent-delete').forEach(btn => {
+  btn.addEventListener('click', () => delSent(Number(btn.dataset.id)));
+});
+</script>

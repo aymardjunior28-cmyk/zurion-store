@@ -1,0 +1,83 @@
+# ═══════════════════════════════════════════════════════════════════════════
+#  ZURION STORE — Configuration Electron Builder
+#  Supporte Linux (AppImage/deb) et Windows (NSIS) selon la plateforme
+# ═══════════════════════════════════════════════════════════════════════════
+
+appId: com.zurion.store
+productName: Zurion Store
+copyright: Copyright © 2024 Flashart - Junior Dev
+
+directories:
+  output: dist
+  buildResources: electron/assets
+
+files:
+  - "electron/main.js"
+  - "electron/preload.js"
+  - "back/src/**/*"
+  - "back/server.js"
+  - "front/views/**/*"
+  - "front/public/**/*"
+  - "front/assets/**/*"
+  - "back/data/**/*"
+  - "back/migrations/**/*"
+  - "package.json"
+  - "node_modules/**/*"
+  - "node_modules/sqlite3/**/*"
+  - "node_modules/sqlite3/lib/**/*"
+  - "node_modules/sqlite3/build/**/*"
+  - "node_modules/sqlite3/src/**/*"
+  - "!node_modules/.cache"
+  - "!node_modules/electron/**"
+  - "!node_modules/electron-builder/**"
+  - "!node_modules/concurrently/**"
+  - "!node_modules/wait-on/**"
+  - "!tests/**"
+  - "!*.sqlite"
+  - "!dist/**"
+  - "!electron/assets/**"
+  - "!electron-builder.yml"
+
+asarUnpack:
+  - "node_modules/sqlite3/**"
+  - "node_modules/better-sqlite3/**"
+
+# ── Linux ─────────────────────────────────────────────────────────────────
+linux:
+  target:
+    - target: AppImage
+      arch:
+        - x64
+    - target: deb
+      arch:
+        - x64
+  icon: electron/assets/icon.png
+  category: Utility
+  maintainer: "Flashart <flashart@zurion.store>"
+  artifactName: "${productName}-${version}-${arch}.${ext}"
+
+# ── Windows ───────────────────────────────────────────────────────────────
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: electron/assets/icon.ico
+  artifactName: "${productName}-Setup-${version}.${ext}"
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  deleteAppDataOnUninstall: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Zurion Store
+  installerLanguages:
+    - fr_FR
+
+# ── Général ───────────────────────────────────────────────────────────────
+compression: maximum
+npmRebuild: false
+buildDependenciesFromSource: false
+afterPack: ./scripts/electron-after-pack.js

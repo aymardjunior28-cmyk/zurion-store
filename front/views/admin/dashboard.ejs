@@ -1,0 +1,791 @@
+<%
+  const statusLabels = { 'créée': 'Créée', 'paiement_confirmé': 'Paiement confirmé', 'préparation': 'Préparation', 'expédition': 'Expédition', 'livraison': 'Livraison', 'terminée': 'Terminée', 'annulée': 'Annulée' };
+  const statusClass = { 'créée': 'zurion-badge-warning', 'paiement_confirmé': 'zurion-badge-info', 'préparation': 'zurion-badge-info', 'expédition': 'zurion-badge-info', 'livraison': 'zurion-badge-success', 'terminée': 'zurion-badge-success', 'annulée': 'zurion-badge-danger' };
+  const livStatusLabels = { 'en_cours': 'En cours', 'livrée': 'Livrée', 'annulée': 'Annulée' };
+  const livStatusClass = { 'en_cours': 'zurion-badge-info', 'livrée': 'zurion-badge-success', 'annulée': 'zurion-badge-danger' };
+  const fmtDate = (d) => new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+  const fmtMoney = (n) => Number(n || 0).toLocaleString('fr-FR') + ' FCFA';
+  const tab = activeTab || 'overview';
+%>
+<div class="zurion-admin__layout">
+  <%- include('../partials/admin/nav') %>
+  <main class="zurion-admin__main">
+    <header class="zurion-admin__head">
+      <div>
+        <h1>Administration</h1>
+        <p>Gérez l'ensemble de votre boutique ZURION depuis cet espace.</p>
+      </div>
+      <span class="zurion-admin__date"><i class="fa-regular fa-calendar"></i> <%= new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) %></span>
+    </header>
+
+    <% if (error) { %><div class="zurion-form-error"><%- esc(error) %></div><% } %>
+        <% if (okSaved === 'deleted') { %><div class="zurion-form-success">Le compte et toutes ses données ont été supprimés.</div><% } else if (okSaved === 'cleared') { %>
+        <% if (historyClearedCount > 0) { %><div class="zurion-form-success"><%= historyClearedCount %> commande(s) d'historique effacée(s) (terminées ou annulées).</div><% } else { %><div class="zurion-form-error">Aucune commande d'historique à effacer : seules les commandes terminées ou annulées sont concernées.</div><% } %>
+<% } else if (okSaved === 'livreur') { %><div class="zurion-form-success">Compte livreur créé. Il peut désormais se connecter sur /livreur avec son e-mail et son mot de passe.</div><% } else if (okSaved === 'livreur-deleted') { %><div class="zurion-form-success">Compte livreur supprimé. Ses livraisons en cours ont été annulées.</div><% } else if (okSaved === 'bulk-products') { %><div class="zurion-form-success"><%= bulkCount %> produit(s) supprimé(s) définitivement.</div><% } else if (okSaved === 'bulk-users') { %><div class="zurion-form-success"><%= bulkCount %> compte(s) supprimé(s) avec toutes leurs données.</div><% } else if (okSaved === 'bulk-coupons') { %><div class="zurion-form-success"><%= bulkCount %> code(s) promo supprimé(s).</div><% } else if (okSaved === 'bulk-categories') { %><div class="zurion-form-success"><%= bulkCount %> catégorie(s) supprimée(s). Les produits rattachés sont conservés sans catégorie.</div><% } else if (okSaved === 'bulk-livreurs') { %><div class="zurion-form-success"><%= bulkCount %> compte(s) livreur supprimé(s). Leurs livraisons en cours ont été annulées.</div><% } else if (okSaved) { %><div class="zurion-form-success">Modifications enregistrées.</div><% } %>
+
+    <nav class="zurion-admin__tabs" aria-label="Sections administration">
+      <% if (isSuperAdmin) { %><a href="/admin?tab=overview" class="<%= tab === 'overview' ? 'is-active' : '' %>"><i class="fa-solid fa-gauge-high"></i> Vue d'ensemble</a><% } %>
+      <a href="/admin?tab=products" class="<%= tab === 'products' ? 'is-active' : '' %>"><i class="fa-solid fa-box"></i> Marchandise</a>
+      <% if (isSuperAdmin) { %><a href="/admin?tab=orders" class="<%= tab === 'orders' ? 'is-active' : '' %>"><i class="fa-solid fa-truck-fast"></i> Commandes</a><% } %>
+      <a href="/admin?tab=livraisons" class="<%= tab === 'livraisons' ? 'is-active' : '' %>"><i class="fa-solid fa-truck-ramp-box"></i> Livraisons</a>
+      <a href="/admin?tab=couriers" class="<%= tab === 'couriers' ? 'is-active' : '' %>"><i class="fa-solid fa-user-tie"></i> Livreurs</a>
+      <a href="/admin?tab=coupons" class="<%= tab === 'coupons' ? 'is-active' : '' %>"><i class="fa-solid fa-tags"></i> Codes promo</a>
+      <% if (isSuperAdmin) { %><a href="/admin?tab=categories" class="<%= tab === 'categories' ? 'is-active' : '' %>"><i class="fa-regular fa-folder-open"></i> Catégories</a><% } %>
+      <% if (isSuperAdmin) { %><a href="/admin?tab=users" class="<%= tab === 'users' ? 'is-active' : '' %>"><i class="fa-solid fa-users"></i> Utilisateurs</a><% } %>
+    </nav>
+
+    <% if (isSuperAdmin) { %>
+    <!-- ==================== VUE D'ENSEMBLE ==================== -->
+    <section class="zurion-admin__tab-panel <%= tab === 'overview' ? 'is-active' : '' %>" data-tab="overview">
+      <div class="zurion-stats">
+        <div class="zurion-stat is-accent">
+          <small>Chiffre d'affaires</small>
+          <strong><%= money(stats.revenue) %></strong>
+          <i class="fa-solid fa-sack-dollar zurion-stat__icon"></i>
+        </div>
+        <div class="zurion-stat is-success">
+          <small>Commandes</small>
+          <strong><%= stats.orderCount %></strong>
+          <i class="fa-solid fa-receipt zurion-stat__icon"></i>
+        </div>
+        <div class="zurion-stat">
+          <small>Produits actifs</small>
+          <strong><%= stats.productCount %></strong>
+          <i class="fa-solid fa-box-open zurion-stat__icon"></i>
+        </div>
+        <div class="zurion-stat <%= stats.lowStockCount ? 'is-warning' : '' %>">
+          <small>Stocks faibles</small>
+          <strong class="<%= stats.lowStockCount ? 'zurion-text-danger' : '' %>"><%= stats.lowStockCount %></strong>
+          <i class="fa-solid fa-triangle-exclamation zurion-stat__icon"></i>
+        </div>
+      </div>
+
+      <div class="zurion-stats zurion-stats--3">
+        <div class="zurion-stat">
+          <small>CA du mois</small>
+          <strong><%= money(stats.revenueMonth) %></strong>
+          <i class="fa-solid fa-calendar-day zurion-stat__icon"></i>
+        </div>
+        <div class="zurion-stat">
+          <small>CA de la semaine</small>
+          <strong><%= money(stats.revenueWeek) %></strong>
+          <i class="fa-solid fa-calendar-week zurion-stat__icon"></i>
+        </div>
+        <div class="zurion-stat">
+          <small>Panier moyen</small>
+          <strong><%= money(stats.avgBasket) %></strong>
+          <i class="fa-solid fa-cart-shopping zurion-stat__icon"></i>
+        </div>
+      </div>
+
+      <div class="zurion-stats zurion-stats--3">
+        <div class="zurion-stat">
+          <small>Commandes ce mois</small>
+          <strong><%= stats.orderCountMonth %></strong>
+          <i class="fa-solid fa-file-invoice zurion-stat__icon"></i>
+        </div>
+        <div class="zurion-stat">
+          <small>Livraisons en cours</small>
+          <strong><%= stats.activeDeliveries %></strong>
+          <i class="fa-solid fa-truck zurion-stat__icon"></i>
+        </div>
+        <div class="zurion-stat">
+          <small>Livraisons terminées</small>
+          <strong><%= stats.deliveredCount %></strong>
+          <i class="fa-solid fa-circle-check zurion-stat__icon"></i>
+        </div>
+      </div>
+
+      <!-- Répartition des commandes par statut -->
+      <% if (ordersByStatus && ordersByStatus.length) { %>
+        <div class="zurion-section-block">
+          <div class="zurion-admin__title">
+            <h2><i class="fa-solid fa-chart-pie" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Répartition des commandes</h2>
+          </div>
+          <div class="zurion-stats zurion-stats--3">
+            <% ordersByStatus.forEach(s => { %>
+              <div class="zurion-stat">
+                <small><%- esc(statusLabels[s.status] || s.status) %></small>
+                <strong><%= s.count %></strong>
+              </div>
+            <% }) %>
+          </div>
+        </div>
+      <% } %>
+
+      <!-- Top produits vendus -->
+      <% if (topProducts && topProducts.length) { %>
+        <div class="zurion-section-block">
+          <div class="zurion-admin__title">
+            <h2><i class="fa-solid fa-trophy" style="margin-right:.6rem;color:var(--zurion-warning)"></i> Top produits vendus</h2>
+          </div>
+          <table class="zurion-table">
+            <thead><tr><th>Produit</th><th>Unités vendues</th><th>Revenu généré</th></tr></thead>
+            <tbody>
+              <% topProducts.forEach(p => { %>
+                <tr>
+                  <td><strong><%- esc(p.nameSnapshot) %></strong></td>
+                  <td><span class="zurion-badge zurion-badge-info"><%= p.totalSold %> unité(s)</span></td>
+                  <td><strong><%= money(p.totalRevenue) %></strong></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-clock-rotate-left" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Commandes récentes</h2>
+          <a href="/admin?tab=orders">Tout voir <i class="fa-solid fa-arrow-right-long"></i></a>
+        </div>
+        <% if (recentOrders.length) { %>
+          <table class="zurion-table">
+            <thead><tr><th>Référence</th><th>Date</th><th>Total</th><th>Statut</th></tr></thead>
+            <tbody>
+              <% recentOrders.slice(0, 5).forEach(o => { %>
+                <tr>
+                  <td><strong><%- esc(o.reference) %></strong></td>
+                  <td><%= fmtDate(o.createdAt) %></td>
+                  <td><strong><%= money(o.total) %></strong></td>
+                  <td><span class="zurion-badge <%= statusClass[o.status] || 'zurion-badge-info' %>"><%- esc(statusLabels[o.status] || o.status) %></span></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } else { %><p class="zurion-muted">Aucune commande pour le moment.</p><% } %>
+      </div>
+
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-boxes-stacked" style="margin-right:.6rem;color:var(--zurion-warning)"></i> Stocks à réapprovisionner</h2>
+          <a href="/admin?tab=products">Tous les produits <i class="fa-solid fa-arrow-right-long"></i></a>
+        </div>
+        <% if (lowStockProducts.length) { %>
+          <table class="zurion-table">
+            <thead><tr><th>Produit</th><th>Prix</th><th>Stock</th></tr></thead>
+            <tbody>
+              <% lowStockProducts.forEach(p => { %>
+                <tr>
+                  <td><strong><%- esc(p.name) %></strong></td>
+                  <td><%= money(p.price) %></td>
+                  <td><span class="zurion-badge zurion-badge-warning"><%= p.stock %> restant(s)</span></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } else { %><p class="zurion-muted">Tous les stocks sont corrects.</p><% } %>
+      </div>
+    </section>
+
+    <% } %>
+
+    <!-- ==================== MARCHANDISE (PRODUITS) ==================== -->
+    <section class="zurion-admin__tab-panel <%= tab === 'products' ? 'is-active' : '' %>" data-tab="products">
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-plus" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Ajouter un produit</h2>
+        </div>
+        <form method="post" action="/admin/produits" enctype="multipart/form-data" class="zurion-admin-create">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="zurion-form-grid">
+            <label>Nom du produit<input type="text" name="name" class="form-control" required placeholder="Ex : Écouteurs ZURION Air Pro"></label>
+            <label>Catégorie<select name="categoryId" class="form-control"><option value="">— Choisir —</option><% categories.forEach(c => { %><option value="<%= c.id %>"><%- esc(c.name) %></option><% }) %></select></label>
+            <label>Prix (FCFA)<input type="number" name="price" class="form-control" min="0" step="1" required placeholder="15000"></label>
+            <label>Ancien prix — promo<input type="number" name="oldPrice" class="form-control" min="0" step="1" placeholder="20000"></label>
+            <label>Stock<input type="number" name="stock" class="form-control" min="0" step="1" required placeholder="25"></label>
+            <label>Image — fichier<input type="file" name="imageFile" class="form-control" accept="image/png,image/jpeg,image/webp,image/gif"></label>
+            <label class="zurion-form-grid__full">Ou image par URL<input type="text" name="imageUrl" class="form-control" placeholder="/images/demos/demo-3/products/product-3.jpg"></label>
+            <label class="zurion-form-grid__full">Description<textarea name="description" class="form-control" rows="2" placeholder="Points clés du produit…"></textarea></label>
+          </div>
+          <div class="zurion-check-row">
+            <label class="zurion-check"><input type="checkbox" name="featured"> Produit mis en avant (accueil)</label>
+            <label class="zurion-check"><input type="checkbox" name="active" checked> Produit actif (visible en boutique)</label>
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Créer le produit</button>
+        </form>
+      </div>
+
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-boxes-stacked" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Tous les produits</h2>
+          <span class="zurion-muted"><%= products.length %> au catalogue</span>
+        </div>
+        <% if (products.length) { %>
+          <form method="post" action="/admin/produits/suppression-multiple" id="bulk-products-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="zurion-bulk-bar" id="bulk-products-bar">
+              <strong><span id="bulk-products-count">0</span> sélectionné(s)</strong>
+              <button type="submit" class="btn btn-sm zurion-btn-danger" data-confirm="Supprimer les produits sélectionnés définitivement ?"><i class="fa-solid fa-trash-can"></i> Supprimer la sélection</button>
+            </div>
+          </form>
+            <div class="zurion-table-wrap">
+              <table class="zurion-table">
+                <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-products-all" title="Tout sélectionner"></th><th>#</th><th>Produit</th><th>Prix</th><th>Stock</th><th>En avant</th><th>Actif</th><th>Actions</th></tr></thead>
+                <tbody>
+                  <% products.forEach(p => { %>
+                    <tr>
+                      <td class="zurion-check-cell"><input type="checkbox" name="ids" value="<%= p.id %>" class="bulk-products-cb"></td>
+                      <td><%= p.id %></td>
+                      <td><strong><%- esc(p.name) %></strong><br><small class="zurion-muted"><%- esc(p.slug) %></small></td>
+                      <td><strong><%= money(p.price) %></strong><% if (p.oldPrice && p.oldPrice > p.price) { %><br><small class="zurion-muted" style="text-decoration:line-through"><%= money(p.oldPrice) %></small><% } %></td>
+                      <td><span class="zurion-badge <%= p.stock <= 0 ? 'zurion-badge-danger' : (p.stock < 5 ? 'zurion-badge-warning' : 'zurion-badge-success') %>"><%= p.stock <= 0 ? 'Rupture' : p.stock + ' unité(s)' %></span></td>
+                      <td><%= p.featured ? '★' : '—' %></td>
+                      <td><span class="zurion-badge <%= p.active ? 'zurion-badge-success' : 'zurion-badge-danger' %>"><%= p.active ? 'Oui' : 'Non' %></span></td>
+                      <td>
+                        <div class="zurion-admin-actions">
+                          <a class="btn btn-outline btn-sm" href="/admin/produits/<%= p.id %>">Modifier</a>
+                          <form method="post" action="/admin/produits/<%= p.id %>/supprimer" data-confirm="Supprimer définitivement « <%- esc(p.name) %> » ?">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button type="submit" class="btn btn-sm zurion-btn-danger">Supprimer</button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+        <% } else { %><p class="zurion-muted">Aucun produit. Créez-en un avec le formulaire ci-dessus.</p><% } %>
+      </div>
+    </section>
+
+    <% if (isSuperAdmin) { %>
+    <!-- ==================== COMMANDES ==================== -->
+    <section class="zurion-admin__tab-panel <%= tab === 'orders' ? 'is-active' : '' %>" data-tab="orders">
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-truck-fast" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Suivi des commandes</h2>
+          <form method="post" action="/admin/commandes/historique/effacer" data-confirm="Effacer définitivement l'historique des commandes terminées ou annulées (tous clients) ? Les commandes actives ne sont pas touchées.">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn btn-sm zurion-btn-danger"><i class="fa-solid fa-trash-can"></i> Effacer l'historique</button>
+          </form>
+        </div>
+        <% if (recentOrders.length) { %>
+          <table class="zurion-table">
+            <thead><tr><th>Référence</th><th>Date</th><th>Articles</th><th>Total</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody>
+              <% recentOrders.forEach(o => { %>
+                <tr>
+                  <td><strong><%- esc(o.reference) %></strong></td>
+                  <td><%= fmtDate(o.createdAt) %></td>
+                  <td><%= o.items ? o.items.length : 0 %> article(s)</td>
+                  <td><strong><%= money(o.total) %></strong></td>
+                  <td><span class="zurion-badge <%= statusClass[o.status] || 'zurion-badge-info' %>"><%- esc(statusLabels[o.status] || o.status) %></span></td>
+                  <td>
+                    <div class="zurion-admin-actions">
+                      <% const idx = ['créée','paiement_confirmé','préparation','expédition','livraison','terminée'].indexOf(o.status); %>
+                      <% if (idx >= 0 && idx < 5) { %>
+                        <form method="post" action="/admin/commandes/<%= encodeURIComponent(o.reference) %>/statut">
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <button type="submit" class="btn btn-primary btn-sm">→ <%- esc(statusLabels[['créée','paiement_confirmé','préparation','expédition','livraison','terminée'][idx+1]]) %></button>
+                        </form>
+                      <% } %>
+                      <% if (['créée','paiement_confirmé'].includes(o.status)) { %>
+                        <form method="post" action="/admin/commandes/<%= encodeURIComponent(o.reference) %>/annuler" data-confirm="Annuler la commande <%- esc(o.reference) %> ?">
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <button type="submit" class="btn btn-sm zurion-btn-danger">Annuler</button>
+                        </form>
+                      <% } %>
+                        <form method="post" action="/admin/commandes/<%= encodeURIComponent(o.reference) %>/supprimer" data-confirm="Supprimer définitivement la commande <%- esc(o.reference) %> et sa livraison ? Action irréversible.">
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <button type="submit" class="btn btn-sm zurion-btn-danger"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
+                        </form>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } else { %><p class="zurion-muted">Aucune commande enregistrée pour le moment.</p><% } %>
+      </div>
+    </section>
+
+    <% } %>
+
+    <!-- ==================== LIVRAISONS ==================== -->
+    <section class="zurion-admin__tab-panel <%= tab === 'livraisons' ? 'is-active' : '' %>" data-tab="livraisons">
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-truck-ramp-box" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Suivi des livraisons</h2>
+          <span class="zurion-muted"><%= livraisons.length %> livraison(s) au total</span>
+        </div>
+        <div class="zurion-section-block" style="margin:1.2rem 0 0">
+          <div class="zurion-admin__title">
+            <h3><i class="fa-solid fa-box-open" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Prendre une commande</h3>
+            <span class="zurion-muted"><%= assignableOrders.length %> commande(s) disponible(s)</span>
+          </div>
+          <% if (assignableOrders.length && livreurs.length) { %>
+            <form method="post" action="/admin/livraisons/attribuer" class="zurion-form-grid">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <label>Commande
+                <select class="form-control" name="orderId" required>
+                  <option value="">Sélectionner une commande</option>
+                  <% assignableOrders.forEach(o => { %>
+                    <option value="<%= o.id %>"><%- esc(o.reference) %> · <%= o.items.reduce((sum, item) => sum + item.quantity, 0) %> article(s) · <%= money(o.total) %></option>
+                  <% }) %>
+                </select>
+              </label>
+              <label>Livreur
+                <select class="form-control" name="courierId" required>
+                  <option value="">Attribuer à...</option>
+                  <% livreurs.forEach(c => { %><option value="<%= c.id %>"><%- esc(`${c.firstName} ${c.lastName}`) %><%= c.phone ? ` · ${esc(c.phone)}` : '' %></option><% }) %>
+                </select>
+              </label>
+              <label>Nom du destinataire<input class="form-control" name="fullName" required minlength="2" maxlength="120"></label>
+              <label>Téléphone<input class="form-control" name="phone" required minlength="5" maxlength="30"></label>
+              <label>Adresse<input class="form-control" name="line1" required minlength="3" maxlength="180"></label>
+              <label>Complément d'adresse<input class="form-control" name="line2" maxlength="180"></label>
+              <label>Ville<input class="form-control" name="city" required minlength="2" maxlength="80"></label>
+              <label>Région<input class="form-control" name="region" maxlength="80"></label>
+              <label>Date de livraison prévue<input class="form-control" name="date" type="date"></label>
+              <label>Heure de livraison prévue<input class="form-control" name="time" type="time"></label>
+              <div class="zurion-form-grid__full"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-truck-fast"></i> Créer la livraison</button></div>
+            </form>
+          <% } else if (!livreurs.length) { %>
+            <p class="zurion-muted">Créez un compte livreur avant d'attribuer une commande.</p>
+          <% } else { %>
+            <p class="zurion-muted">Aucune commande active sans livraison à attribuer.</p>
+          <% } %>
+        </div>
+        <% if (livraisons.length) { %>
+          <div class="zurion-table-wrap">
+            <table class="zurion-table zurion-table--livraisons">
+              <thead>
+                <tr>
+                  <th>Référence</th>
+                  <th>Commande et produits</th>
+                  <th>Destination</th>
+                  <th>Livreur</th>
+                  <th>Colis</th>
+                  <th>Frais</th>
+                  <th>Prévue le</th>
+                  <th>Expédiée le</th>
+                  <th>État</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% livraisons.forEach(l => { %>
+                  <tr>
+                    <td><strong><%- esc(l.reference) %></strong></td>
+                    <td><strong><%- esc((l.order && l.order.reference) || '—') %></strong><br><small class="zurion-muted"><%- esc((l.order && l.order.items || []).map(it => `${it.quantity}× ${it.nameSnapshot}`).join(', ') || 'Produits indisponibles') %></small></td>
+                    <% let destination = null; try { destination = l.destinationSnapshot ? JSON.parse(l.destinationSnapshot) : (l.order && l.order.addressSnapshot ? JSON.parse(l.order.addressSnapshot) : null); } catch (_) { destination = null; } %>
+                    <td><%- esc(destination ? `${destination.fullName}, ${destination.line1}, ${destination.city}` : '—') %><br><small class="zurion-muted"><%- esc(destination && destination.phone || '') %></small></td>
+                    <td><strong><%- esc(l.courierName) %></strong></td>
+                    <td><%= l.quantity %> colis</td>
+                    <td><%= money(l.price) %></td>
+                    <td><%= l.scheduledAt ? new Date(l.scheduledAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—' %></td>
+                    <td><%= l.shippedAt ? new Date(l.shippedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—' %></td>
+                    <td>
+                      <% if (l.status === 'livrée') { %>
+                        <span class="zurion-voyant" style="color:#157347" title="Livrée"><i class="fa-solid fa-circle-check"></i> Livrée</span>
+                      <% } else if (l.status === 'annulée') { %>
+                        <span class="zurion-voyant" style="color:#a13333" title="Annulée"><i class="fa-solid fa-circle-xmark"></i> Annulée</span>
+                      <% } else { %>
+                        <span class="zurion-voyant" style="color:#17669d" title="En cours"><i class="fa-solid fa-circle-dot"></i> En cours</span>
+                      <% } %>
+                    </td>
+                    <td>
+                      <div class="zurion-admin-actions">
+                        <% if (l.status === 'en_cours') { %>
+                          <form method="post" action="/admin/livraisons/<%= l.id %>/statut" style="display:inline">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <input type="hidden" name="status" value="livrée">
+                            <button class="btn btn-sm btn-success" type="submit"><i class="fa-solid fa-circle-check"></i> Effectué(e)</button>
+                          </form>
+                        <% } %>
+                        <% if (l.status === 'en_cours') { %>
+                          <form method="post" action="/admin/livraisons/<%= l.id %>/annuler" data-confirm="Annuler la livraison « <%- esc(l.reference) %> » du livreur <%- esc(l.courierName) %> ?" style="display:inline">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button class="btn btn-sm zurion-btn-danger" type="submit">Annuler</button>
+                          </form>
+                        <% } else { %>
+                          <span class="zurion-muted">—</span>
+                        <% } %>
+                      </div>
+                    </td>
+                  </tr>
+                <% }) %>
+              </tbody>
+            </table>
+          </div>
+        <% } else { %>
+          <p class="zurion-muted">Aucune livraison pour le moment. Elles sont créées automatiquement dès qu'une commande passe au statut « Expédition ».</p>
+        <% } %>
+      </div>
+    </section>
+
+    <!-- ==================== LIVREURS ==================== -->
+    <section class="zurion-admin__tab-panel <%= tab === 'couriers' ? 'is-active' : '' %>" data-tab="couriers">
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-plus" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Ajouter un livreur</h2>
+        </div>
+        <form method="post" action="/admin/livreurs" class="zurion-form-grid">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label>Nom du livreur<input class="form-control" name="name" required minlength="2" maxlength="80" placeholder="Ex : Daré Express"></label>
+          <label>Téléphone (optionnel)<input class="form-control" name="phone" maxlength="30" placeholder="Ex : +225 07 00 00 00 00"></label>
+          <div class="zurion-form-grid__full"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Ajouter le livreur</button></div>
+        </form>
+      </div>
+
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-user-tie" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Livreurs partenaires</h2>
+          <span class="zurion-muted"><%= couriers.length %> au total</span>
+        </div>
+        <% if (couriers.length) { %>
+          <table class="zurion-table">
+            <thead><tr><th>Nom</th><th>Téléphone</th><th>Actif</th><th>Actions</th></tr></thead>
+            <tbody>
+              <% couriers.forEach(c => { %>
+                <tr>
+                  <form method="post" action="/admin/livreurs/<%= c.id %>">
+                    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                    <td><input class="zurion-input-inline" style="width:14rem" name="name" value="<%- esc(c.name) %>" required minlength="2" maxlength="80"></td>
+                    <td><input class="zurion-input-inline" name="phone" value="<%- esc(c.phone || '') %>" maxlength="30" placeholder="—"></td>
+                    <td><input type="checkbox" name="active" <%= c.active ? 'checked' : '' %>></td>
+                    <td><div class="zurion-admin-actions"><button class="btn btn-primary btn-sm" type="submit">Enregistrer</button></div></td>
+                  </form>
+                  <td>
+                    <form method="post" action="/admin/livreurs/<%= c.id %>/supprimer" data-confirm="Supprimer le livreur « <%- esc(c.name) %> » ? Les livraisons passées conserveront son nom.">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="btn btn-sm zurion-btn-danger" type="submit">Supprimer</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        <% } else { %><p class="zurion-muted">Aucun livreur. Ajoutez-en un avec le formulaire ci-dessus.</p><% } %>
+      </div>
+
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-user-lock" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Comptes livreurs (connexion)</h2>
+          <span class="zurion-muted">Ces comptes ont un e-mail et un mot de passe pour se connecter sur /livreur</span>
+        </div>
+        <form method="post" action="/admin/livreur-comptes" class="zurion-form-grid">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label>Prénom<input class="form-control" name="firstName" required minlength="2" maxlength="80" placeholder="Ex : Aya"></label>
+          <label>Nom<input class="form-control" name="lastName" required minlength="2" maxlength="80" placeholder="Ex : Konan"></label>
+          <label>E-mail<input class="form-control" type="email" name="email" required maxlength="160" placeholder="livreur@zurion.store"></label>
+          <label>Téléphone (optionnel)<input class="form-control" name="phone" maxlength="30" placeholder="Ex : +225 07 00 00 00 00"></label>
+          <label>Mot de passe<span class="zurion-pw-wrap"><input class="form-control" type="password" name="password" required minlength="8" maxlength="128" placeholder="8 caractères minimum"><button type="button" class="zurion-pw-toggle" aria-label="Afficher le mot de passe"><i class="fa-solid fa-eye"></i></button></span></label>
+          <div class="zurion-form-grid__full"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Créer le compte livreur</button></div>
+        </form>
+        <% if (livreurs.length) { %>
+          <form method="post" action="/admin/livreur-comptes/suppression-multiple" id="bulk-livreurs-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="zurion-bulk-bar" id="bulk-livreurs-bar">
+              <strong><span id="bulk-livreurs-count">0</span> sélectionné(s)</strong>
+              <button type="submit" class="btn btn-sm zurion-btn-danger" data-confirm="Supprimer les comptes livreur sélectionnés ? Leurs livraisons en cours seront annulées."><i class="fa-solid fa-trash-can"></i> Supprimer la sélection</button>
+            </div>
+          </form>
+            <div class="zurion-table-wrap">
+              <table class="zurion-table" style="margin-top:1.4rem">
+                <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-livreurs-all" title="Tout sélectionner"></th><th>Nom complet</th><th>E-mail</th><th>Téléphone</th><th>Créé le</th><% if (isSuperAdmin) { %><th>Actions</th><% } %></tr></thead>
+                <tbody>
+                  <% livreurs.forEach(l => { %>
+                    <tr>
+                      <td class="zurion-check-cell"><input type="checkbox" name="ids" value="<%= l.id %>" class="bulk-livreurs-cb"></td>
+                      <td><strong><%- esc(l.firstName) %> <%- esc(l.lastName) %></strong></td>
+                      <td><%- esc(l.email) %></td>
+                      <td><%- esc(l.phone || '—') %></td>
+                      <td><%= fmtDate(l.createdAt) %></td>
+                      <% if (isSuperAdmin) { %>
+                        <td>
+                          <form method="post" action="/admin/livreur-comptes/<%= l.id %>/supprimer" data-confirm="Supprimer le compte livreur « <%- esc(l.email) %> » ? Les livraisons en cours lui seront retirées et passées en annulées.">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button class="btn btn-sm zurion-btn-danger" type="submit"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
+                          </form>
+                        </td>
+                      <% } %>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+        <% } else { %><p class="zurion-muted" style="margin-top:1.4rem">Aucun compte livreur pour le moment.</p><% } %>
+      </div>
+    </section>
+
+    <!-- ==================== CODES PROMO ==================== -->
+    <section class="zurion-admin__tab-panel <%= tab === 'coupons' ? 'is-active' : '' %>" data-tab="coupons">
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-plus" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Créer un code promo</h2>
+        </div>
+        <form method="post" action="/admin/codes-promo" class="zurion-form-grid">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label>Code<input class="form-control" name="code" required minlength="2" maxlength="40" placeholder="EX : BIENVENUE10"></label>
+          <label>Type<select class="form-control" name="type"><option value="percent">Pourcentage (%)</option><option value="fixed">Montant fixe (FCFA)</option></select></label>
+          <label>Valeur<input class="form-control" name="value" type="number" min="1" step="1" required placeholder="10 ou 5000"></label>
+          <label>Panier minimum (FCFA)<input class="form-control" name="minAmount" type="number" min="0" step="1" placeholder="—"></label>
+          <label>Utilisations max<input class="form-control" name="maxUses" type="number" min="1" step="1" placeholder="—"></label>
+          <label>Début de validité<input class="form-control" name="validFrom" type="date"></label>
+          <label>Fin de validité<input class="form-control" name="validUntil" type="date"></label>
+          <div class="zurion-check-row zurion-form-grid__full"><label class="zurion-check"><input type="checkbox" name="active" checked> Actif immédiatement</label></div>
+          <div class="zurion-form-grid__full"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-plus"></i> Créer le code</button></div>
+        </form>
+      </div>
+
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-tags" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Codes promo</h2>
+          <span class="zurion-muted"><%= coupons.length %> au total</span>
+        </div>
+        <% if (coupons.length) { %>
+          <form method="post" action="/admin/codes-promo/suppression-multiple" id="bulk-coupons-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="zurion-bulk-bar" id="bulk-coupons-bar">
+              <strong><span id="bulk-coupons-count">0</span> sélectionné(s)</strong>
+              <button type="submit" class="btn btn-sm zurion-btn-danger" data-confirm="Supprimer les codes promo sélectionnés ?"><i class="fa-solid fa-trash-can"></i> Supprimer la sélection</button>
+            </div>
+          </form>
+            <div class="zurion-table-wrap">
+              <table class="zurion-table">
+                <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-coupons-all" title="Tout sélectionner"></th><th>Code</th><th>Remise</th><th>Panier min.</th><th>Utilisations</th><th>Validité</th><th>État</th><th>Actions</th></tr></thead>
+                <tbody>
+                  <% coupons.forEach(c => { %>
+                    <tr>
+                      <td class="zurion-check-cell"><input type="checkbox" name="ids" value="<%= c.id %>" class="bulk-coupons-cb"></td>
+                      <td><strong><%- esc(c.code) %></strong></td>
+                      <td><%= c.type === 'percent' ? c.value + '%' : money(c.value) %></td>
+                      <td><%= c.minAmount ? money(c.minAmount) : '—' %></td>
+                      <td><%= c.maxUses ? c.usedCount + ' / ' + c.maxUses : c.usedCount + ' (illimité)' %></td>
+                      <td><% if (c.validFrom || c.validUntil) { %><small class="zurion-muted"><%= c.validFrom ? new Date(c.validFrom).toLocaleDateString('fr-FR') : '…' %> → <%= c.validUntil ? new Date(c.validUntil).toLocaleDateString('fr-FR') : '∞' %></small><% } else { %>—<% } %></td>
+                      <td><span class="zurion-badge <%= c.active ? 'zurion-badge-success' : 'zurion-badge-danger' %>"><%= c.active ? 'Actif' : 'Inactif' %></span></td>
+                      <td>
+                        <div class="zurion-admin-actions">
+                          <form method="post" action="/admin/codes-promo/<%= c.id %>/toggle" style="display:inline">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button class="btn btn-outline btn-sm" type="submit"><%= c.active ? 'Désactiver' : 'Activer' %></button>
+                          </form>
+                          <form method="post" action="/admin/codes-promo/<%= c.id %>/supprimer" data-confirm="Supprimer le code « <%- esc(c.code) %> » ?" style="display:inline">
+                            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                            <button class="btn btn-sm zurion-btn-danger" type="submit">Supprimer</button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+        <% } else { %><p class="zurion-muted">Aucun code promo pour le moment.</p><% } %>
+      </div>
+    </section>
+
+    <% if (isSuperAdmin) { %>
+    <!-- ==================== CATÉGORIES ==================== -->
+    <section class="zurion-admin__tab-panel <%= tab === 'categories' ? 'is-active' : '' %>" data-tab="categories">
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-plus" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Ajouter une catégorie</h2>
+        </div>
+        <form method="post" action="/admin/categories" class="zurion-form-grid">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label>Nom<input class="form-control" name="name" required minlength="2" maxlength="120"></label>
+          <label>Ordre<input class="form-control" name="sortOrder" type="number" min="0" value="0"></label>
+          <label class="zurion-check"><input type="checkbox" name="active" checked> Visible dans la boutique</label>
+          <label class="zurion-form-grid__full">Description<textarea class="form-control" name="description" rows="2"></textarea></label>
+          <div class="zurion-form-grid__full"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-plus"></i> Créer la catégorie</button></div>
+        </form>
+      </div>
+
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-regular fa-folder-open" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Catégories</h2>
+          <span class="zurion-muted"><%= categories.length %> au total</span>
+        </div>
+        <% if (categories.length) { %>
+          <form method="post" action="/admin/categories/suppression-multiple" id="bulk-categories-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="zurion-bulk-bar" id="bulk-categories-bar">
+              <strong><span id="bulk-categories-count">0</span> sélectionnée(s)</strong>
+              <button type="submit" class="btn btn-sm zurion-btn-danger" data-confirm="Supprimer les catégories sélectionnées ? Les produits rattachés seront conservés sans catégorie."><i class="fa-solid fa-trash-can"></i> Supprimer la sélection</button>
+            </div>
+          </form>
+            <div class="zurion-table-wrap">
+              <table class="zurion-table">
+                <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-categories-all" title="Tout sélectionner"></th><th>Nom</th><th>Slug</th><th>Ordre</th><th>Visible</th><th>Actions</th></tr></thead>
+                <tbody>
+                  <% categories.forEach(category => { %>
+                    <tr>
+                      <td class="zurion-check-cell"><input type="checkbox" name="ids" value="<%= category.id %>" class="bulk-categories-cb"></td>
+                      <form method="post" action="/admin/categories/<%= category.id %>">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <td><input class="zurion-input-inline" name="name" value="<%- esc(category.name) %>" required></td>
+                        <td><%- esc(category.slug) %></td>
+                        <td><input class="zurion-input-inline" type="number" name="sortOrder" min="0" value="<%= category.sortOrder %>"></td>
+                        <td><input type="checkbox" name="active" <%= category.active ? 'checked' : '' %>></td>
+                        <td><button class="btn btn-primary btn-sm">Enregistrer</button></td>
+                      </form>
+                      <td>
+                        <form method="post" action="/admin/categories/<%= category.id %>/supprimer" data-confirm="Supprimer la catégorie « <%- esc(category.name) %> » ? Les produits rattachés deviendront sans catégorie.">
+                          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                          <button class="btn btn-sm zurion-btn-danger" type="submit">Supprimer</button>
+                        </form>
+                      </td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+        <% } else { %><p class="zurion-muted">Aucune catégorie.</p><% } %>
+      </div>
+    </section>
+    <% } %>
+
+    <% if (isSuperAdmin) { %>
+    <!-- ==================== UTILISATEURS ==================== -->
+    <section class="zurion-admin__tab-panel <%= tab === 'users' ? 'is-active' : '' %>" data-tab="users">
+      <div class="zurion-section-block">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-users" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Utilisateurs</h2>
+          <span class="zurion-muted"><%= users.length %> inscrit(s)</span>
+        </div>
+        <% if (isSuperAdmin) { %>
+          <div class="zurion-section-block" style="margin:1.2rem 0">
+            <div class="zurion-admin__title"><h3><i class="fa-solid fa-user-shield" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Créer un compte admin</h3></div>
+            <p class="zurion-muted">Ce compte gérera les produits (marchandise), les codes promo, les livraisons, les livreurs (partenaires et comptes de connexion) ainsi que la messagerie interne. Il n'a pas accès aux commandes, aux catégories, aux utilisateurs ni au tableau de bord financier.</p>
+            <form method="post" action="/admin/utilisateurs/admin" class="zurion-form-grid">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <label>Prénom<input class="form-control" name="firstName" required minlength="2" maxlength="80"></label>
+              <label>Nom<input class="form-control" name="lastName" required minlength="2" maxlength="80"></label>
+              <label>E-mail<input class="form-control" type="email" name="email" required maxlength="160"></label>
+              <label>Téléphone<input class="form-control" name="phone" maxlength="30"></label>
+              <label>Mot de passe<span class="zurion-pw-wrap"><input class="form-control" type="password" name="password" required minlength="8" maxlength="128"><button type="button" class="zurion-pw-toggle" aria-label="Afficher le mot de passe"><i class="fa-solid fa-eye"></i></button></span></label>
+              <div class="zurion-form-grid__full"><button class="btn btn-primary" type="submit"><i class="fa-solid fa-user-plus"></i> Créer l'administrateur</button></div>
+            </form>
+          </div>
+        <% } %>
+        <% if (users.length) { %>
+          <form method="post" action="/admin/utilisateurs/suppression-multiple" id="bulk-users-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <div class="zurion-bulk-bar" id="bulk-users-bar">
+              <strong><span id="bulk-users-count">0</span> sélectionné(s)</strong>
+              <button type="submit" class="btn btn-sm zurion-btn-danger" data-confirm="Supprimer les comptes sélectionnés et toutes leurs données ? Action irréversible."><i class="fa-solid fa-trash-can"></i> Supprimer la sélection</button>
+            </div>
+          </form>
+            <div class="zurion-table-wrap">
+              <table class="zurion-table">
+                <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-users-all" title="Tout sélectionner"></th><th>Nom</th><th>E-mail</th><th>Téléphone</th><th>Rôle</th><th>Créé le</th><% if (isSuperAdmin) { %><th>Actions</th><% } %></tr></thead>
+                <tbody>
+                  <% users.forEach(user => { %>
+                    <tr>
+                      <td class="zurion-check-cell"><input type="checkbox" name="ids" value="<%= user.id %>" class="bulk-users-cb" <%= (user.role === 'superadmin' || Number(user.id) === Number(currentUser.id)) ? 'disabled' : '' %>></td>
+                      <td>
+                        <div style="display:flex;align-items:center;gap:1rem">
+                          <span class="zurion-account__avatar" style="width:3.6rem;height:3.6rem;font-size:1.4rem;margin:0"><%- esc((user.firstName || 'Z')[0].toUpperCase()) %></span>
+                          <strong><%- esc(`${user.firstName} ${user.lastName}`) %></strong>
+                        </div>
+                      </td>
+                      <td><%- esc(user.email) %></td>
+                      <td><%- esc(user.phone || '—') %></td>
+                      <td><span class="zurion-badge <%= user.role === 'superadmin' ? 'zurion-badge-danger' : (user.role === 'admin' ? 'zurion-badge-info' : 'zurion-badge-success') %>"><%- esc(user.role) %></span></td>
+                      <td><%= new Date(user.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) %></td>
+                      <% if (isSuperAdmin) { %>
+                        <td>
+                          <% if (user.role !== 'superadmin' && Number(user.id) !== Number(currentUser.id)) { %>
+                            <form method="post" action="/admin/utilisateurs/<%= user.id %>/supprimer" data-confirm="Supprimer définitivement le compte « <%- esc(`${user.firstName} ${user.lastName}`) %> » (<%- esc(user.email) %>) et toutes ses données (commandes, adresses, favoris, avis, messages) : action irréversible.">
+                              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                              <button class="btn btn-sm zurion-btn-danger" type="submit" title="Supprimer le compte et toutes ses données"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
+                            </form>
+                          <% } else { %><span class="zurion-muted">—</span><% } %>
+                        </td>
+                      <% } %>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+        <% } else { %><p class="zurion-muted">Aucun utilisateur inscrit.</p><% } %>
+      </div>
+    </section>
+    <% } %>
+
+  </main>
+</div>
+
+<style>
+.zurion-admin__tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 2.4rem; border-bottom: 1px solid var(--zurion-border); padding-bottom: 1rem; }
+.zurion-admin__tabs a { display: inline-flex; align-items: center; gap: .6rem; padding: .8rem 1.4rem; border-radius: var(--zurion-radius); font-weight: 600; font-size: 1.3rem; color: var(--zurion-body); border: 1px solid var(--zurion-border); background: #fff; transition: all .18s; }
+.zurion-admin__tabs a:hover { border-color: var(--zurion-primary); color: var(--zurion-primary); }
+.zurion-admin__tabs a.is-active { background: linear-gradient(120deg, var(--zurion-primary), #1d5d91); color: #fff; border-color: transparent; }
+.zurion-admin__tab-panel { display: none; }
+.zurion-admin__tab-panel.is-active { display: block; }
+.zurion-stats--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 767px) { .zurion-admin__tabs { flex-direction: column; } .zurion-admin__tabs a { width: 100%; } .zurion-stats--3 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 479px) { .zurion-stats--3 { grid-template-columns: 1fr; } }
+.zurion-pw-wrap { position: relative; }
+.zurion-pw-wrap input[type="password"],
+.zurion-pw-wrap input[type="text"] { padding-right: 4rem; }
+.zurion-pw-toggle { position: absolute; right: .6rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--zurion-muted); font-size: 1.4rem; padding: .4rem; line-height: 1; }
+.zurion-pw-toggle:hover { color: var(--zurion-primary); }
+</style>
+
+<script nonce="<%= nonce %>">
+(function() {
+  const bulkConfigs = [
+    { prefix: 'products', formId: 'bulk-products-form' },
+    { prefix: 'coupons', formId: 'bulk-coupons-form' },
+    { prefix: 'categories', formId: 'bulk-categories-form' },
+    { prefix: 'users', formId: 'bulk-users-form' },
+    { prefix: 'livreurs', formId: 'bulk-livreurs-form' },
+  ];
+  bulkConfigs.forEach(({ prefix, formId }) => {
+    const form = document.getElementById(formId);
+    if (!form) return;
+    const allCb = document.getElementById(`bulk-${prefix}-all`);
+    const bar = document.getElementById(`bulk-${prefix}-bar`);
+    const countEl = document.getElementById(`bulk-${prefix}-count`);
+    const cbs = document.querySelectorAll(`.bulk-${prefix}-cb`);
+    function updateBar() {
+      const checked = document.querySelectorAll(`.bulk-${prefix}-cb:checked`).length;
+      if (countEl) countEl.textContent = checked;
+      if (bar) bar.classList.toggle('is-visible', checked > 0);
+    }
+    if (allCb) {
+      allCb.addEventListener('change', () => {
+        cbs.forEach(cb => { if (!cb.disabled) cb.checked = allCb.checked; });
+        updateBar();
+      });
+    }
+    cbs.forEach(cb => cb.addEventListener('change', updateBar));
+    form.addEventListener('submit', (e) => {
+      const checked = document.querySelectorAll(`.bulk-${prefix}-cb:checked`);
+      if (!checked.length) { e.preventDefault(); return; }
+      if (!confirm(`Supprimer ${checked.length} élément(s) sélectionné(s) ?`)) { e.preventDefault(); return; }
+      form.querySelectorAll('input[name="ids"]').forEach(el => el.remove());
+      checked.forEach(cb => {
+        const hid = document.createElement('input');
+        hid.type = 'hidden';
+        hid.name = 'ids';
+        hid.value = cb.value;
+        form.appendChild(hid);
+      });
+    });
+  });
+})();
+</script>
+<script nonce="<%= nonce %>">
+(function() {
+  document.querySelectorAll('.zurion-pw-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var wrap = btn.closest('.zurion-pw-wrap');
+      var input = wrap.querySelector('input');
+      var icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    });
+  });
+})();
+</script>
