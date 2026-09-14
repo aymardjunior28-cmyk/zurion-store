@@ -1,0 +1,36 @@
+# VCS
+.git
+.gitignore
+
+# Secrets — jamais dans l'image
+.env
+.env.local
+.env.*.local
+
+# Dépendances (réinstallées dans l'image)
+node_modules
+
+# Bases locales — production = PostgreSQL
+*.sqlite
+*.sqlite-journal
+back/data
+
+# Application desktop — non déployée sur le web
+electron
+electron-builder.yml
+
+# Outillage dev / CI / tests — non déployé
+scripts
+tests
+playwright.config.js
+.github
+test-results
+coverage
+dist
+dist-*
+
+# Documentation
+docs
+README.md
+README-desktop.md
+docker-compose.yml
