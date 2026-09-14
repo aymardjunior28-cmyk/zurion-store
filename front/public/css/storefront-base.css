@@ -1,0 +1,78 @@
+/* ZURION Store — Design System (base) — palette premium : navy profond, accent bleu ZURION */
+:root {
+  --zurion-primary: #12639e;
+  --zurion-primary-hover: #0f5590;
+  --zurion-primary-100: #e3f1fc;
+  --zurion-primary-50: #f0f7fd;
+  --zurion-ink: #0c1216;
+  --zurion-body: #42525f;
+  --zurion-muted: #677581;
+  --zurion-surface: #f4f6f8;
+  --zurion-surface-2: #e9edf1;
+  --zurion-border: #e0e6eb;
+  --zurion-white: #ffffff;
+  --zurion-success: #147a4a;
+  --zurion-danger: #b3302f;
+  --zurion-warning: #9a6200;
+  --zurion-radius-sm: 8px;
+  --zurion-radius: 12px;
+  --zurion-radius-lg: 18px;
+  --zurion-shadow-sm: 0 1px 2px rgba(12,18,22,.06), 0 2px 6px rgba(12,18,22,.06);
+  --zurion-shadow: 0 6px 18px rgba(12,25,38,.08);
+  --zurion-shadow-lg: 0 18px 44px rgba(12,25,38,.14);
+  --zurion-font: 'Poppins', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --zurion-font-display: 'Poppins', system-ui, sans-serif;
+  --zurion-gradient: linear-gradient(135deg, #12639e 0%, #1d7fc8 100%);
+}
+
+* { box-sizing: border-box; }
+html { font-size: 62.5%; }
+html { scroll-behavior: smooth; }
+body { font-family: var(--zurion-font); font-weight: 400; font-size: 1.5rem; line-height: 1.65; color: var(--zurion-body); background: #fafcfe; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; margin: 0; }
+
+h1, h2, h3, h4 { color: var(--zurion-ink); line-height: 1.18; letter-spacing: -.015em; }
+
+a, button, input, textarea, select { transition: all .18s ease; }
+h1 { font-size: 3.4rem; font-weight: 700; letter-spacing: -.03em; }
+h2 { font-size: 2.6rem; font-weight: 700; }
+h3 { font-size: 2rem; font-weight: 600; }
+a { color: var(--zurion-primary); text-decoration: none; }
+a:hover { color: var(--zurion-primary-hover); }
+img { max-width: 100%; }
+.container { width: 100%; max-width: 1280px; margin: 0 auto; padding: 0 2rem; }
+
+/* Boutons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: .8rem; padding: 1.15rem 2rem; border: 1px solid transparent; border-radius: 999px; font-family: var(--zurion-font); font-size: 1.45rem; font-weight: 600; line-height: 1; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s, transform .12s, box-shadow .25s, filter .2s; text-decoration: none; white-space: nowrap; }
+.btn:focus-visible { outline: 3px solid rgba(29,127,200,.35); outline-offset: 2px; }
+.btn-primary { background: var(--zurion-gradient); color: #fff; box-shadow: 0 6px 16px rgba(18,99,158,.24); }
+.btn-primary:hover { filter: brightness(1.05); color: #fff; transform: translateY(-1px); box-shadow: 0 10px 22px rgba(18,99,158,.30); }
+.btn-outline { background: transparent; color: var(--zurion-body); border-color: var(--zurion-border); }
+.btn-outline:hover { background: var(--zurion-surface); color: var(--zurion-ink); border-color: #ccd5dd; }
+.btn-outline-primary { background: transparent; color: var(--zurion-primary); border-color: var(--zurion-primary); }
+.btn-outline-primary:hover { background: var(--zurion-primary); color: #fff; }
+.btn-outline-secondary { background: transparent; color: var(--zurion-body); border-color: var(--zurion-border); }
+.btn-outline-secondary:hover { background: var(--zurion-surface); }
+.btn-light { background: #fff; color: var(--zurion-primary-hover); box-shadow: 0 4px 14px rgba(12,25,38,.12); }
+.btn-light:hover { background: var(--zurion-primary-50); color: var(--zurion-primary-hover); transform: translateY(-1px); }
+.btn-link { background: none; border: 0; color: var(--zurion-primary); padding: .4rem .6rem; font-weight: 500; }
+.btn-sm { padding: .75rem 1.3rem; font-size: 1.3rem; }
+.btn-lg { padding: 1.45rem 2.6rem; font-size: 1.6rem; border-radius: 999px; }
+.btn-block { width: 100%; }
+.btn[disabled] { opacity: .55; cursor: not-allowed; transform: none !important; box-shadow: none; filter: none; }
+
+/* Formulaires */
+.form-control { width: 100%; padding: 1.05rem 1.25rem; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-sm); font-family: inherit; font-size: 1.45rem; color: var(--zurion-ink); background: #fff; transition: border-color .2s, box-shadow .2s; }
+.form-control:focus { outline: none; border-color: var(--zurion-primary); box-shadow: 0 0 0 3px rgba(29,127,200,.16); }
+label { display: block; font-weight: 500; color: var(--zurion-ink); margin-bottom: .6rem; font-size: 1.35rem; }
+
+.d-flex { display: flex; }
+.justify-content-between { justify-content: space-between; }
+.align-items-center { align-items: center; }
+.text-center { text-align: center; }
+.mt-2 { margin-top: 1rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mt-4 { margin-top: 2.5rem; }
+.mb-0 { margin-bottom: 0; }
+.small { font-size: 1.25rem; }
+hr { border: 0; border-top: 1px solid var(--zurion-border); margin: 1.6rem 0; }
+.zurion-muted { color: var(--zurion-muted); }

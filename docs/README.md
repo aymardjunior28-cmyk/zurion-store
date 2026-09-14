@@ -14,7 +14,26 @@ MVP e-commerce construit avec Node.js, Express, EJS, Sequelize et SQLite.
 - Codes promotionnels.
 - Contact, FAQ et informations livraison/retours.
 - Back-office administrateur : produits, catégories, commandes, utilisateurs, coupons, livreurs et livraisons.
-- API REST pour le catalogue, l’authentification, le panier, les commandes et les favoris.
+- API REST pour le catalogue, l'authentification, le panier, les commandes et les favoris.
+
+### Système de livraison
+
+- **Attribution de livraison** : le super-admin ou l'admin sélectionne une commande active
+  et un livreur, puis saisit les informations du destinataire (nom, téléphone, adresse,
+  ville, région) et la date/heure de livraison prévue pour créer une livraison.
+- **Notifications enrichies** : à l'attribution, le livreur reçoit une notification avec le
+  contact du client, le délai de livraison et la localisation. À la confirmation de livraison,
+  les admin/super-admin reçoivent une notification avec le nom du livreur, son contact,
+  l'identifiant de livraison et l'heure de notification.
+- **Tableau de bord livreur** : colonnes Contact client, Destination et Livraison prévue.
+  Bouton « Confirmer la livraison » (au lieu d'un select) qui notifie les administrateurs.
+- **Voyants de statut** dans l'espace admin : vert (🟢 livrée), rouge (🔴 annulée),
+  bleu (🔵 en cours) pour un suivi visuel rapide.
+- **Annulation** : le super-admin ou l'admin peut annuler une livraison en cours ;
+  le livreur ne peut plus la confirmer.
+- **Suppression en masse** : cases à cocher + barre de sélection pour supprimer
+  plusieurs éléments d'un coup depuis l'espace admin (produits, coupons, catégories,
+  utilisateurs, livreur comptes).
 
 ## Prérequis
 
@@ -90,18 +109,18 @@ La suite actuelle couvre :
 - le healthcheck ;
 - la protection des endpoints privés ;
 - la connexion administrateur ;
-- l’accueil ;
+- l'accueil ;
 - le catalogue ;
 - le parcours panier → commande ;
 - la FAQ ;
-- l’API des images produit.
+- l'API des images produit.
 
 Les tests sont des smoke tests ciblés. Ils ne constituent pas une mesure de couverture exhaustive, responsive ou de performance.
 
 ## Structure
 
 ```text
-server.js                 Point d’entrée HTTP
+server.js                 Point d'entrée HTTP
 src/app.js                Configuration Express
 src/routes/               Routes SSR et API
 src/controllers/          Contrôleurs API
@@ -121,7 +140,7 @@ data/                     Base SQLite locale
 - Sessions JWT dans cookie `httpOnly`.
 - Protection CSRF pour les mutations.
 - Helmet avec Content Security Policy.
-- Rate limiting sur l’API.
+- Rate limiting sur l'API.
 - Validation des entrées.
 - Secret JWT obligatoire lorsque `NODE_ENV=production`.
 
@@ -136,11 +155,11 @@ data/                     Base SQLite locale
 | GET | `/api/categories` | Catégories actives |
 | GET | `/api/products` | Catalogue paginé |
 | GET | `/api/products/:slug` | Produit détaillé |
-| GET | `/api/product-images?slug=...` | Galerie d’un produit |
+| GET | `/api/product-images?slug=...` | Galerie d'un produit |
 | GET | `/api/suggestions?q=...` | Suggestions de recherche |
 | GET/POST | `/api/cart` et `/api/cart/items` | Panier |
 | POST | `/api/orders` | Créer une commande |
-| GET | `/api/orders` | Commandes de l’utilisateur |
+| GET | `/api/orders` | Commandes de l'utilisateur |
 | GET/POST/DELETE | `/api/wishlist` | Favoris |
 
 Les mutations API doivent fournir le jeton CSRF dans `X-CSRF-Token`.
@@ -152,6 +171,6 @@ Les mutations API doivent fournir le jeton CSRF dans `X-CSRF-Token`.
   installation système, créer une base et un rôle dédiés, définir
   `DATABASE_URL`, puis exécuter `npm run migrate`.
 - Les tests navigateur et le benchmark sont maintenant disponibles, mais leurs
-  résultats restent dépendants de la machine d’exécution.
+  résultats restent dépendants de la machine d'exécution.
 
 Pour le détail technique, consulter [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) et [docs/VALIDATION.md](docs/VALIDATION.md).

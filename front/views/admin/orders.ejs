@@ -1,0 +1,80 @@
+<div class="zurion-admin__layout">
+  <%- include('../partials/admin/nav') %>
+  <main class="zurion-admin__main">
+    <header class="zurion-admin__head">
+      <div>
+        <h1>Commandes</h1>
+        <p>Suivez et pilotez le cycle de vie des commandes.</p>
+      </div>
+      <span class="zurion-admin__date"><i class="fa-solid fa-clipboard-list"></i> <%= orders.length %> commande(s)</span>
+    </header>
+
+    <% if (okSaved === 'cleared') { %>
+      <% if (historyClearedCount > 0) { %><div class="zurion-form-success"><%= historyClearedCount %> commande(s) d'historique effacée(s) (terminées ou annulées).</div><% } else { %><div class="zurion-form-error">Aucune commande d'historique à effacer : seules les commandes terminées ou annulées sont concernées.</div><% } %>
+    <% } %>
+
+    <div class="zurion-section-block">
+      <div class="zurion-admin__title">
+        <h2><i class="fa-solid fa-truck-fast" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Suivi des commandes</h2>
+        <form method="post" action="/admin/commandes/historique/effacer" data-confirm="Effacer définitivement l'historique des commandes terminées ou annulées (tous clients) ? Les commandes actives ne sont pas touchées.">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn btn-sm zurion-btn-danger"><i class="fa-solid fa-trash-can"></i> Effacer l'historique</button>
+        </form>
+      </div>
+  <% const statusLabels = { 'créée': 'Créée', 'paiement_confirmé': 'Paiement confirmé', 'préparation': 'Préparation', 'expédition': 'Expédition', 'livraison': 'Livraison', 'terminée': 'Terminée', 'annulée': 'Annulée' }; %>
+  <% const statusClass = { 'créée': 'zurion-badge-warning', 'paiement_confirmé': 'zurion-badge-info', 'préparation': 'zurion-badge-info', 'expédition': 'zurion-badge-info', 'livraison': 'zurion-badge-success', 'terminée': 'zurion-badge-success', 'annulée': 'zurion-badge-danger' }; %>
+  <% const cancellable = ['créée', 'paiement_confirmé']; %>
+  <% if (orders.length) { %>
+    <table class="zurion-table">
+      <thead>
+        <tr><th>Référence</th><th>Client</th><th>Date</th><th>Articles</th><th>Livraison</th><th>Total</th><th>Statut</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+        <% orders.forEach(o => { %>
+          <tr>
+            <td><strong><%- esc(o.reference) %></strong></td>
+            <td>
+              <strong><%- esc(o.customerName || 'Client invité') %></strong><br>
+              <small class="zurion-muted"><%- esc(o.customerPhone || 'Téléphone non renseigné') %></small>
+            </td>
+            <td><%= new Date(o.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) %></td>
+            <td>
+              <% if (o.items && o.items.length) { %>
+                <%= o.items.map(it => `${it.quantity}× ${it.nameSnapshot}`).join(', ').length > 60
+                  ? esc(o.items.map(it => `${it.quantity}× ${it.nameSnapshot}`).join(', ').slice(0, 60)) + '…'
+                  : esc(o.items.map(it => `${it.quantity}× ${it.nameSnapshot}`).join(', ')) %>
+              <% } else { %>—<% } %>
+            </td>
+            <td>
+              <%- esc((deliveryModes[o.deliveryMode] || {}).label || o.deliveryMode) %><br>
+              <small class="zurion-muted"><%- esc(o.paymentMethod) %></small>
+            </td>
+            <td><strong><%= money(o.total) %></strong></td>
+            <td><span class="zurion-badge <%= statusClass[o.status] || 'zurion-badge-warning' %>"><%- esc(statusLabels[o.status] || o.status) %></span></td>
+            <td>
+              <% const next = nextStatus(o); %>
+              <% if (next) { %>
+                <form method="post" action="/admin/commandes/<%= encodeURIComponent(o.reference) %>/statut">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-primary btn-sm">→ <%- esc(statusLabels[next]) %></button>
+                </form>
+              <% } else { %>
+                <span class="zurion-muted">Cycle terminé</span>
+              <% } %>
+              <% if (cancellable.includes(o.status)) { %>
+                <form method="post" action="/admin/commandes/<%= encodeURIComponent(o.reference) %>/annuler" style="margin-top:.4rem" data-confirm="Annuler la commande <%- esc(o.reference) %> et remettre les articles en stock ?">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="btn btn-sm zurion-btn-danger">Annuler la commande</button>
+                </form>
+              <% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } else { %>
+      <p class="zurion-muted">Aucune commande enregistrée pour le moment.</p>
+    <% } %>
+    </div>
+  </main>
+</div>

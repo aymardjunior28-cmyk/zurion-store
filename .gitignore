@@ -12,7 +12,7 @@ node_modules/
 *.db
 
 # Fichiers uploadés (contenus clients)
-public/uploads/
+front/public/uploads/
 uploads/
 
 # Logs
@@ -34,3 +34,18 @@ playwright-report/
 # Artefacts temporaires locaux
 _clean_test.js
 *.bak
+
+# Builds Electron / desktop
+dist/
+dist-*/
+*.AppImage
+*.deb
+*.exe
+win-unpacked/
+linux-unpacked/
+
+# Build Capacitor / Android
+www/
+android/
+captured/
+.DS_Store

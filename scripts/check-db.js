@@ -3,7 +3,7 @@ const root = path.resolve(process.argv[2] || '.');
 process.chdir(root);
 
 const D = require('sqlite3');
-const db = new D.Database(path.join(root, 'data/zurion.sqlite'), D.OPEN_READWRITE);
+const db = new D.Database(path.join(root, 'back/data/zurion.sqlite'), D.OPEN_READWRITE);
 
 
 db.all('SELECT COUNT(*) AS c FROM sqlite_master', (e, rows) => {

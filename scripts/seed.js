@@ -14,10 +14,10 @@ const {
   ProductSpec,
   Review,
   Coupon,
-} = require('../src/models');
-const { hashPassword } = require('../src/utils/password');
+} = require('../back/src/models');
+const { hashPassword } = require('../back/src/utils/password');
 const { CATEGORIES, PRODUCTS } = require('./seed-data-index');
-const { slugify } = require('../src/utils/slugify');
+const { slugify } = require('../back/src/utils/slugify');
 
 (async () => {
   try {
@@ -37,7 +37,7 @@ const { slugify } = require('../src/utils/slugify');
       email: 'admin@zurion.store',
       phone: '+237 000 000 000',
       passwordHash: await hashPassword('Admin1234!'),
-      role: 'admin',
+      role: 'superadmin',
     });
 
     // Le compte client est créé AVANT les produits pour référencer ses avis.

@@ -1,0 +1,381 @@
+/* Pages : head, catalogue, fiche produit, panier, checkout, footer, toasts */
+.zurion-page-head { padding: 3.5rem 0 2.5rem; }
+.zurion-page-head h1 { margin: .6rem 0; }
+.zurion-page-head p { color: var(--zurion-muted); margin: 0; }
+.zurion-breadcrumb { display: flex; gap: .8rem; align-items: center; font-size: 1.3rem; color: var(--zurion-muted); flex-wrap: wrap; }
+.zurion-breadcrumb a { color: var(--zurion-muted); }
+.zurion-breadcrumb a:hover { color: var(--zurion-primary); }
+
+/* Catalogue */
+.zurion-catalog { display: grid; grid-template-columns: 250px 1fr; gap: 3rem; align-items: start; padding-bottom: 6rem; }
+.zurion-filters { position: sticky; top: 9rem; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); padding: 2rem; background: var(--zurion-white); }
+.zurion-filter-group { margin-bottom: 2.4rem; }
+.zurion-filter-group h3 { font-size: 1.4rem; text-transform: uppercase; letter-spacing: .05em; margin: 0 0 1rem; }
+.zurion-filter-list { list-style: none; margin: 0; padding: 0; }
+.zurion-filter-list a { display: block; padding: .55rem .8rem; border-radius: var(--zurion-radius-sm); color: var(--zurion-body); font-size: 1.35rem; }
+.zurion-filter-list a:hover { background: var(--zurion-surface); color: var(--zurion-primary); }
+.zurion-filter-list a.is-active { background: var(--zurion-primary-100); color: var(--zurion-primary-hover); font-weight: 600; }
+.zurion-check { display: flex; align-items: center; gap: .8rem; margin-bottom: 1.6rem; cursor: pointer; }
+.zurion-check input { width: 1.7rem; height: 1.7rem; accent-color: var(--zurion-primary); }
+.zurion-check span { font-size: 1.35rem; color: var(--zurion-body); }
+.zurion-sortbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
+.zurion-sortbar__count { color: var(--zurion-muted); }
+.zurion-sort { display: flex; align-items: center; gap: .8rem; }
+.zurion-sort label { margin: 0; }
+.zurion-sort .form-control { width: auto; }
+.zurion-pagination { display: flex; justify-content: center; gap: .6rem; margin-top: 4rem; flex-wrap: wrap; }
+.zurion-pagination a { min-width: 4rem; height: 4rem; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius); color: var(--zurion-body); font-weight: 600; }
+.zurion-pagination a:hover { border-color: var(--zurion-primary); color: var(--zurion-primary); }
+.zurion-pagination a.is-active { background: var(--zurion-primary); border-color: var(--zurion-primary); color: #fff; }
+.zurion-empty { text-align: center; padding: 6rem 2rem; border: 1px dashed var(--zurion-border); border-radius: var(--zurion-radius-lg); color: var(--zurion-muted); background: var(--zurion-surface); }
+.zurion-empty h2 { margin: 1.4rem 0 .6rem; }
+.zurion-faq { max-width: 86rem; margin: 0 auto 6rem; }
+.zurion-faq details { border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius); background: var(--zurion-white); margin-bottom: 1rem; padding: 1.6rem 2rem; }
+.zurion-faq summary { cursor: pointer; font-weight: 700; color: var(--zurion-ink); }
+.zurion-faq details p { margin: 1.2rem 0 0; color: var(--zurion-muted); }
+@media (max-width: 991px) { .zurion-catalog { grid-template-columns: 1fr; } .zurion-filters { position: static; } }
+
+/* Fiche produit */
+.zurion-product { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; padding: 1rem 0 4rem; }
+.zurion-gallery__main { position: relative; background: var(--zurion-surface); border-radius: var(--zurion-radius-lg); overflow: hidden; }
+.zurion-gallery__main img { width: 100%; height: 460px; object-fit: contain; }
+.zurion-gallery__thumbs { display: flex; gap: 1rem; margin-top: 1.2rem; flex-wrap: wrap; }
+.zurion-gallery__thumbs button { width: 7.2rem; height: 7.2rem; border: 2px solid transparent; border-radius: var(--zurion-radius); background: var(--zurion-surface); overflow: hidden; cursor: pointer; padding: 0; }
+.zurion-gallery__thumbs button.is-active { border-color: var(--zurion-primary); }
+.zurion-gallery__thumbs img { width: 100%; height: 100%; object-fit: contain; }
+.zurion-product__category { color: var(--zurion-primary); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; font-size: 1.2rem; margin: 0 0 .6rem; }
+.zurion-product__info h1 { margin: 0 0 1.4rem; }
+.zurion-product__rating { display: flex; align-items: center; gap: .8rem; color: var(--zurion-muted); margin-bottom: 1.4rem; flex-wrap: wrap; }
+.zurion-stars { color: var(--zurion-warning); font-size: 1.4rem; letter-spacing: 2px; }
+.zurion-product__price { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 0 0 1.6rem; }
+.zurion-product__price strong { font-size: 3rem; color: var(--zurion-primary); font-weight: 800; }
+.zurion-product__price s { color: var(--zurion-muted); font-size: 1.8rem; }
+.zurion-product__stock { font-weight: 600; margin: 0 0 1.4rem; }
+.zurion-product__stock.is-success { color: var(--zurion-success); }
+.zurion-product__stock.is-warning { color: var(--zurion-warning); }
+.zurion-product__stock.is-danger { color: var(--zurion-danger); }
+.zurion-product__desc { color: var(--zurion-body); margin-bottom: 2rem; }
+.zurion-qty { display: inline-flex; align-items: center; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius); overflow: hidden; }
+.zurion-qty button { width: 3.8rem; height: 4.4rem; background: var(--zurion-surface); border: 0; font-size: 1.8rem; cursor: pointer; color: var(--zurion-ink); }
+.zurion-qty button:hover { background: var(--zurion-surface-2); }
+.zurion-qty input { width: 5.5rem; height: 4.4rem; border: 0; text-align: center; font-size: 1.5rem; font-weight: 600; color: var(--zurion-ink); -moz-appearance: textfield; }
+.zurion-qty input::-webkit-outer-spin-button, .zurion-qty input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.zurion-product__buy { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; margin-bottom: 2.2rem; }
+.zurion-product__cta { flex: 1; min-width: 24rem; }
+.zurion-product__assurance { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--zurion-border); }
+.zurion-product__assurance li { display: flex; gap: 1rem; align-items: center; padding: 1.1rem 0; border-bottom: 1px solid var(--zurion-border); color: var(--zurion-body); }
+.zurion-product__assurance i { color: var(--zurion-primary); font-size: 1.8rem; }
+.zurion-specs { width: 100%; border-collapse: collapse; }
+.zurion-specs th, .zurion-specs td { text-align: left; padding: 1.1rem 1.4rem; border-bottom: 1px solid var(--zurion-border); }
+.zurion-specs th { width: 32%; color: var(--zurion-ink); font-weight: 600; background: var(--zurion-surface); }
+.zurion-review-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4rem; margin-bottom: 3rem; padding: 2rem; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); background: var(--zurion-surface); }
+.zurion-review-form textarea { grid-column: 1 / -1; }
+.zurion-review-form .btn { grid-column: 1 / -1; justify-self: start; }
+.zurion-review { padding: 1.6rem 0; border-bottom: 1px solid var(--zurion-border); }
+.zurion-review__head { display: flex; align-items: center; gap: 1.2rem; flex-wrap: wrap; }
+.zurion-review time { color: var(--zurion-muted); font-size: 1.2rem; }
+@media (max-width: 767px) { .zurion-product { grid-template-columns: 1fr; gap: 3rem; } .zurion-gallery__main img { height: 300px; } }
+
+/* Panier + checkout */
+.zurion-cart { display: grid; grid-template-columns: 1fr 340px; gap: 3rem; align-items: start; padding-bottom: 6rem; }
+.zurion-cart-row { display: grid; grid-template-columns: 80px 1fr 130px 110px 40px; gap: 1.6rem; align-items: center; padding: 1.6rem 0; border-bottom: 1px solid var(--zurion-border); }
+.zurion-cart-row__media img { width: 80px; height: 70px; object-fit: contain; background: var(--zurion-surface); border-radius: var(--zurion-radius-sm); }
+.zurion-cart-row__info a { color: var(--zurion-ink); font-weight: 600; }
+.zurion-cart-row__info a:hover { color: var(--zurion-primary); }
+.zurion-cart-row__price { color: var(--zurion-muted); font-size: 1.3rem; }
+.zurion-cart-row__total { color: var(--zurion-ink); }
+.zurion-cart-row__remove { border: 0; background: none; color: var(--zurion-muted); font-size: 1.8rem; cursor: pointer; }
+.zurion-cart-row__remove:hover { color: var(--zurion-danger); }
+.zurion-cart__foot { display: flex; justify-content: space-between; align-items: center; padding: 2rem 0; flex-wrap: wrap; gap: 1rem; }
+.zurion-cart__summary { border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); padding: 2.4rem; position: sticky; top: 9rem; background: var(--zurion-white); }
+.zurion-cart__summary h2 { margin-top: 0; }
+.zurion-cart__summary p { margin: 1rem 0; }
+.zurion-cart__grand strong { font-size: 1.9rem; color: var(--zurion-primary); }
+@media (max-width: 991px) { .zurion-cart { grid-template-columns: 1fr; } .zurion-cart__summary { position: static; } }
+@media (max-width: 575px) { .zurion-cart-row { grid-template-columns: 60px 1fr 90px 30px; } .zurion-cart-row__total { display: none; } }
+
+.zurion-checkout { display: grid; grid-template-columns: 1fr 360px; gap: 3rem; align-items: start; padding-bottom: 6rem; }
+.zurion-checkout__form { display: flex; flex-direction: column; gap: 1.6rem; }
+.zurion-checkout__form h2 { margin: 2rem 0 0; display: flex; align-items: center; gap: 1rem; }
+.zurion-checkout-item { display: grid; grid-template-columns: 56px 1fr auto; gap: 1rem; align-items: center; padding: .8rem 0; border-bottom: 1px dashed var(--zurion-border); }
+.zurion-checkout-item:last-of-type { border-bottom: 0; }
+.zurion-checkout-item__media img { width: 56px; height: 48px; object-fit: contain; background: var(--zurion-surface); border-radius: var(--zurion-radius-sm); display: block; }
+.zurion-checkout-item__info { display: flex; flex-direction: column; gap: .2rem; font-size: 1.3rem; min-width: 0; }
+.zurion-checkout-item__info a { color: var(--zurion-ink); font-weight: 600; }
+.zurion-checkout-item__info a:hover { color: var(--zurion-primary); }
+.zurion-checkout-item__info small { color: var(--zurion-muted); }
+.zurion-stepper { display: flex; gap: 1.6rem; font-size: 1.3rem; color: var(--zurion-muted); padding: 1.4rem; border-radius: var(--zurion-radius); background: var(--zurion-surface); flex-wrap: wrap; }
+.zurion-stepper span { display: inline-flex; gap: .6rem; align-items: center; }
+.zurion-stepper span.is-active { color: var(--zurion-primary); font-weight: 700; }
+.zurion-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6rem; }
+.zurion-form-grid__full { grid-column: 1 / -1; }
+.zurion-radio { display: flex; align-items: flex-start; gap: 1.2rem; cursor: pointer; padding: 1.4rem; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius); margin-bottom: 1rem; transition: border-color .2s; }
+.zurion-radio:hover { border-color: #9ac8e4; }
+.zurion-radio input[type="radio"]:checked + span { color: var(--zurion-primary); }
+.zurion-radio:has(input:checked) { border-color: var(--zurion-primary); background: var(--zurion-primary-50); }
+.zurion-radio input { margin-top: .4rem; accent-color: var(--zurion-primary); }
+.zurion-radio strong { display: block; color: var(--zurion-ink); }
+.zurion-radio small { color: var(--zurion-muted); }
+@media (max-width: 991px) { .zurion-checkout { grid-template-columns: 1fr; } }
+
+/* Footer + toasts + auth */
+.zurion-footer { background: linear-gradient(180deg, #0c1216 0%, #0a0f13 100%); color: #cfd8e0; margin-top: 9rem; }
+.zurion-footer__grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 4rem; padding: 5.5rem 0 3.5rem; }
+.zurion-footer__brand p { font-size: 1.35rem; color: #9fb0bd; max-width: 30rem; }
+.zurion-footer__col h4 { color: #fff; font-size: 1.5rem; margin: 0 0 1.4rem; }
+.zurion-footer__col ul { list-style: none; margin: 0; padding: 0; }
+.zurion-footer__col a { display: block; padding: .45rem 0; color: #9fb0bd; font-size: 1.35rem; }
+.zurion-footer__col a:hover { color: #fff; }
+.zurion-footer__bottom { border-top: 1px solid rgba(255,255,255,.12); padding: 2.2rem 0 2.6rem; display: flex; justify-content: space-between; gap: 2rem; flex-wrap: wrap; font-size: 1.25rem; color: #9fb0bd; }
+.zurion-footer__pay i { color: var(--zurion-primary); }
+@media (max-width: 991px) { .zurion-footer__grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 575px) { .zurion-footer__grid { grid-template-columns: 1fr; } }
+
+.zurion-toasts { position: fixed; bottom: 2rem; right: 2rem; z-index: 3000; display: flex; flex-direction: column; gap: .8rem; }
+.zurion-toast { background: var(--zurion-ink); color: #fff; padding: 1.2rem 1.6rem; border-radius: var(--zurion-radius); box-shadow: var(--zurion-shadow-lg); font-size: 1.35rem; max-width: 32rem; animation: zurion-toast-in .25s ease; }
+.zurion-toast.is-success { background: var(--zurion-success); }
+.zurion-toast.is-error { background: var(--zurion-danger); }
+@keyframes zurion-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.zurion-auth { max-width: 44rem; margin: 6rem auto; padding: 3rem; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); }
+.zurion-auth h1 { text-align: center; }
+.zurion-auth .zurion-form-grid { grid-template-columns: 1fr; }
+.zurion-auth__alt { text-align: center; margin-top: 1.6rem; color: var(--zurion-muted); }
+.zurion-auth__alt a { color: var(--zurion-primary); font-weight: 600; }
+.zurion-form-error { padding: 1.2rem 1.5rem; margin-bottom: 1.6rem; border-radius: var(--zurion-radius); background: #fdeeee; color: #a13333; border: 1px solid #f5cfcf; }
+
+/* Badges de statut commande */
+.zurion-status { display: inline-flex; align-items: center; gap: .5rem; }
+.zurion-status::before { content: ''; width: .8rem; height: .8rem; border-radius: 50%; background: currentColor; }
+.zurion-status.is-info { background: var(--zurion-primary-100); color: #17669d; }
+.zurion-status.is-success { background: #e3f6ed; color: #157347; }
+.zurion-status.is-warning { background: #fdf3dd; color: #9a6a10; }
+.zurion-status.is-primary { background: var(--zurion-primary); color: #fff; }
+
+/* Confirmation de commande */
+.zurion-confirm-hero { text-align: center; padding: 4rem 1rem 2.5rem; }
+.zurion-confirm-hero__icon { width: 7.2rem; height: 7.2rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: #e3f6ed; color: var(--zurion-success); font-size: 3rem; margin-bottom: 1.6rem; }
+.zurion-confirm-hero__ref { display: inline-block; margin: 1rem 0 0; padding: .6rem 1.6rem; border-radius: 999px; background: var(--zurion-ink); color: #fff; font-weight: 700; letter-spacing: .06em; }
+.zurion-steps { display: flex; justify-content: space-between; gap: .6rem; margin: 2.4rem 0; }
+.zurion-steps span { flex: 1; text-align: center; font-size: 1.25rem; color: var(--zurion-muted); padding-top: 1.4rem; position: relative; }
+.zurion-steps span::before { content: ''; position: absolute; top: 0; left: 15%; right: 15%; height: .4rem; border-radius: 999px; background: var(--zurion-border); }
+.zurion-steps span.is-done { color: var(--zurion-success); font-weight: 600; }
+.zurion-steps span.is-done::before { background: var(--zurion-success); }
+.zurion-steps span.is-active { color: var(--zurion-primary); font-weight: 700; }
+.zurion-steps span.is-active::before { background: var(--zurion-primary); }
+
+/* ── Back-office ─────────────────────────────────────────────── */
+.zurion-admin__layout { display: grid; grid-template-columns: 264px minmax(0, 1fr); gap: 2.6rem; align-items: start; padding: 3rem 0 6rem; }
+.zurion-admin__side { position: sticky; top: 9rem; display: flex; flex-direction: column; gap: 1.2rem; }
+.zurion-admin__nav { background: #fff; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); box-shadow: var(--zurion-shadow-sm); padding: 1rem; display: flex; flex-direction: column; gap: .35rem; }
+.zurion-admin__nav a { display: flex; align-items: center; gap: 1.1rem; padding: 1.05rem 1.2rem; border-radius: var(--zurion-radius); color: var(--zurion-body); font-weight: 600; font-size: 1.35rem; transition: background-color .18s, color .18s, transform .12s; }
+.zurion-admin__nav a i { width: 1.9rem; text-align: center; color: var(--zurion-muted); font-size: 1.5rem; flex-shrink: 0; }
+.zurion-admin__nav a:hover { background: var(--zurion-primary-50); color: var(--zurion-primary); }
+.zurion-admin__nav a.is-active { background: var(--zurion-gradient); color: #fff; box-shadow: 0 8px 18px rgba(18,99,158,.30); }
+.zurion-admin__nav a.is-active i { color: #fff; }
+.zurion-admin__back { display: flex; align-items: center; justify-content: center; gap: .8rem; padding: 1rem; border: 1px dashed #b9cbd8; border-radius: var(--zurion-radius-lg); color: var(--zurion-muted); font-weight: 600; font-size: 1.3rem; background: #fff; transition: color .18s, border-color .18s; }
+.zurion-admin__back:hover { color: var(--zurion-primary); border-color: var(--zurion-primary); }
+.zurion-admin__main { min-width: 0; background: #fff; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); box-shadow: var(--zurion-shadow-sm); padding: 2.8rem; }
+.zurion-admin__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1.4rem; flex-wrap: wrap; margin-bottom: 2.6rem; padding-bottom: 1.8rem; border-bottom: 1px solid var(--zurion-border); }
+.zurion-admin__head h1 { margin: 0; font-size: 2.6rem; font-weight: 800; letter-spacing: -.03em; }
+.zurion-admin__head p { margin: .3rem 0 0; color: var(--zurion-muted); font-size: 1.35rem; }
+.zurion-admin__head .zurion-admin__date { display: inline-flex; align-items: center; gap: .7rem; padding: .7rem 1.2rem; border-radius: 999px; background: var(--zurion-primary-50); color: var(--zurion-primary-hover); font-size: 1.25rem; font-weight: 600; }
+.zurion-admin__title { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin: 0 0 1.5rem; }
+.zurion-admin__title h2 { margin: 0; font-size: 1.9rem; font-weight: 700; }
+.zurion-admin__title a { font-size: 1.3rem; font-weight: 600; }
+
+/* KPI */
+.zurion-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.6rem; margin-bottom: 2.8rem; }
+.zurion-stat { position: relative; padding: 2rem; display: flex; flex-direction: column; gap: .5rem; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); background: #fff; box-shadow: var(--zurion-shadow-sm); overflow: hidden; transition: transform .2s, box-shadow .2s; }
+.zurion-stat:hover { transform: translateY(-3px); box-shadow: var(--zurion-shadow); }
+.zurion-stat small { display: block; color: var(--zurion-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .06em; font-size: 1.1rem; }
+.zurion-stat strong { font-size: 2.6rem; font-weight: 800; color: var(--zurion-ink); letter-spacing: -.03em; }
+.zurion-stat i.zurion-stat__icon { position: absolute; top: 1.5rem; right: 1.5rem; width: 4.4rem; height: 4.4rem; display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; background: var(--zurion-primary-50); color: var(--zurion-primary); font-size: 1.8rem; }
+.zurion-stat.is-accent { background: linear-gradient(145deg, var(--zurion-primary-50), #fff); border-color: #cfe4f3; }
+.zurion-stat.is-accent i.zurion-stat__icon { background: var(--zurion-gradient); color: #fff; }
+.zurion-stat.is-success i.zurion-stat__icon { background: #e3f6ed; color: var(--zurion-success); }
+.zurion-stat.is-warning i.zurion-stat__icon { background: #fdf3dd; color: var(--zurion-warning); }
+.zurion-stat.is-danger i.zurion-stat__icon { background: #fdeeee; color: var(--zurion-danger); }
+
+/* Tables */
+.zurion-section-block { margin-bottom: 3rem; }
+.zurion-section-block > h2 { margin-bottom: 1.5rem; }
+.zurion-table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 1rem 0; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius); }
+.zurion-table { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; border-radius: var(--zurion-radius); overflow: hidden; min-width: 0; }
+.zurion-table th, .zurion-table td { padding: 1.3rem 1.5rem; text-align: left; border-bottom: 1px solid var(--zurion-border); font-size: 1.35rem; vertical-align: middle; }
+.zurion-table th { background: var(--zurion-surface); color: var(--zurion-ink); font-weight: 700; font-size: 1.15rem; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+.zurion-table tbody tr { transition: background-color .15s; }
+.zurion-table tbody tr:hover { background: var(--zurion-primary-50); }
+.zurion-table tr:last-child td { border-bottom: 0; }
+.zurion-table .zurion-input-inline { width: 10rem; padding: .65rem .9rem; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-sm); font-size: 1.3rem; }
+.zurion-table form { display: flex; gap: .8rem; align-items: center; flex-wrap: wrap; }
+.zurion-admin-actions { display: flex; gap: .7rem; align-items: center; flex-wrap: wrap; }
+.zurion-table--livraisons { min-width: 1100px; }
+.zurion-table--livraisons th:nth-child(5),
+.zurion-table--livraisons td:nth-child(5),
+.zurion-table--livraisons th:nth-child(6),
+.zurion-table--livraisons td:nth-child(6),
+.zurion-table--livraisons th:nth-child(8),
+.zurion-table--livraisons td:nth-child(8) { white-space: nowrap; font-size: 1.2rem; }
+.zurion-table--deliveries { min-width: 860px; }
+.zurion-table--deliveries th:nth-child(5),
+.zurion-table--deliveries td:nth-child(5) { white-space: nowrap; }
+.zurion-voyant { display: inline-flex; align-items: center; gap: .5rem; font-weight: 700; font-size: 1.25rem; white-space: nowrap; }
+.zurion-voyant i { font-size: 1.4rem; }
+
+/* Checkbox bulk selection */
+.zurion-bulk-bar { display: none; align-items: center; gap: 1.2rem; padding: 1rem 1.5rem; margin-bottom: 1rem; background: var(--zurion-primary-50); border: 1px solid #cfe4f3; border-radius: var(--zurion-radius); }
+.zurion-bulk-bar.is-visible { display: flex; }
+.zurion-bulk-bar strong { font-size: 1.3rem; color: var(--zurion-primary-hover); }
+.zurion-check-cell { width: 3rem; text-align: center; }
+.zurion-check-cell input { width: 1.7rem; height: 1.7rem; accent-color: var(--zurion-primary); cursor: pointer; }
+.zurion-check-cell--head { cursor: pointer; }
+
+/* Tabs back-office (rôles) */
+.zurion-admin__tabs { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 2.6rem; padding-bottom: 1.4rem; border-bottom: 1px solid var(--zurion-border); }
+.zurion-admin__tabs a { display: inline-flex; align-items: center; gap: .7rem; padding: .85rem 1.4rem; border-radius: 999px; border: 1px solid transparent; color: var(--zurion-body); font-weight: 600; font-size: 1.3rem; transition: background-color .18s, color .18s, border-color .18s, box-shadow .18s; }
+.zurion-admin__tabs a i { color: var(--zurion-muted); }
+.zurion-admin__tabs a:hover { background: var(--zurion-primary-50); color: var(--zurion-primary); border-color: #cfe4f3; }
+.zurion-admin__tabs a.is-active { background: var(--zurion-gradient); color: #fff; box-shadow: 0 8px 18px rgba(18,99,158,.28); }
+.zurion-admin__tabs a.is-active i { color: #fff; }
+.zurion-admin__tab-panel { display: none; }
+.zurion-admin__tab-panel.is-active { display: block; }
+.zurion-stats--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (max-width: 767px) { .zurion-stats--3, .zurion-stats { grid-template-columns: 1fr 1fr; } .zurion-admin__tabs { gap: .4rem; } .zurion-admin__tabs a { padding: .7rem 1rem; font-size: 1.15rem; } }
+@media (max-width: 479px) { .zurion-stats--3, .zurion-stats { grid-template-columns: 1fr; } }
+
+/* ── Accents par rôle (différenciation des comptes) ───────────────── */
+body[data-role="superadmin"] .zurion-admin__nav a.is-active,
+body[data-role="superadmin"] .zurion-admin__tabs a.is-active,
+body[data-role="superadmin"] .zurion-account__nav a.is-active {
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+  box-shadow: 0 8px 18px rgba(79,70,229,.30);
+}
+body[data-role="superadmin"] .zurion-stat.is-accent i.zurion-stat__icon,
+body[data-role="superadmin"] .zurion-account__avatar {
+  background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+}
+body[data-role="admin"] .zurion-admin__nav a.is-active,
+body[data-role="admin"] .zurion-admin__tabs a.is-active,
+body[data-role="admin"] .zurion-account__nav a.is-active {
+  background: var(--zurion-gradient);
+}
+body[data-role="livreur"] .zurion-admin__nav a.is-active,
+body[data-role="livreur"] .zurion-account__nav a.is-active,
+body[data-role="livreur"] .zurion-livreur-hero {
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  box-shadow: 0 8px 18px rgba(15,118,110,.28);
+}
+body[data-role="livreur"] .zurion-account__avatar {
+  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+}
+body[data-role="livreur"] .zurion-account__role:not(.is-admin) {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+body[data-role="superadmin"] .zurion-account__role:not(.is-admin),
+body[data-role="admin"] .zurion-account__role:not(.is-admin) {
+  background: #ede9fe;
+  color: #4338ca;
+}
+.zurion-livreur-hero {
+  border-radius: var(--zurion-radius-lg);
+  color: #fff;
+  padding: 2.6rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── Espace client ────────────────────────────────────────────── */
+.zurion-account { display: grid; grid-template-columns: 276px minmax(0, 1fr); gap: 2.6rem; align-items: start; padding-bottom: 6rem; }
+.zurion-account__side { position: sticky; top: 9rem; display: flex; flex-direction: column; gap: 1.2rem; }
+.zurion-account__card { background: #fff; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); box-shadow: var(--zurion-shadow-sm); overflow: hidden; }
+.zurion-account__profile { padding: 2.4rem 2rem 2rem; text-align: center; border-bottom: 1px solid var(--zurion-border); background: linear-gradient(165deg, #eaf4fd 0%, #fff 90%); }
+.zurion-account__avatar { width: 6.6rem; height: 6.6rem; margin: 0 auto 1.1rem; border-radius: 50%; background: var(--zurion-gradient); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: 800; letter-spacing: -.02em; box-shadow: 0 10px 22px rgba(18,99,158,.30); }
+.zurion-account__profile h2 { margin: 0 0 .2rem; font-size: 1.65rem; overflow-wrap: anywhere; }
+.zurion-account__profile p { margin: 0; color: var(--zurion-muted); font-size: 1.25rem; word-break: break-word; }
+.zurion-account__role { display: inline-flex; align-items: center; margin-top: .9rem; padding: .4rem 1rem; border-radius: 999px; font-size: 1.1rem; font-weight: 700; background: var(--zurion-primary-100); color: var(--zurion-primary-hover); }
+.zurion-account__role.is-admin { background: var(--zurion-ink); color: #fff; }
+.zurion-account__nav { padding: .9rem; display: flex; flex-direction: column; gap: .25rem; }
+.zurion-account__nav a { display: flex; align-items: center; gap: 1rem; padding: 1.05rem 1.2rem; border-radius: var(--zurion-radius); color: var(--zurion-body); font-weight: 600; font-size: 1.35rem; }
+.zurion-account__nav a i { width: 1.9rem; text-align: center; color: var(--zurion-muted); font-size: 1.45rem; flex-shrink: 0; }
+.zurion-account__nav a:hover { background: var(--zurion-primary-50); color: var(--zurion-primary); }
+.zurion-account__nav a.is-active { background: var(--zurion-gradient); color: #fff; box-shadow: 0 8px 18px rgba(18,99,158,.28); }
+.zurion-account__nav a.is-active i { color: #fff; }
+.zurion-account__logout { padding: 1.2rem; border-top: 1px solid var(--zurion-border); }
+.zurion-account__logout .btn { width: 100%; }
+.zurion-account__main { min-width: 0; display: flex; flex-direction: column; gap: 2.8rem; }
+.zurion-account__section { background: #fff; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); box-shadow: var(--zurion-shadow-sm); padding: 2.6rem; }
+.zurion-account__section > h2, .zurion-account__section > h3 { margin: 0 0 1.2rem; }
+.zurion-account__stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1.4rem; }
+.zurion-account__order { padding: 2rem 0; border-bottom: 1px solid var(--zurion-border); }
+.zurion-account__order:last-child { border-bottom: 0; padding-bottom: 0; }
+.zurion-account__order-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1.2rem; flex-wrap: wrap; }
+.zurion-account__order-head strong { font-size: 1.5rem; color: var(--zurion-ink); }
+.zurion-account__order-head .zurion-muted { font-size: 1.25rem; }
+.zurion-account__order-list { list-style: none; margin: 1rem 0 1.2rem; padding: 0; display: flex; flex-wrap: wrap; gap: .8rem 1.6rem; }
+.zurion-account__order-list li { font-size: 1.3rem; }
+.zurion-account__order-list li::before { content: "·"; color: var(--zurion-muted); margin-right: 1rem; }
+.zurion-account__order-list li:first-child::before { display: none; }
+.zurion-account__order-foot { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.zurion-account__secgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.4rem; align-items: start; }
+
+@media (max-width: 991px) {
+  .zurion-admin__layout { grid-template-columns: 1fr; }
+  .zurion-admin__side { position: static; }
+  .zurion-account { grid-template-columns: 1fr; }
+  .zurion-account__side { position: static; }
+  .zurion-stats { grid-template-columns: repeat(2, 1fr); }
+  .zurion-account__stats { grid-template-columns: repeat(2, 1fr); }
+  .zurion-account__secgrid { grid-template-columns: 1fr; }
+}
+@media (max-width: 479px) { .zurion-stats { grid-template-columns: 1fr; } .zurion-account__stats { grid-template-columns: 1fr; } }
+
+/* ── Pages institutionnelles : contact, livraison & retours ─────────── */
+
+/* Contact */
+.zurion-contact-layout { display: grid; grid-template-columns: 1fr 1.2fr; gap: 4rem; align-items: start; padding-bottom: 6rem; }
+.zurion-contact-info h2, .zurion-contact-form h2 { margin: 0 0 2rem; }
+.zurion-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.6rem; }
+.zurion-info-card { background: var(--zurion-white); border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); padding: 2rem; box-shadow: var(--zurion-shadow-sm); }
+.zurion-info-card__icon { display: inline-flex; align-items: center; justify-content: center; width: 4.4rem; height: 4.4rem; border-radius: var(--zurion-radius); background: var(--zurion-primary-100); color: var(--zurion-primary); font-size: 1.8rem; margin-bottom: 1.2rem; }
+.zurion-info-card h3 { margin: 0 0 .6rem; font-size: 1.6rem; }
+.zurion-info-card p { margin: 0; font-size: 1.35rem; }
+.zurion-info-card a { font-weight: 600; }
+.zurion-contact-note { display: flex; gap: 1.2rem; align-items: flex-start; margin-top: 2rem; padding: 1.6rem 1.8rem; background: var(--zurion-primary-50); border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius); }
+.zurion-contact-note i { color: var(--zurion-primary); font-size: 1.8rem; margin-top: .2rem; }
+.zurion-contact-note p { margin: 0; font-size: 1.35rem; }
+.zurion-contact-form { background: var(--zurion-white); border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); padding: 3rem; box-shadow: var(--zurion-shadow-sm); }
+.zurion-contact-form label { margin-bottom: 1.6rem; }
+.zurion-contact-form .form-control { margin-top: .6rem; }
+.zurion-contact-form__actions { display: flex; justify-content: flex-end; margin-top: .4rem; }
+
+/* Livraison & retours */
+.zurion-trustbar--static { margin: 0 0 4rem; transform: none; }
+.zurion-delivery { padding-bottom: 6rem; }
+.zurion-delivery__section { margin-bottom: 4.5rem; }
+.zurion-delivery__section > h2 { display: flex; align-items: center; gap: 1rem; margin: 0 0 1.4rem; }
+.zurion-delivery__section > h2 i { color: var(--zurion-primary); }
+.zurion-delivery__section > p { max-width: 78rem; }
+.zurion-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.6rem; margin: 2.4rem 0; }
+.zurion-step { background: var(--zurion-white); border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); padding: 2rem; position: relative; box-shadow: var(--zurion-shadow-sm); }
+.zurion-step__num { display: inline-flex; align-items: center; justify-content: center; width: 3.2rem; height: 3.2rem; border-radius: 50%; background: linear-gradient(120deg, var(--zurion-primary), #1d5d91); color: #fff; font-weight: 700; font-size: 1.4rem; margin-bottom: 1rem; }
+.zurion-step h3 { margin: 0 0 .4rem; font-size: 1.55rem; }
+.zurion-step p { margin: 0; font-size: 1.3rem; color: var(--zurion-muted); }
+.zurion-delivery__table { margin: 1.6rem 0; }
+.zurion-delivery__list { margin: 1rem 0; padding-left: 2rem; }
+.zurion-delivery__list li { margin-bottom: .8rem; }
+.zurion-delivery__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 1.6rem 0; }
+.zurion-delivery__card { background: var(--zurion-white); border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); padding: 2.2rem; box-shadow: var(--zurion-shadow-sm); }
+.zurion-delivery__card h3 { margin: 0 0 1rem; }
+
+@media (max-width: 991px) {
+  .zurion-contact-layout { grid-template-columns: 1fr; gap: 3rem; }
+  .zurion-steps { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 599px) {
+  .zurion-info-grid { grid-template-columns: 1fr; }
+  .zurion-steps { grid-template-columns: 1fr; }
+  .zurion-delivery__grid { grid-template-columns: 1fr; }
+  .zurion-contact-form { padding: 2rem; }
+}

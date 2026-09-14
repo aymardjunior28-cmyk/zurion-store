@@ -4,10 +4,24 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const request = require('supertest');
 
-const app = require('../src/app');
-const { connectDatabase, sequelize } = require('../src/config/db');
-const { Courier, Category, Coupon, Product, Order, Livraison } = require('../src/models');
-const catalogService = require('../src/services/catalog.service');
+const app = require('../back/src/app');
+const { connectDatabase, sequelize } = require('../back/src/config/db');
+const {
+  User,
+  Address,
+  Review,
+  Wishlist,
+  Cart,
+  ContactMessage,
+  Order,
+  OrderItem,
+  Courier,
+  Category,
+  Coupon,
+  Product,
+  Livraison,
+} = require('../back/src/models');
+const catalogService = require('../back/src/services/catalog.service');
 
 /** Extrait la valeur du cookie CSRF d'une réponse (pattern double-soumission). */
 function csrfTokenFrom(res) {
@@ -50,12 +64,296 @@ test('authentication protects private endpoints', async () => {
     .set('X-CSRF-Token', csrfToken)
     .send({ email: 'admin@zurion.store', password: 'Admin1234!' });
   assert.equal(admin.status, 200);
-  assert.equal(admin.body.user.role, 'admin');
+  assert.equal(admin.body.user.role, 'superadmin');
   assert.ok((admin.headers['set-cookie'] || []).some((cookie) => cookie.startsWith('zurion_token=')));
 
   const me = await api.get('/api/auth/me');
   assert.equal(me.status, 200);
   assert.equal(me.body.user.email, 'admin@zurion.store');
+});
+
+test('superadmin creates a limited admin account', async () => {
+  const superAdmin = request.agent(app);
+  const pre = await superAdmin.get('/api/health');
+  const csrfToken = csrfTokenFrom(pre);
+  const login = await superAdmin
+    .post('/api/auth/login')
+    .set('X-CSRF-Token', csrfToken)
+    .send({ email: 'admin@zurion.store', password: 'Admin1234!' });
+  assert.equal(login.status, 200);
+
+  const email = `limited-admin-${Date.now()}@example.test`;
+  const created = await superAdmin
+    .post('/api/admin/admins')
+    .set('X-CSRF-Token', csrfToken)
+    .send({ firstName: 'Gestion', lastName: 'Produits', email, password: 'AdminTest123!' });
+  assert.equal(created.status, 201);
+  assert.equal(created.body.user.role, 'admin');
+
+  const limited = request.agent(app);
+  const limitedPre = await limited.get('/api/health');
+  const limitedCsrf = csrfTokenFrom(limitedPre);
+  const limitedLogin = await limited
+    .post('/api/auth/login')
+    .set('X-CSRF-Token', limitedCsrf)
+    .send({ email, password: 'AdminTest123!' });
+  assert.equal(limitedLogin.status, 200);
+  // Le compte admin limité gère la marchandise et les codes promo (API).
+  assert.equal((await limited.get('/api/admin/products')).status, 200);
+  assert.equal((await limited.get('/api/admin/coupons')).status, 200);
+  // Les sections financières et la gestion des comptes restent au super-admin.
+  assert.equal((await limited.get('/api/admin/users')).status, 403);
+  assert.equal((await limited.get('/api/admin/stats')).status, 403);
+  assert.equal((await limited.get('/api/admin/orders')).status, 403);
+  assert.equal((await limited.post('/api/admin/admins').set('X-CSRF-Token', limitedCsrf).send({
+    firstName: 'Interdit', lastName: 'Admin', email: `blocked-${Date.now()}@example.test`, password: 'AdminTest123!',
+  })).status, 403);
+
+  // Il gère aussi la logistique : répertoire et création de comptes livreurs.
+  assert.equal((await limited.get('/api/admin/livreurs')).status, 200);
+  const courierAccount = await limited
+    .post('/api/admin/livreurs')
+    .set('X-CSRF-Token', limitedCsrf)
+    .send({ firstName: 'Logistique', lastName: 'Test', email: `logistics-${Date.now()}@example.test`, phone: '+237 699000000', password: 'AdminTest123!' });
+  assert.equal(courierAccount.status, 201);
+  assert.equal(courierAccount.body.user.role, 'livreur');
+
+  // La vue d'ensemble financière reste réservée (redirigée vers les livraisons).
+  const limitedOverview = await limited.get('/admin?tab=overview');
+  assert.equal(limitedOverview.status, 302);
+  assert.equal(limitedOverview.headers.location, '/admin?tab=livraisons');
+
+  // L'admin limité accède à ses onglets marchandise / codes promo / livraisons.
+  const limitedProducts = await limited.get('/admin?tab=products');
+  assert.equal(limitedProducts.status, 200);
+  assert.match(limitedProducts.text, /Ajouter un produit/);
+  const limitedCoupons = await limited.get('/admin?tab=coupons');
+  assert.equal(limitedCoupons.status, 200);
+  assert.match(limitedCoupons.text, /Créer un code promo/);
+  const limitedDeliveries = await limited.get('/admin?tab=livraisons');
+  assert.equal(limitedDeliveries.status, 200);
+  // Navigation visible mais panneaux réservés invalides (ordres, catégories, utilisateurs).
+  assert.match(limitedDeliveries.text, /Marchandise/);
+  assert.match(limitedDeliveries.text, /Codes promo/);
+  assert.doesNotMatch(limitedDeliveries.text, /Créer un compte admin|data-tab="categories"|data-tab="orders"|data-tab="users"/);
+
+  // Nettoyage du compte livreur créé par l'admin limité.
+  await superAdmin.delete(`/api/admin/livreurs/${courierAccount.body.user.id}`).set('X-CSRF-Token', csrfToken);
+});
+
+test('superadmin deletes a customer account with all its data', async () => {
+  const superAdmin = request.agent(app);
+  const csrfToken = csrfTokenFrom(await superAdmin.get('/api/health'));
+  const login = await superAdmin
+    .post('/api/auth/login')
+    .set('X-CSRF-Token', csrfToken)
+    .send({ email: 'admin@zurion.store', password: 'Admin1234!' });
+  assert.equal(login.status, 200);
+
+  const suffix = Date.now();
+  const customer = request.agent(app);
+  const customerCsrf = csrfTokenFrom(await customer.get('/api/health'));
+  const email = `delete-me-${suffix}@example.test`;
+  const registered = await customer
+    .post('/api/auth/register')
+    .set('X-CSRF-Token', customerCsrf)
+    .send({ firstName: 'Supprimé', lastName: 'Prochain', email, password: 'Customer123!' });
+  assert.equal(registered.status, 201);
+  const userId = registered.body.user.id;
+
+  const product = (await customer.get('/api/products?limit=50')).body.products.find((p) => p.stock >= 1);
+  assert.ok(product, 'A product is required to build customer data');
+
+  const cart = await customer
+    .post('/api/cart/items')
+    .set('X-CSRF-Token', customerCsrf)
+    .send({ productId: product.id, quantity: 1 });
+  assert.equal(cart.status, 201);
+
+  const order = await customer
+    .post('/api/orders')
+    .set('X-CSRF-Token', customerCsrf)
+    .send({
+      paymentMethod: 'Paiement à la livraison',
+      deliveryMode: 'standard',
+      address: {
+        fullName: 'Supprimé Test',
+        phone: '0698765432',
+        line1: '12 Rue de la Suppression',
+        city: 'Douala',
+        region: 'Littoral',
+      },
+    });
+  assert.equal(order.status, 201);
+
+  await Address.create({ userId, label: 'Domicile', fullName: 'Supprimé Test', phone: '0698765432', line1: '12 Rue Test', city: 'Douala', region: 'Littoral' });
+  await Wishlist.create({ userId, productId: product.id });
+  await Review.create({ userId, productId: product.id, rating: 5, comment: 'Avis à supprimer' });
+  await ContactMessage.create({ userId, name: 'Supprimé', email, subject: 'Test', message: 'Message à rattacher avant suppression' });
+  assert.equal(await OrderItem.count({ where: { orderId: order.body.id } }), 1);
+
+  // Un administrateur limité ne peut pas supprimer de comptes.
+  const limitedEmail = `limited-del-${suffix}@example.test`;
+  const createdLimited = await superAdmin
+    .post('/api/admin/admins')
+    .set('X-CSRF-Token', csrfToken)
+    .send({ firstName: 'Limité', lastName: 'Suppression', email: limitedEmail, password: 'AdminTest123!' });
+  assert.equal(createdLimited.status, 201);
+  const limited = request.agent(app);
+  const limitedCsrf = csrfTokenFrom(await limited.get('/api/health'));
+  const limitedLogin = await limited
+    .post('/api/auth/login')
+    .set('X-CSRF-Token', limitedCsrf)
+    .send({ email: limitedEmail, password: 'AdminTest123!' });
+  assert.equal(limitedLogin.status, 200);
+  assert.equal(
+    (await limited.delete(`/api/admin/users/${userId}`).set('X-CSRF-Token', limitedCsrf)).status,
+    403
+  );
+
+  // Le superadmin ne peut pas supprimer son propre compte.
+  const me = await superAdmin.get('/api/auth/me');
+  assert.equal(
+    (await superAdmin.delete(`/api/admin/users/${me.body.user.id}`).set('X-CSRF-Token', csrfToken)).status,
+    400
+  );
+
+  // Suppression réelle : compte + toutes ses données (transaction).
+  const deleted = await superAdmin
+    .delete(`/api/admin/users/${userId}`)
+    .set('X-CSRF-Token', csrfToken);
+  assert.equal(deleted.status, 200);
+  assert.equal(deleted.body.deleted, true);
+
+  assert.equal(await User.findByPk(userId), null);
+  assert.equal(await Address.count({ where: { userId } }), 0);
+  assert.equal(await Wishlist.count({ where: { userId } }), 0);
+  assert.equal(await Review.count({ where: { userId } }), 0);
+  assert.equal(await Order.count({ where: { userId } }), 0);
+  assert.equal(await OrderItem.count({ where: { orderId: order.body.id } }), 0);
+  assert.equal(await Cart.count({ where: { userId } }), 0);
+  assert.equal(await ContactMessage.count({ where: { userId } }), 0);
+});
+
+test('superadmin deletion is exposed through the SSR back-office', async () => {
+  const superAdmin = request.agent(app);
+  const csrfToken = csrfTokenFrom(await superAdmin.get('/api/health'));
+  const login = await superAdmin
+    .post('/api/auth/login')
+    .set('X-CSRF-Token', csrfToken)
+    .send({ email: 'admin@zurion.store', password: 'Admin1234!' });
+  assert.equal(login.status, 200);
+
+  const usersPage = await superAdmin.get('/admin?tab=users');
+  assert.equal(usersPage.status, 200);
+  assert.match(usersPage.text, /Supprimer/);
+  assert.match(usersPage.text, /\/admin\/utilisateurs\/\d+\/supprimer/);
+  const formToken = csrfTokenFromHtml(usersPage.text);
+  assert.ok(formToken, 'A CSRF token must be rendered in the admin page');
+
+  const customer = request.agent(app);
+  const customerCsrf = csrfTokenFrom(await customer.get('/api/health'));
+  const email = `ssr-delete-${Date.now()}@example.test`;
+  const registered = await customer
+    .post('/api/auth/register')
+    .set('X-CSRF-Token', customerCsrf)
+    .send({ firstName: 'Jet', lastName: 'Table', email, password: 'Customer123!' });
+  assert.equal(registered.status, 201);
+  const userId = registered.body.user.id;
+  assert.ok(await User.findByPk(userId), 'The customer account exists');
+
+  // L'administrateur limité est redirigé et ne peut pas supprimer côté SSR.
+  const limitedEmail = `ssr-limited-${Date.now()}@example.test`;
+  const createdLimited = await superAdmin
+    .post('/api/admin/admins')
+    .set('X-CSRF-Token', csrfToken)
+    .send({ firstName: 'Limité', lastName: 'SSR', email: limitedEmail, password: 'AdminTest123!' });
+  assert.equal(createdLimited.status, 201);
+  const limited = request.agent(app);
+  const limitedCsrf = csrfTokenFrom(await limited.get('/api/health'));
+  const limitedLogin = await limited
+    .post('/api/auth/login')
+    .set('X-CSRF-Token', limitedCsrf)
+    .send({ email: limitedEmail, password: 'AdminTest123!' });
+  assert.equal(limitedLogin.status, 200);
+  const blocked = await limited
+    .post(`/admin/utilisateurs/${userId}/supprimer`)
+    .type('form')
+    .send({ _csrf: limitedCsrf });
+  assert.equal(blocked.status, 302);
+  assert.equal(blocked.headers.location, '/admin?tab=livraisons');
+  assert.ok(await User.findByPk(userId), 'The customer account must still exist');
+
+  // Le superadmin supprime le compte via le formulaire SSR.
+  const deleted = await superAdmin
+    .post(`/admin/utilisateurs/${userId}/supprimer`)
+    .type('form')
+    .send({ _csrf: formToken });
+  assert.equal(deleted.status, 302);
+  assert.match(deleted.headers.location, /tab=users&ok=deleted/);
+  assert.equal(await User.findByPk(userId), null);
+});
+
+test('admin history purge reports the number of deleted orders', async () => {
+  const superAdmin = request.agent(app);
+  const csrfToken = csrfTokenFrom(await superAdmin.get('/api/health'));
+  const login = await superAdmin
+    .post('/api/auth/login')
+    .set('X-CSRF-Token', csrfToken)
+    .send({ email: 'admin@zurion.store', password: 'Admin1234!' });
+  assert.equal(login.status, 200);
+
+  // Une commande client est créée puis menée à « terminée ».
+  const customer = request.agent(app);
+  const customerCsrf = csrfTokenFrom(await customer.get('/api/health'));
+  const registered = await customer
+    .post('/api/auth/register')
+    .set('X-CSRF-Token', customerCsrf)
+    .send({ firstName: 'Historique', lastName: 'Purge', email: `purge-${Date.now()}@example.test`, password: 'Customer123!' });
+  assert.equal(registered.status, 201);
+  const product = (await customer.get('/api/products?limit=50')).body.products.find((p) => p.stock >= 1);
+  assert.ok(product);
+  await customer.post('/api/cart/items').set('X-CSRF-Token', customerCsrf).send({ productId: product.id, quantity: 1 });
+  const orderRes = await customer
+    .post('/api/orders')
+    .set('X-CSRF-Token', customerCsrf)
+    .send({
+      paymentMethod: 'Paiement à la livraison',
+      deliveryMode: 'standard',
+      address: { fullName: 'Historique Purge', phone: '0600000000', line1: 'Rue de la purge', city: 'Douala', region: 'Littoral' },
+    });
+  assert.equal(orderRes.status, 201);
+  const order = await Order.findOne({ where: { reference: orderRes.body.reference } });
+  assert.ok(order);
+  const statuses = ['paiement_confirmé', 'préparation', 'expédition', 'livraison', 'terminée'];
+  for (const status of statuses) {
+    const r = await superAdmin
+      .patch(`/api/admin/orders/${order.id}/status`)
+      .set('X-CSRF-Token', csrfToken)
+      .send({ status });
+    assert.equal(r.status, 200);
+  }
+  const before = await Order.count({ where: { status: ['terminée', 'annulée'] } });
+  assert.ok(before >= 1, 'At least one history order must exist before the purge');
+
+  // Effacement via le formulaire SSR : redirection avec compteur explicite.
+  const deleted = await superAdmin
+    .post('/admin/commandes/historique/effacer')
+    .type('form')
+    .send({ _csrf: csrfTokenFromHtml((await superAdmin.get('/admin/commandes')).text) });
+  assert.equal(deleted.status, 302);
+  assert.match(deleted.headers.location, /ok=cleared&count=(\d+)/);
+  const count = Number(deleted.headers.location.match(/count=(\d+)/)[1]);
+  assert.equal(count, before);
+  assert.equal(await Order.count({ where: { status: ['terminée', 'annulée'] } }), 0);
+
+  // Seconde purge : plus rien à effacer → compteur à 0 (message explicite côté vue).
+  const second = await superAdmin
+    .post('/admin/commandes/historique/effacer')
+    .type('form')
+    .send({ _csrf: csrfTokenFromHtml((await superAdmin.get('/admin/commandes')).text) });
+  assert.equal(second.status, 302);
+  assert.match(second.headers.location, /ok=cleared&count=0/);
 });
 
 test('GET / returns the storefront homepage', async () => {
@@ -152,6 +450,30 @@ test('cart flow can add an item and create an order', async () => {
   assert.equal(orderRes.status, 201);
   assert.ok(orderRes.body.reference, 'The order should return a reference');
   assert.equal(orderRes.body.status, 'créée');
+});
+
+test('cart rows expose the product image', async () => {
+  const api = request.agent(app);
+  const csrfToken = csrfTokenFrom(await api.get('/api/health'));
+  const products = (await api.get('/api/products?limit=50')).body.products;
+  const product = products.find((p) => p.stock >= 1 && p.image);
+  assert.ok(product, 'A product with an image is required');
+
+  // Galerie complète du produit (triée par position) via la fiche produit
+  const detail = (await api.get(`/api/products/${product.slug}`)).body.product;
+  const gallery = detail.images || [];
+  assert.ok(gallery.length > 0, 'The product must have images');
+
+  const cartToken = 'img-' + Date.now();
+  const addRes = await api
+    .post('/api/cart/items')
+    .set('X-Cart-Token', cartToken)
+    .set('X-CSRF-Token', csrfToken)
+    .send({ productId: product.id, quantity: 1 });
+  assert.equal(addRes.status, 201);
+  const cartImage = addRes.body.items[0].image;
+  assert.ok(cartImage, 'The cart row must expose a product image');
+  assert.ok(gallery.includes(cartImage), 'The cart image must be one of the product images');
 });
 
 test('order lifecycle is isolated per user and controlled by admin', async () => {
@@ -500,6 +822,88 @@ test('admin SSR product and delivery workflows support create, update and shipme
     .send({ _csrf: csrfTokenFromHtml(await admin.get('/admin?tab=products').then((res) => res.text)) });
   assert.equal(deleted.status, 302);
   assert.equal(await Product.count({ where: { id: product.id } }), 0);
+});
+
+test('admin can manually assign an order with products and destination', async () => {
+  const admin = request.agent(app);
+  const pre = await admin.get('/api/health');
+  const csrfToken = csrfTokenFrom(pre);
+  const login = await admin
+    .post('/api/auth/login')
+    .set('X-CSRF-Token', csrfToken)
+    .send({ email: 'admin@zurion.store', password: 'Admin1234!' });
+  assert.equal(login.status, 200);
+
+  const customer = request.agent(app);
+  const customerPre = await customer.get('/api/health');
+  const customerCsrf = csrfTokenFrom(customerPre);
+  const product = (await customer.get('/api/products?limit=50')).body.products.find((item) => item.stock >= 1);
+  assert.ok(product);
+  const cartToken = `manual-delivery-${Date.now()}`;
+  const added = await customer
+    .post('/api/cart/items')
+    .set('X-Cart-Token', cartToken)
+    .set('X-CSRF-Token', customerCsrf)
+    .send({ productId: product.id, quantity: 1 });
+  assert.equal(added.status, 201);
+  const orderRes = await customer
+    .post('/api/orders')
+    .set('X-Cart-Token', cartToken)
+    .set('X-CSRF-Token', customerCsrf)
+    .send({
+      paymentMethod: 'Paiement à la livraison',
+      deliveryMode: 'standard',
+      address: { fullName: 'Client commande manuelle', phone: '690000111', line1: 'Rue commande manuelle', city: 'Douala', region: 'Littoral' },
+    });
+  assert.equal(orderRes.status, 201);
+  const order = await Order.findOne({ where: { reference: orderRes.body.reference } });
+  const courier = await Courier.create({ name: `Manual Courier ${Date.now()}`, phone: '+237 690123456', active: true });
+  assert.ok(courier);
+
+  const deliveriesPage = await admin.get('/admin/livraisons');
+  assert.equal(deliveriesPage.status, 200);
+  const assigned = await admin
+    .post('/admin/livraisons/attribuer')
+    .type('form')
+    .send({
+      _csrf: csrfTokenFromHtml(deliveriesPage.text),
+      orderId: order.id,
+      courierId: courier.id,
+      fullName: 'Destinataire colis',
+      phone: '699999999',
+      line1: 'Avenue de la destination',
+      line2: 'Immeuble 4',
+      city: 'Douala',
+      region: 'Littoral',
+      date: '2026-09-15',
+      time: '14:30',
+    });
+  assert.equal(assigned.status, 302);
+  assert.equal(assigned.headers.location, '/admin?tab=livraisons');
+
+  await order.reload();
+  assert.equal(order.status, 'expédition');
+  const delivery = await Livraison.findOne({ where: { orderId: order.id } });
+  assert.ok(delivery);
+  assert.equal(delivery.courierName, courier.name);
+  assert.deepEqual(JSON.parse(delivery.destinationSnapshot), {
+    fullName: 'Destinataire colis',
+    phone: '699999999',
+    line1: 'Avenue de la destination',
+    line2: 'Immeuble 4',
+    city: 'Douala',
+    region: 'Littoral',
+  });
+  const scheduled = new Date('2026-09-15T14:30');
+  assert.ok(
+    Math.abs(new Date(delivery.scheduledAt).getTime() - scheduled.getTime()) < 1000,
+    'Scheduled delivery date/time must match the submitted values'
+  );
+  const updatedPage = await admin.get('/admin/livraisons');
+  assert.match(updatedPage.text, new RegExp(product.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.match(updatedPage.text, /Destinataire colis/);
+  assert.match(updatedPage.text, /Avenue de la destination/);
+  assert.match(updatedPage.text, /15 sept/i);
 });
 
 test('legal pages are reachable and linked from the footer', async () => {

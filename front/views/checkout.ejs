@@ -1,0 +1,92 @@
+<div class="container">
+  <div class="zurion-page-head">
+    <nav class="zurion-breadcrumb" aria-label="Fil d’Ariane">
+      <a href="/">Accueil</a><span>/</span><a href="/panier">Panier</a><span>/</span><span>Commande</span>
+    </nav>
+    <h1>Finaliser la commande</h1>
+  </div>
+
+  <div class="zurion-checkout">
+    <form action="/commande" method="post" class="zurion-checkout__form" data-checkout-form>
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <div class="zurion-stepper">
+        <span class="is-active">1. Livraison</span>
+        <span>2. Paiement</span>
+        <span>3. Confirmation</span>
+      </div>
+
+      <h2>Adresse de livraison</h2>
+      <div class="zurion-form-grid">
+        <label>Nom complet
+          <input type="text" name="fullName" class="form-control" required value="<%= currentUser ? esc(currentUser.firstName + ' ' + currentUser.lastName) : '' %>">
+        </label>
+        <label>Téléphone
+          <input type="tel" name="phone" class="form-control" required value="<%= currentUser && currentUser.phone ? esc(currentUser.phone) : '' %>">
+        </label>
+        <label class="zurion-form-grid__full">Adresse
+          <input type="text" name="line1" class="form-control" required placeholder="Rue, quartier, immeuble…">
+        </label>
+        <label>Ville
+          <input type="text" name="city" class="form-control" required placeholder="Douala">
+        </label>
+        <label>Région
+          <input type="text" name="region" class="form-control" required placeholder="Littoral">
+        </label>
+      </div>
+
+      <h2>Mode de livraison</h2>
+      <% Object.entries(deliveryModes).forEach(([key, mode]) => { %>
+        <label class="zurion-radio">
+          <input type="radio" name="deliveryMode" value="<%= key %>" <%= key === 'standard' ? 'checked' : '' %> data-delivery="<%= mode.fee %>">
+          <span>
+            <strong><%= mode.label %></strong>
+            <small><%= mode.days %> · <%= money(mode.fee) %></small>
+          </span>
+        </label>
+      <% }) %>
+
+      <h2>Paiement <span class="zurion-badge zurion-badge--info">Démonstration</span></h2>
+      <% paymentMethods.forEach(m => { %>
+        <label class="zurion-radio">
+          <input type="radio" name="paymentMethod" value="<%= m %>" <%= m === 'Paiement à la livraison' ? 'checked' : '' %>>
+          <span><strong><%= m %></strong></span>
+        </label>
+      <% }) %>
+
+      <h2>Code promo (optionnel)</h2>
+      <label class="zurion-radio">
+        <span>
+          <input type="text" name="couponCode" class="form-control" maxlength="40" placeholder="Ex : BIENVENUE10" value="<%- esc(values.couponCode || '') %>">
+          <small>La remise est vérifiée et déduite avant validation de la commande.</small>
+        </span>
+      </label>
+
+      <button type="submit" class="btn btn-primary btn-lg btn-block">Confirmer la commande <i class="fa-solid fa-arrow-right-long"></i></button>
+    </form>
+
+    <aside class="zurion-cart__summary">
+      <h2>Votre commande</h2>
+      <% cart.items.forEach(line => { const p = line.product; %>
+        <div class="zurion-checkout-item">
+          <a href="/produit/<%= p.slug %>" class="zurion-checkout-item__media"><img src="<%= productImage(p) %>" alt="<%- esc(p.name) %>" loading="lazy"></a>
+          <div class="zurion-checkout-item__info">
+            <a href="/produit/<%= p.slug %>"><%- esc(p.name) %></a>
+            <small>Quantité : <%= line.quantity %></small>
+          </div>
+          <strong><%= money(p.price * line.quantity) %></strong>
+        </div>
+      <% }) %>
+      <hr>
+      <p class="d-flex justify-content-between"><span>Sous-total</span><strong><%= money(totals.subtotal) %></strong></p>
+      <% if (coupon.discount > 0) { %>
+        <p class="d-flex justify-content-between zurion-text-success"><span>Remise (<%- esc(coupon.code) %>)</span><strong id="zurion-discount">-<%= money(coupon.discount) %></strong></p>
+      <% } %>
+      <p class="d-flex justify-content-between"><span>Livraison</span><strong id="zurion-delivery-fee"><%= money(0) %></strong></p>
+      <% if (error) { %>
+        <p class="zurion-form-error"><%- esc(error) %></p>
+      <% } %>
+      <p class="d-flex justify-content-between zurion-cart__grand"><span>Total</span><strong id="zurion-order-total"><%= money(totals.subtotal - coupon.discount) %></strong></p>
+      <p class="zurion-muted small">Paiement simulé pour cette démonstration. Aucun débit réel ne sera effectué.</p>
+    </aside>
+  </div>
+</div>

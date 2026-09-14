@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title><%= (typeof title !== 'undefined' && title) ? title + ' · ' + appName : appName %></title>
+  <meta name="description" content="ZURION Store — produits électroniques et accessoires technologiques.">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/Zurion/PNG/appicon.png">
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkcmfRyVX3pBnMFcV7oQPJkl9QevSCWr3W6A==" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="/css/storefront.css">
+  <script nonce="<%= nonce %>">window.ZURION = { cartToken: <%- JSON.stringify(cartToken || '') %>, csrfToken: <%- JSON.stringify(csrfToken || '') %> };</script>
+</head>
+<body data-role="<%= (typeof currentUser !== 'undefined' && currentUser) ? currentUser.role : 'guest' %>">
+  <%- include('partials/header', { currentPath, currentUser, cartCount, categories, backHref: null }) %>
+
+  <main class="zurion-main">
+    <%- body %>
+  </main>
+
+  <%- include('partials/footer') %>
+
+  <!-- Toast container + scripts -->
+  <div id="zurion-toasts" class="zurion-toasts" aria-live="polite"></div>
+  <script src="/js/storefront.js"></script>
+</body>
+</html>
