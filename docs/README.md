@@ -47,7 +47,7 @@ npm install
 cp .env.example .env
 ```
 
-La configuration par défaut utilise SQLite dans `data/zurion.sqlite`.
+La configuration par défaut utilise SQLite dans `back/data/zurion.sqlite`.
 
 ## Lancement
 
@@ -120,19 +120,35 @@ Les tests sont des smoke tests ciblés. Ils ne constituent pas une mesure de cou
 ## Structure
 
 ```text
-server.js                 Point d'entrée HTTP
-src/app.js                Configuration Express
-src/routes/               Routes SSR et API
-src/controllers/          Contrôleurs API
-src/services/             Logique métier
-src/models/               Modèles Sequelize et associations
-src/middlewares/          Authentification, CSRF, validation, erreurs
-views/                    Templates EJS
-public/                   CSS et JavaScript client
-scripts/                  Migration, seed et diagnostics
-tests/                    Tests Node.js
-data/                     Base SQLite locale
+back/
+  server.js             Point d'entrée HTTP
+  src/app.js            Configuration Express
+  src/routes/           Routes SSR et API
+  src/controllers/      Contrôleurs API
+  src/services/         Logique métier
+  src/models/           Modèles Sequelize et associations
+  src/middlewares/      Authentification, CSRF, validation, erreurs
+  src/config/           env, base de données, migrations
+  migrations/           Migrations de schéma
+  data/                 Base SQLite locale
+front/
+  views/                Templates EJS
+  public/               CSS, JavaScript client, uploads
+  assets/               Images et vidéos du thème
+scripts/                Migration, seed et diagnostics
+tests/                  Tests Node.js + specs Playwright
+docs/                   Documentation
 ```
+
+## Déploiement
+
+- **Docker** : `docker build . -t zurion-store` puis lancer avec `DATABASE_URL`
+  PostgreSQL, `JWT_SECRET` et `NODE_ENV=production`. L'image n'embarque que le
+  serveur web (voir `Dockerfile` et `.dockerignore`).
+- **Render** : voir `render.yaml` (runtime Node + base PostgreSQL).
+
+Seul `back/` et `front/` sont nécessaires à l'exécution du serveur ; `electron/`,
+`scripts/`, `tests/` et `docs/` ne sont pas déployés.
 
 ## Sécurité
 
