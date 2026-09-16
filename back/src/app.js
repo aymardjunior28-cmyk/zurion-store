@@ -51,7 +51,7 @@ app.use(
         styleSrc: ["'self'", 'https://cdnjs.cloudflare.com', "'unsafe-inline'"],
         fontSrc: ["'self'", 'data:', 'https://cdnjs.cloudflare.com'],
         imgSrc: ["'self'", 'data:', 'https:'],
-        connectSrc: ["'self'"],
+        connectSrc: ["'self'", 'https://nominatim.openstreetmap.org'],
         formAction: ["'self'"],
         frameAncestors: ["'none'"],
         objectSrc: ["'none'"],

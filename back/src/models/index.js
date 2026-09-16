@@ -26,6 +26,7 @@ const Wishlist = require('./Wishlist');
 const Courier = require('./Courier');
 const ContactMessage = require('./ContactMessage');
 const Notification = require('./Notification');
+const LivraisonEvent = require('./LivraisonEvent');
 
 // ── Associations ──────────────────────────────────────────────────────────
 
@@ -70,6 +71,10 @@ Livraison.belongsTo(Order, { as: 'order', foreignKey: 'orderId' });
 User.hasMany(Livraison, { as: 'livraisonsAssignees', foreignKey: 'courierId' });
 Livraison.belongsTo(User, { as: 'courier', foreignKey: 'courierId' });
 
+/* ── Livraison → historique des actions (journal timeliné) ─────────────────── */
+Livraison.hasMany(LivraisonEvent, { as: 'events', foreignKey: 'livraisonId', onDelete: 'CASCADE' });
+LivraisonEvent.belongsTo(Livraison, { foreignKey: 'livraisonId' });
+
 /* ── Coupon → commandes : aucune FK, code conservé en dur sur la commande ──── */
 
 /* ── Favoris : table de jointure Wishlist (userId, productId) ────────────── */
@@ -112,4 +117,5 @@ module.exports = {
   Courier,
   ContactMessage,
   Notification,
+  LivraisonEvent,
 };

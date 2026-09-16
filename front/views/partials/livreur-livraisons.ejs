@@ -1,0 +1,108 @@
+<% const _livraisons = (typeof livraisons !== 'undefined' && Array.isArray(livraisons)) ? livraisons : []; %>
+<% const _statusLabels = { 'en_cours': 'En cours', 'livrée': 'Livrée', 'annulée': 'Annulée' }; %>
+<% const _statusColors = { 'livrée': '#157347', 'en_cours': '#17669d', 'annulée': '#a13333' }; %>
+<% const _statusBgs = { 'livrée': '#e3f6ed', 'en_cours': 'var(--zurion-primary-100)', 'annulée': '#fdeeee' }; %>
+<% const _fmtDate = (d) => d ? new Date(d).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''; %>
+<% const _shortAddr = (dest) => dest ? [dest.line1, dest.city, dest.region].filter(Boolean).join(', ') : ''; %>
+
+<% if (_livraisons.length === 0) { %>
+  <div class="zurion-empty">
+    <i class="fa-solid fa-box-open" style="font-size:3rem"></i>
+    <h2>Aucune livraison assignée</h2>
+    <p>Aucune livraison ne vous est attribuée pour le moment. Vous serez notifié dès qu'un colis vous sera confié.</p>
+  </div>
+<% } else { %>
+  <div class="zurion-lv-cards" id="livraisons-list">
+    <% _livraisons.forEach(l => { %>
+      <% const dest = l.destinationParsed || l.destination || null; %>
+      <% const _cls = l.status === 'livrée' ? 'livree' : (l.status === 'annulée' ? 'annulee' : 'cours'); %>
+      <a class="zurion-lv-card zurion-lv-card--<%= _cls %>" href="/livreur/livraisons/<%= l.id %>">
+        <span class="zurion-lv-card__bar"></span>
+        <div class="zurion-lv-card__inner">
+          <div class="zurion-lv-card__head">
+            <div>
+              <span class="zurion-lv-card__ref"><%= l.reference %></span>
+              <span class="zurion-lv-card__order">
+                <i class="fa-solid fa-box"></i> Commande <%= l.order ? l.order.reference : '—' %>
+              </span>
+            </div>
+            <span class="zurion-lv-card__badge" style="background:<%= _statusBgs[l.status] %>;color:<%= _statusColors[l.status] %>">
+              <span style="width:.7rem;height:.7rem;border-radius:50%;background:<%= _statusColors[l.status] %>;display:inline-block"></span>
+              <%= _statusLabels[l.status] || l.status %>
+            </span>
+          </div>
+
+          <div class="zurion-lv-card__body">
+            <div class="zurion-lv-card__client">
+              <% if (dest && dest.fullName) { %>
+                <p class="zurion-lv-card__name"><i class="fa-solid fa-user"></i> <%= dest.fullName %></p>
+                <% if (dest.phone) { %><p class="zurion-lv-card__tel"><i class="fa-solid fa-phone"></i> <%= dest.phone %></p><% } %>
+              <% } else { %><p class="zurion-muted">Client : non renseigné</p><% } %>
+            </div>
+            <div class="zurion-lv-card__addr">
+              <i class="fa-solid fa-location-dot"></i>
+              <span><%= _shortAddr(dest) || 'Adresse non renseignée' %></span>
+            </div>
+          </div>
+
+          <div class="zurion-lv-card__foot">
+            <div class="zurion-lv-card__meta">
+              <span><i class="fa-solid fa-calendar-check"></i> <%= l.scheduledAt ? 'Prévue le ' + _fmtDate(l.scheduledAt) : 'Date non planifiée' %></span>
+              <% if (l.lastReportMessage) { %>
+                <span title="<%= l.lastReportMessage %>" style="color:#9a6a10"><i class="fa-solid fa-triangle-exclamation"></i> Signalement</span>
+              <% } %>
+            </div>
+            <span class="zurion-lv-card__go">Voir le détail <i class="fa-solid fa-chevron-right"></i></span>
+          </div>
+
+          <% if (l.status === 'en_cours') { %>
+            <div class="zurion-lv-card__actions" data-liv-actions>
+              <button class="btn btn-success btn-sm liv-action" data-action="livree" data-id="<%= l.id %>">
+                <i class="fa-solid fa-check-double"></i> Confirmer la livraison
+              </button>
+              <button class="btn btn-warning btn-sm liv-action" data-action="nonlivree" data-id="<%= l.id %>">
+                <i class="fa-solid fa-times"></i> Non livré
+              </button>
+            </div>
+          <% } %>
+        </div>
+      </a>
+    <% }) %>
+  </div>
+<% } %>
+
+<script nonce="<%= typeof nonce !== 'undefined' ? nonce : '' %>">
+(() => {
+  async function signalerLivree(id) {
+    if (!confirm('Confirmer la livraison de ce colis ?')) return;
+    const res = await fetch(`/api/livreur/livraisons/${id}/livree`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.ZURION.csrfToken }
+    });
+    if (res.ok) { alert('✅ Livraison confirmée. Les administrateurs ont été notifiés.'); location.reload(); }
+    else { const d = await res.json(); alert('❌ ' + d.error); }
+  }
+  async function signalerNonLivree(id) {
+    const reason = prompt('Raison du non-livraison (optionnel) :');
+    if (reason === null) return;
+    const res = await fetch(`/api/livreur/livraisons/${id}/non-livree`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.ZURION.csrfToken },
+      body: JSON.stringify({ reason: reason.trim() })
+    });
+    if (res.ok) { alert('✅ Signalement enregistré.'); location.reload(); }
+    else { const d = await res.json(); alert('❌ ' + d.error); }
+  }
+  document.querySelectorAll('.liv-action').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = Number(btn.dataset.id);
+      if (btn.dataset.action === 'livree') signalerLivree(id);
+      else if (btn.dataset.action === 'nonlivree') signalerNonLivree(id);
+    });
+  });
+})();
+</script>

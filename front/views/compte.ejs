@@ -24,6 +24,8 @@
   const activeOrders = orders.filter(o => !['terminée', 'annulée'].includes(o.status)).length;
   const isAdmin = ['admin', 'superadmin'].includes(currentUser.role);
   const isSuperAdmin = currentUser.role === 'superadmin';
+  const isLivreur = currentUser.role === 'livreur';
+  const _livraisonsCompte = (typeof livraisons !== 'undefined' && Array.isArray(livraisons)) ? livraisons : [];
   const historyCount = orders.filter(o => ['terminée', 'annulée'].includes(o.status)).length;
 %>
 <div class="container">
@@ -46,6 +48,9 @@
         <nav class="zurion-account__nav" aria-label="Navigation compte">
           <a href="#resume" class="is-active"><i class="fa-solid fa-gauge-high"></i> Vue d'ensemble</a>
           <a href="#commandes"><i class="fa-solid fa-truck-fast"></i> Mes commandes <span class="zurion-count" style="position:static"><%= orders.length %></span></a>
+          <% if (isLivreur) { %>
+            <a href="#livraisons"><i class="fa-solid fa-box-open"></i> Mes livraisons <span class="zurion-count" style="position:static"><%= _livraisonsCompte.length %></span></a>
+          <% } %>
           <a href="#achats"><i class="fa-solid fa-bag-shopping"></i> Produits achetés <span class="zurion-count" style="position:static"><%= purchased.length %></span></a>
           <a href="#adresses"><i class="fa-solid fa-map-location-dot"></i> Mes adresses <span class="zurion-count" style="position:static"><%= addresses.length %></span></a>
           <a href="/favoris"><i class="fa-regular fa-heart"></i> Mes favoris</a>
@@ -145,6 +150,17 @@
           <% }) %>
         <% } %>
       </section>
+      <% if (isLivreur) { %>
+      <section id="livraisons" class="zurion-account__section">
+        <div class="zurion-admin__title">
+          <h2><i class="fa-solid fa-box-open" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Mes livraisons</h2>
+          <a href="/livreur" class="btn btn-outline btn-sm">Ouvrir l'espace livreur <i class="fa-solid fa-arrow-right-long" style="margin-left:.3rem"></i></a>
+        </div>
+        <p class="zurion-muted" style="margin:0 0 1.4rem">Colis confiés à votre compte. Confirmez une livraison ou signalez qu'elle n'a pas abouti.</p>
+        <%- include('partials/livreur-livraisons', { livraisons: _livraisonsCompte }) %>
+      </section>
+      <% } %>
+
       <% if (purchased && purchased.length) { %>
       <section id="achats" class="zurion-account__section">
         <div class="zurion-admin__title">

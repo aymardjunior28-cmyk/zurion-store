@@ -9,6 +9,7 @@
  * ═══════════════════════════════════════════════════════════════════════════ */
 const { Livraison, Order } = require('../models');
 const notificationService = require('../services/notification.service');
+const deliveryService = require('../services/delivery.service');
 
 /** GET /api/livreur/livraisons — livraisons assignées au livreur connecté. */
 async function getMesLivraisons(req, res, next) {
@@ -63,10 +64,16 @@ async function signalerLivraison(req, res, next) {
       return res.status(409).json({ error: 'Cette livraison est déjà marquée comme livrée.' });
     }
 
-    await livraison.update({ status: 'livrée', deliveredAt: new Date(), lastReportMessage: null });
-
     const ref = livraison.order ? livraison.order.reference : livraison.reference;
     const author = `${req.user.firstName} ${req.user.lastName}`;
+
+    await livraison.update({ status: 'livrée', deliveredAt: new Date(), lastReportMessage: null });
+    await deliveryService.logEvent({
+      livraisonId: livraison.id,
+      type: 'delivered',
+      message: `Colis confirmé livré par ${author}.`,
+      authorName: author,
+    });
 
     // 1) Marquée dans le compte de l'auteur (livreur ou admin).
     await notificationService.createNotification({
@@ -132,12 +139,18 @@ async function signalerNonLivre(req, res, next) {
       return res.status(409).json({ error: 'Cette livraison est déjà marquée comme livrée.' });
     }
 
-    // Le statut reste 'en_cours' (le livreur peut retenter plus tard).
     const report = reason || 'Non livré (raison non précisée).';
     await livraison.update({ lastReportMessage: report });
 
     const ref = livraison.order ? livraison.order.reference : livraison.reference;
     const author = `${req.user.firstName} ${req.user.lastName}`;
+
+    await deliveryService.logEvent({
+      livraisonId: livraison.id,
+      type: 'non_livree',
+      message: `Non livré signalé par ${author}. Raison : ${report}`,
+      authorName: author,
+    });
 
     // 1) Marquée dans le compte de l'auteur.
     await notificationService.createNotification({

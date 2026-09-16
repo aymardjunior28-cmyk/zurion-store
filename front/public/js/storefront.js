@@ -152,7 +152,7 @@
         if (document.getElementById('zurion-cart-discount')) { window.location.reload(); return; }
         if (d.subtotalFormatted) {
           var st = document.getElementById('zurion-subtotal'); if (st) st.textContent = d.subtotalFormatted;
-          var gt = document.getElementById('zurion-grand-total'); if (gt) gt.textContent = d.subtotalFormatted;
+          recomputeCartTotal();
           var ot = document.getElementById('zurion-order-total'); if (ot) recomputeTotal();
         }
         toast('Panier mis à jour.', 'success');
@@ -176,12 +176,26 @@
           if (row) row.remove();
           setCartCount(d.count || 0);
           var st = document.getElementById('zurion-subtotal'); if (st) st.textContent = d.subtotalFormatted;
-          var gt = document.getElementById('zurion-grand-total'); if (gt) gt.textContent = d.subtotalFormatted;
+          recomputeCartTotal();
           toast('Article retiré du panier.', 'success');
         })
         .catch(function () { toast('Erreur réseau.', 'error'); });
     }
   });
+
+  /* ── Cart : total estimé (sous-total − remise + livraison) ────── */
+  function recomputeCartTotal() {
+    var st = document.getElementById('zurion-subtotal');
+    var sh = document.getElementById('zurion-shipping');
+    var gt = document.getElementById('zurion-grand-total');
+    if (!st || !sh || !gt) return;
+    var subtotal = parseFloat(String(st.textContent).replace(/[^0-9]/g, '')) || 0;
+    var shipping = parseFloat(String(sh.textContent).replace(/[^0-9]/g, '')) || 0;
+    var discEl = document.getElementById('zurion-cart-discount');
+    var discount = discEl ? parseFloat(String(discEl.textContent).replace(/[^0-9]/g, '')) || 0 : 0;
+    var fmt = new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'XAF', maximumFractionDigits: 0 });
+    gt.textContent = fmt.format(Math.max(0, subtotal + shipping - discount));
+  }
 
   /* ── Checkout : calcul livraison ────────────────────────────── */
   function recomputeTotal() {

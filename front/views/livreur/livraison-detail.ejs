@@ -1,0 +1,208 @@
+<% const dest = (typeof livraison !== 'undefined' && livraison) ? (livraison.destinationParsed || null) : null; %>
+<% const ref = livraison.reference; %>
+<% const statusColors = { 'livrée': '#157347', 'en_cours': '#17669d', 'annulée': '#a13333' }; %>
+<% const statusLabels = { 'livrée': 'Livrée', 'en_cours': 'En cours', 'annulée': 'Annulée' }; %>
+<div class="container py-5 zurion-lv-detail">
+  <!-- En-tête de la livraison -->
+  <a href="/livreur" class="zurion-lv-back"><i class="fa-solid fa-arrow-left"></i> Retour à l'espace livreur</a>
+  <div class="zurion-livreur-hero zurion-lv-detail__hero mb-5">
+    <div class="zurion-livreur-hero__row">
+      <div class="zurion-livreur-hero__text">
+        <p class="zurion-eyebrow zurion-livreur-hero__eyebrow">DÉTAIL LIVRAISON</p>
+        <h2><%= ref %> <i class="fa-solid fa-truck-fast zurion-livreur-hero__moto"></i></h2>
+        <p><i class="fa-solid fa-box"></i> Commande <%= livraison.order && livraison.order.reference ? livraison.order.reference : '—' %></p>
+      </div>
+      <span class="zurion-livreur-hero__badge">
+        <span style="width:.85rem;height:.85rem;border-radius:50%;background:<%= statusColors[livraison.status] || '#9a6a10' %>"></span>
+        <%= statusLabels[livraison.status] || livraison.status %>
+      </span>
+    </div>
+  </div>
+
+  <% if (livraison.lastReportMessage) { %>
+    <div class="zurion-lv-alert">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span><strong>Dernier signalement :</strong> <%= livraison.lastReportMessage %></span>
+    </div>
+  <% } %>
+
+  <div class="zurion-lv-detail__grid">
+    <!-- Colonne principale -->
+    <div class="zurion-lv-detail__main">
+      <% if (dest) { %>
+        <!-- Carte + destination -->
+        <section class="zurion-lv-panel">
+          <h2><i class="fa-solid fa-location-dot"></i> Destination</h2>
+          <div class="zurion-lv-dest">
+            <div class="zurion-lv-dest__info">
+              <p class="zurion-lv-dest__name"><i class="fa-solid fa-user"></i> <strong><%= dest.fullName || '—' %></strong></p>
+              <p class="zurion-lv-dest__tel"><i class="fa-solid fa-phone"></i> <a href="tel:<%= dest.phone %>"><%= dest.phone || '—' %></a></p>
+              <p class="zurion-lv-dest__addr"><i class="fa-solid fa-map-pin"></i>
+                <%= [dest.line1, dest.line2, dest.city, dest.region].filter(Boolean).join(', ') || '—' %>
+              </p>
+            </div>
+            <div class="zurion-lv-dest__actions">
+              <a class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener"
+                 href="https://www.google.com/maps/search/?api=1&query=<%= encodeURIComponent([dest.line1, dest.line2, dest.city, dest.region].filter(Boolean).join(', ')) %>">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Ouvrir sur Google Maps
+              </a>
+            </div>
+          </div>
+          <div id="livraison-map" class="zurion-lv-map"
+               data-address="<%= [dest.line1, dest.line2, dest.city, dest.region].filter(Boolean).join(', ') %>"></div>
+        </section>
+      <% } %>
+
+      <!-- Produits de la commande -->
+      <section class="zurion-lv-panel">
+        <h2><i class="fa-solid fa-box-open"></i> Contenu du colis</h2>
+        <% const items = (livraison.order && livraison.order.items) ? livraison.order.items : []; %>
+        <% if (items.length) { %>
+          <ul class="zurion-lv-items">
+            <% items.forEach((item) => { %>
+              <li>
+                <span class="zurion-lv-items__qty"><%= item.quantity %> ×</span>
+                <span class="zurion-lv-items__name"><%= item.nameSnapshot %></span>
+                <span class="zurion-lv-items__price"><%= money(item.priceSnapshot * item.quantity) %></span>
+              </li>
+            <% }) %>
+          </ul>
+        <% } else { %>
+          <p class="zurion-muted">Aucun produit associé affichable.</p>
+        <% } %>
+      </section>
+
+      <!-- Historique des actions -->
+      <section class="zurion-lv-panel">
+        <h2><i class="fa-solid fa-clock-rotate-left"></i> Historique</h2>
+        <% const events = (typeof livraison.events !== 'undefined' && livraison.events) ? livraison.events : []; %>
+        <% if (events.length) { %>
+          <ol class="zurion-lv-timeline">
+            <% events.forEach((ev) => { %>
+              <li class="zurion-lv-timeline__item zurion-lv-timeline__item--<%= ev.type %>">
+                <span class="zurion-lv-timeline__dot">
+                  <% if (ev.type === 'delivered') { %><i class="fa-solid fa-check"></i>
+                  <% } else if (ev.type === 'non_livree') { %><i class="fa-solid fa-exclamation"></i>
+                  <% } else if (ev.type === 'cancelled') { %><i class="fa-solid fa-ban"></i>
+                  <% } else if (ev.type === 'shipped') { %><i class="fa-solid fa-truck-fast"></i>
+                  <% } else { %><i class="fa-solid fa-circle-plus"></i><% } %>
+                </span>
+                <div class="zurion-lv-timeline__body">
+                  <p class="zurion-lv-timeline__msg"><%= ev.message || ev.type %></p>
+                  <small class="zurion-muted">
+                    <%= ev.createdAt ? new Date(ev.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '' %>
+                    <% if (ev.authorName && ev.authorName !== 'Système') { %> · par <%= ev.authorName %><% } %>
+                  </small>
+                </div>
+              </li>
+            <% }) %>
+          </ol>
+        <% } else { %>
+          <p class="zurion-muted">Aucun événement enregistré pour cette livraison.</p>
+        <% } %>
+      </section>
+    </div>
+
+    <!-- Colonne latérale -->
+    <aside class="zurion-lv-detail__side">
+      <!-- Résumé -->
+      <section class="zurion-lv-panel">
+        <h2><i class="fa-solid fa-receipt"></i> Résumé</h2>
+        <dl class="zurion-lv-summary">
+          <div><dt>Référence livraison</dt><dd><strong><%= ref %></strong></dd></div>
+          <div><dt>Commande</dt><dd><strong><%= livraison.order && livraison.order.reference ? livraison.order.reference : '—' %></strong></dd></div>
+          <div><dt>Statut commande</dt><dd><%= livraison.order && livraison.order.status ? livraison.order.status : '—' %></dd></div>
+          <div><dt>Nombre de colis</dt><dd><%= livraison.quantity %> ×</dd></div>
+          <div><dt>Frais de livraison</dt><dd><%= money(livraison.price) %></dd></div>
+          <div><dt>Total commande</dt><dd><strong><%= money(livraison.order && livraison.order.total) %></strong></dd></div>
+          <% if (livraison.scheduledAt) { %>
+            <div><dt>Livraison prévue</dt><dd><strong><%= new Date(livraison.scheduledAt).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></strong></dd></div>
+          <% } %>
+          <% if (livraison.shippedAt) { %>
+            <div><dt>Expédiée le</dt><dd><%= new Date(livraison.shippedAt).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></dd></div>
+          <% } %>
+          <% if (livraison.deliveredAt) { %>
+            <div><dt>Livrée le</dt><dd><strong><%= new Date(livraison.deliveredAt).toLocaleString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) %></strong></dd></div>
+          <% } %>
+        </dl>
+      </section>
+
+      <!-- Actions -->
+      <% if (livraison.status === 'en_cours') { %>
+        <section class="zurion-lv-panel">
+          <h2><i class="fa-solid fa-bolt"></i> Actions</h2>
+          <div class="zurion-lv-actions">
+            <button class="btn btn-success liv-action" data-action="livree" data-id="<%= livraison.id %>">
+              <i class="fa-solid fa-check-double"></i> Confirmer la livraison
+            </button>
+            <button class="btn btn-warning liv-action" data-action="nonlivree" data-id="<%= livraison.id %>">
+              <i class="fa-solid fa-times"></i> Signaler comme non livré
+            </button>
+          </div>
+        </section>
+      <% } %>
+    </aside>
+  </div>
+</div>
+
+<!-- Carte Leaflet + actions (scripts locaux) -->
+<link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+<script nonce="<%= nonce %>" src="/vendor/leaflet/leaflet.js"></script>
+<script nonce="<%= nonce %>">
+(() => {
+  const address = document.getElementById('livraison-map')?.dataset.address;
+  if (address && window.L) {
+    const query = encodeURIComponent(address + ', Cameroun');
+    const map = L.map('livraison-map', { scrollWheelZoom: false }).setView([6.35, 12.53], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+    const marker = L.marker([6.35, 12.53]).addTo(map).bindPopup(address).openPopup();
+    let placed = false;
+    fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=' + query)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data && data.length && data[0].lat && data[0].lon) {
+          const lat = parseFloat(data[0].lat);
+          const lon = parseFloat(data[0].lon);
+          marker.setLatLng([lat, lon]);
+          map.setView([lat, lon], 15);
+          placed = true;
+        }
+      })
+      .catch(() => { /* la carte reste centrée sur le pays */ });
+  }
+
+  // Confirmer / signer les actions comme sur le dashboard
+  async function signalerLivree(id) {
+    if (!confirm('Confirmer la livraison de ce colis ?')) return;
+    const res = await fetch(`/api/livreur/livraisons/${id}/livree`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.ZURION.csrfToken }
+    });
+    if (res.ok) { alert('✅ Livraison confirmée. Les administrateurs ont été notifiés.'); location.reload(); }
+    else { const d = await res.json(); alert('❌ ' + d.error); }
+  }
+  async function signalerNonLivree(id) {
+    const reason = prompt('Raison du non-livraison (optionnel) :');
+    if (reason === null) return;
+    const res = await fetch(`/api/livreur/livraisons/${id}/non-livree`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': window.ZURION.csrfToken },
+      body: JSON.stringify({ reason: reason.trim() })
+    });
+    if (res.ok) { alert('✅ Signalement enregistré.'); location.reload(); }
+    else { const d = await res.json(); alert('❌ ' + d.error); }
+  }
+  document.querySelectorAll('.liv-action').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = Number(btn.dataset.id);
+      if (btn.dataset.action === 'livree') signalerLivree(id);
+      else if (btn.dataset.action === 'nonlivree') signalerNonLivree(id);
+    });
+  });
+})();
+</script>

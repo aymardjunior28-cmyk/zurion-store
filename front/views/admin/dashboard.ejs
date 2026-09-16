@@ -141,10 +141,11 @@
         </div>
         <% if (recentOrders.length) { %>
           <table class="zurion-table">
-            <thead><tr><th>Référence</th><th>Date</th><th>Total</th><th>Statut</th></tr></thead>
+            <thead><tr><th>ID</th><th>Référence</th><th>Date</th><th>Total</th><th>Statut</th></tr></thead>
             <tbody>
               <% recentOrders.slice(0, 5).forEach(o => { %>
                 <tr>
+                  <td><strong>#<%= o.id %></strong></td>
                   <td><strong><%- esc(o.reference) %></strong></td>
                   <td><%= fmtDate(o.createdAt) %></td>
                   <td><strong><%= money(o.total) %></strong></td>
@@ -263,10 +264,11 @@
         </div>
         <% if (recentOrders.length) { %>
           <table class="zurion-table">
-            <thead><tr><th>Référence</th><th>Date</th><th>Articles</th><th>Total</th><th>Statut</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Référence</th><th>Date</th><th>Articles</th><th>Total</th><th>Statut</th><th>Actions</th></tr></thead>
             <tbody>
               <% recentOrders.forEach(o => { %>
                 <tr>
+                  <td><strong>#<%= o.id %></strong></td>
                   <td><strong><%- esc(o.reference) %></strong></td>
                   <td><%= fmtDate(o.createdAt) %></td>
                   <td><%= o.items ? o.items.length : 0 %> article(s)</td>
@@ -353,6 +355,7 @@
             <table class="zurion-table zurion-table--livraisons">
               <thead>
                 <tr>
+                  <th>ID</th>
                   <th>Référence</th>
                   <th>Commande et produits</th>
                   <th>Destination</th>
@@ -368,6 +371,7 @@
               <tbody>
                 <% livraisons.forEach(l => { %>
                   <tr>
+                    <td><strong>#<%= l.id %></strong></td>
                     <td><strong><%- esc(l.reference) %></strong></td>
                     <td><strong><%- esc((l.order && l.order.reference) || '—') %></strong><br><small class="zurion-muted"><%- esc((l.order && l.order.items || []).map(it => `${it.quantity}× ${it.nameSnapshot}`).join(', ') || 'Produits indisponibles') %></small></td>
                     <% let destination = null; try { destination = l.destinationSnapshot ? JSON.parse(l.destinationSnapshot) : (l.order && l.order.addressSnapshot ? JSON.parse(l.order.addressSnapshot) : null); } catch (_) { destination = null; } %>
@@ -437,10 +441,11 @@
         </div>
         <% if (couriers.length) { %>
           <table class="zurion-table">
-            <thead><tr><th>Nom</th><th>Téléphone</th><th>Actif</th><th>Actions</th></tr></thead>
+            <thead><tr><th>ID</th><th>Nom</th><th>Téléphone</th><th>Actif</th><th>Actions</th></tr></thead>
             <tbody>
               <% couriers.forEach(c => { %>
                 <tr>
+                  <td><strong>#<%= c.id %></strong></td>
                   <form method="post" action="/admin/livreurs/<%= c.id %>">
                     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                     <td><input class="zurion-input-inline" style="width:14rem" name="name" value="<%- esc(c.name) %>" required minlength="2" maxlength="80"></td>
@@ -485,11 +490,12 @@
           </form>
             <div class="zurion-table-wrap">
               <table class="zurion-table" style="margin-top:1.4rem">
-                <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-livreurs-all" title="Tout sélectionner"></th><th>Nom complet</th><th>E-mail</th><th>Téléphone</th><th>Créé le</th><% if (isSuperAdmin) { %><th>Actions</th><% } %></tr></thead>
+                <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-livreurs-all" title="Tout sélectionner"></th><th>ID</th><th>Nom complet</th><th>E-mail</th><th>Téléphone</th><th>Créé le</th><% if (isSuperAdmin) { %><th>Actions</th><% } %></tr></thead>
                 <tbody>
                   <% livreurs.forEach(l => { %>
                     <tr>
                       <td class="zurion-check-cell"><input type="checkbox" name="ids" value="<%= l.id %>" class="bulk-livreurs-cb"></td>
+                      <td><strong>#<%= l.id %></strong></td>
                       <td><strong><%- esc(l.firstName) %> <%- esc(l.lastName) %></strong></td>
                       <td><%- esc(l.email) %></td>
                       <td><%- esc(l.phone || '—') %></td>
@@ -546,11 +552,12 @@
           </form>
             <div class="zurion-table-wrap">
               <table class="zurion-table">
-                <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-coupons-all" title="Tout sélectionner"></th><th>Code</th><th>Remise</th><th>Panier min.</th><th>Utilisations</th><th>Validité</th><th>État</th><th>Actions</th></tr></thead>
+                <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-coupons-all" title="Tout sélectionner"></th><th>ID</th><th>Code</th><th>Remise</th><th>Panier min.</th><th>Utilisations</th><th>Validité</th><th>État</th><th>Actions</th></tr></thead>
                 <tbody>
                   <% coupons.forEach(c => { %>
                     <tr>
                       <td class="zurion-check-cell"><input type="checkbox" name="ids" value="<%= c.id %>" class="bulk-coupons-cb"></td>
+                      <td><strong>#<%= c.id %></strong></td>
                       <td><strong><%- esc(c.code) %></strong></td>
                       <td><%= c.type === 'percent' ? c.value + '%' : money(c.value) %></td>
                       <td><%= c.minAmount ? money(c.minAmount) : '—' %></td>
@@ -610,11 +617,12 @@
           </form>
             <div class="zurion-table-wrap">
               <table class="zurion-table">
-                <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-categories-all" title="Tout sélectionner"></th><th>Nom</th><th>Slug</th><th>Ordre</th><th>Visible</th><th>Actions</th></tr></thead>
+                <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-categories-all" title="Tout sélectionner"></th><th>ID</th><th>Nom</th><th>Slug</th><th>Ordre</th><th>Visible</th><th>Actions</th></tr></thead>
                 <tbody>
                   <% categories.forEach(category => { %>
                     <tr>
                       <td class="zurion-check-cell"><input type="checkbox" name="ids" value="<%= category.id %>" class="bulk-categories-cb"></td>
+                      <td><strong>#<%= category.id %></strong></td>
                       <form method="post" action="/admin/categories/<%= category.id %>">
                         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                         <td><input class="zurion-input-inline" name="name" value="<%- esc(category.name) %>" required></td>
@@ -672,11 +680,12 @@
           </form>
             <div class="zurion-table-wrap">
               <table class="zurion-table">
-                <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-users-all" title="Tout sélectionner"></th><th>Nom</th><th>E-mail</th><th>Téléphone</th><th>Rôle</th><th>Créé le</th><% if (isSuperAdmin) { %><th>Actions</th><% } %></tr></thead>
+                <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-users-all" title="Tout sélectionner"></th><th>ID</th><th>Nom</th><th>E-mail</th><th>Téléphone</th><th>Rôle</th><th>Créé le</th><% if (isSuperAdmin) { %><th>Actions</th><% } %></tr></thead>
                 <tbody>
                   <% users.forEach(user => { %>
                     <tr>
                       <td class="zurion-check-cell"><input type="checkbox" name="ids" value="<%= user.id %>" class="bulk-users-cb" <%= (user.role === 'superadmin' || Number(user.id) === Number(currentUser.id)) ? 'disabled' : '' %>></td>
+                      <td><strong>#<%= user.id %></strong></td>
                       <td>
                         <div style="display:flex;align-items:center;gap:1rem">
                           <span class="zurion-account__avatar" style="width:3.6rem;height:3.6rem;font-size:1.4rem;margin:0"><%- esc((user.firstName || 'Z')[0].toUpperCase()) %></span>

@@ -26,6 +26,7 @@ if (isElectron) {
     await connectDatabase();
     const deliveryService = require('./src/services/delivery.service');
     await deliveryService.seedCouriersIfEmpty();
+    await deliveryService.ensureLivraisonEvents();
     const app = require('./src/app');
     app.listen(env.port, () => {
       console.log(`[zurion] Server prêt sur http://localhost:${env.port}`);

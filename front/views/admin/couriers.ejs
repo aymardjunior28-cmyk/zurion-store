@@ -9,6 +9,9 @@
       <span class="zurion-admin__date"><i class="fa-solid fa-user-tie"></i> <%= couriers.length %> livreur(s)</span>
     </header>
 
+    <% if (error) { %><div class="zurion-form-error"><%- esc(error) %></div><% } %>
+    <% if (okSaved === 'livreur') { %><div class="zurion-form-success">Compte livreur créé. Il peut désormais se connecter sur /livreur avec son e-mail et son mot de passe.</div><% } else if (okSaved === 'livreur-deleted') { %><div class="zurion-form-success">Compte livreur supprimé. Ses livraisons en cours ont été annulées.</div><% } else if (okSaved === 'bulk-livreurs') { %><div class="zurion-form-success"><%= bulkCount %> compte(s) livreur supprimé(s). Leurs livraisons en cours ont été annulées.</div><% } else if (okSaved) { %><div class="zurion-form-success">Modifications enregistrées.</div><% } %>
+
     <div class="zurion-section-block">
       <div class="zurion-admin__title">
         <h2><i class="fa-solid fa-plus" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Ajouter un livreur</h2>
@@ -30,11 +33,12 @@
       <% if (couriers.length) { %>
         <table class="zurion-table">
           <thead>
-            <tr><th>Nom</th><th>Téléphone</th><th>Actif</th><th>Actions</th></tr>
+            <tr><th>ID</th><th>Nom</th><th>Téléphone</th><th>Actif</th><th>Actions</th></tr>
           </thead>
           <tbody>
             <% couriers.forEach(c => { %>
               <tr>
+                <td><strong>#<%= c.id %></strong></td>
                 <form method="post" action="/admin/livreurs/<%= c.id %>">
                   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
                   <td><input class="zurion-input-inline" style="width:14rem" name="name" value="<%- esc(c.name) %>" required minlength="2" maxlength="80"></td>
@@ -61,5 +65,117 @@
       <% } %>
       <p class="zurion-muted" style="margin-top:1.4rem"><i class="fa-solid fa-circle-info"></i> Chaque commande expédiée est automatiquement attribuée au livreur actif le moins chargé.</p>
     </div>
+
+    <div class="zurion-section-block">
+      <div class="zurion-admin__title">
+        <h2><i class="fa-solid fa-user-lock" style="margin-right:.6rem;color:var(--zurion-primary)"></i> Comptes livreurs (connexion)</h2>
+        <span class="zurion-muted">Ces comptes ont un e-mail et un mot de passe pour se connecter sur /livreur</span>
+      </div>
+      <form method="post" action="/admin/livreur-comptes" class="zurion-form-grid">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Prénom<input class="form-control" name="firstName" required minlength="2" maxlength="80" placeholder="Ex : Aya"></label>
+        <label>Nom<input class="form-control" name="lastName" required minlength="2" maxlength="80" placeholder="Ex : Konan"></label>
+        <label>E-mail<input class="form-control" type="email" name="email" required maxlength="160" placeholder="livreur@zurion.store"></label>
+        <label>Téléphone (optionnel)<input class="form-control" name="phone" maxlength="30" placeholder="Ex : +225 07 00 00 00 00"></label>
+        <label>Mot de passe<span class="zurion-pw-wrap"><input class="form-control" type="password" name="password" required minlength="8" maxlength="128" placeholder="8 caractères minimum"><button type="button" class="zurion-pw-toggle" aria-label="Afficher le mot de passe"><i class="fa-solid fa-eye"></i></button></span></label>
+        <div class="zurion-form-grid__full"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> Créer le compte livreur</button></div>
+      </form>
+      <% if (livreurs.length) { %>
+        <form method="post" action="/admin/livreur-comptes/suppression-multiple" id="bulk-livreurs-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <div class="zurion-bulk-bar" id="bulk-livreurs-bar">
+            <strong><span id="bulk-livreurs-count">0</span> sélectionné(s)</strong>
+            <button type="submit" class="btn btn-sm zurion-btn-danger" data-confirm="Supprimer les comptes livreur sélectionnés ? Leurs livraisons en cours seront annulées."><i class="fa-solid fa-trash-can"></i> Supprimer la sélection</button>
+          </div>
+        </form>
+        <div class="zurion-table-wrap">
+          <table class="zurion-table" style="margin-top:1.4rem">
+            <thead><tr><th class="zurion-check-cell zurion-check-cell--head"><input type="checkbox" id="bulk-livreurs-all" title="Tout sélectionner"></th><th>ID</th><th>Nom complet</th><th>E-mail</th><th>Téléphone</th><th>Créé le</th><% if (isSuperAdmin) { %><th>Actions</th><% } %></tr></thead>
+            <tbody>
+              <% livreurs.forEach(l => { %>
+                <tr>
+                  <td class="zurion-check-cell"><input type="checkbox" name="ids" value="<%= l.id %>" class="bulk-livreurs-cb"></td>
+                  <td><strong>#<%= l.id %></strong></td>
+                  <td><strong><%- esc(l.firstName) %> <%- esc(l.lastName) %></strong></td>
+                  <td><%- esc(l.email) %></td>
+                  <td><%- esc(l.phone || '—') %></td>
+                  <td><%= l.createdAt ? new Date(l.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—' %></td>
+                  <% if (isSuperAdmin) { %>
+                    <td>
+                      <form method="post" action="/admin/livreur-comptes/<%= l.id %>/supprimer" data-confirm="Supprimer le compte livreur « <%- esc(l.email) %> » ? Les livraisons en cours lui seront retirées et passées en annulées.">
+                        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                        <button class="btn btn-sm zurion-btn-danger" type="submit"><i class="fa-solid fa-trash-can"></i> Supprimer</button>
+                      </form>
+                    </td>
+                  <% } %>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %><p class="zurion-muted" style="margin-top:1.4rem">Aucun compte livreur pour le moment.</p><% } %>
+    </div>
   </main>
 </div>
+
+<style>
+.zurion-pw-wrap { position: relative; }
+.zurion-pw-wrap input[type="password"],
+.zurion-pw-wrap input[type="text"] { padding-right: 4rem; }
+.zurion-pw-toggle { position: absolute; right: .6rem; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--zurion-muted); font-size: 1.4rem; padding: .4rem; line-height: 1; }
+.zurion-pw-toggle:hover { color: var(--zurion-primary); }
+</style>
+
+<script nonce="<%= nonce %>">
+(function() {
+  const form = document.getElementById('bulk-livreurs-form');
+  if (!form) return;
+  const allCb = document.getElementById('bulk-livreurs-all');
+  const bar = document.getElementById('bulk-livreurs-bar');
+  const countEl = document.getElementById('bulk-livreurs-count');
+  const cbs = document.querySelectorAll('.bulk-livreurs-cb');
+  function updateBar() {
+    const checked = document.querySelectorAll('.bulk-livreurs-cb:checked').length;
+    if (countEl) countEl.textContent = checked;
+    if (bar) bar.classList.toggle('is-visible', checked > 0);
+  }
+  if (allCb) {
+    allCb.addEventListener('change', () => {
+      cbs.forEach(cb => { if (!cb.disabled) cb.checked = allCb.checked; });
+      updateBar();
+    });
+  }
+  cbs.forEach(cb => cb.addEventListener('change', updateBar));
+  form.addEventListener('submit', (e) => {
+    const checked = document.querySelectorAll('.bulk-livreurs-cb:checked');
+    if (!checked.length) { e.preventDefault(); return; }
+    if (!confirm(`Supprimer ${checked.length} compte(s) livreur sélectionné(s) ?`)) { e.preventDefault(); return; }
+    form.querySelectorAll('input[name="ids"]').forEach(el => el.remove());
+    checked.forEach(cb => {
+      const hid = document.createElement('input');
+      hid.type = 'hidden';
+      hid.name = 'ids';
+      hid.value = cb.value;
+      form.appendChild(hid);
+    });
+  });
+})();
+</script>
+<script nonce="<%= nonce %>">
+(function() {
+  document.querySelectorAll('.zurion-pw-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var wrap = btn.closest('.zurion-pw-wrap');
+      var input = wrap.querySelector('input');
+      var icon = btn.querySelector('i');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    });
+  });
+})();
+</script>

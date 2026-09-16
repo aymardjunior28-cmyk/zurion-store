@@ -1,7 +1,7 @@
 'use strict';
 
 const crypto = require('crypto');
-const { sequelize, Livraison, Order, OrderItem, Courier, User } = require('../models');
+const { sequelize, Livraison, LivraisonEvent, Order, OrderItem, Courier, User } = require('../models');
 
 /** Livreurs par défaut (seedés en base au premier démarrage, modifiables ensuite). */
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -21,6 +21,43 @@ const COURIERS = DEFAULT_COURIERS;
 /** Génère une référence unique de livraison (LIV-XXXX). */
 function nextReference() {
   return `LIV-${crypto.randomBytes(5).toString('hex').toUpperCase()}`;
+}
+
+/** Enregistre un événement dans le journal d'une livraison. */
+async function logEvent({ livraisonId, type, message, authorName, transaction }) {
+  return LivraisonEvent.create(
+    {
+      livraisonId,
+      type,
+      message: message ? String(message).slice(0, 500) : null,
+      authorName: authorName ? String(authorName).slice(0, 80) : null,
+    },
+    { transaction }
+  );
+}
+
+/** Reconstitue un journal initial pour les livraisons antérieures (idempotent). */
+async function ensureLivraisonEvents() {
+  const livraisons = await Livraison.findAll({
+    attributes: ['id', 'reference', 'status', 'shippedAt', 'deliveredAt', 'cancelledAt', 'lastReportMessage'],
+    order: [['id', 'ASC']],
+  });
+  const rows = await LivraisonEvent.findAll({ attributes: ['livraisonId'], raw: true });
+  const hasEvents = new Set(rows.map((r) => r.livraisonId));
+  let generated = 0;
+  for (const l of livraisons) {
+    if (hasEvents.has(l.id)) continue;
+    await logEvent({ livraisonId: l.id, type: 'created', message: `Livraison ${l.reference} créée.`, authorName: 'Système' });
+    if (l.shippedAt) await logEvent({ livraisonId: l.id, type: 'shipped', message: 'Colis expédié.', authorName: 'Système' });
+    if (l.lastReportMessage) {
+      await logEvent({ livraisonId: l.id, type: 'non_livree', message: `Non livré signalé. Raison : ${l.lastReportMessage}`, authorName: 'Système' });
+    }
+    if (l.status === 'livrée') await logEvent({ livraisonId: l.id, type: 'delivered', message: 'Colis marqué comme livré.', authorName: 'Système' });
+    if (l.status === 'annulée') await logEvent({ livraisonId: l.id, type: 'cancelled', message: 'Livraison annulée.', authorName: 'Système' });
+    generated++;
+  }
+  if (generated) console.log(`[livraisons] ${generated} journal(s) d'historique reconstitué(s).`);
+  return generated;
 }
 
 /**
@@ -45,7 +82,7 @@ async function listCouriers() {
 async function listLivreurAccounts(transaction) {
   return User.findAll({
     where: { role: 'livreur' },
-    attributes: ['id', 'firstName', 'lastName', 'email', 'phone'],
+    attributes: ['id', 'firstName', 'lastName', 'email', 'phone', 'createdAt'],
     order: [['firstName', 'ASC'], ['lastName', 'ASC']],
     transaction,
   });
@@ -145,6 +182,20 @@ async function autoCreateForOrder(order, transaction) {
       },
       { transaction: t }
     );
+    await logEvent({
+      livraisonId: livraison.id,
+      type: 'created',
+      message: `Livraison créée pour la commande ${order.reference}.`,
+      authorName: 'Système',
+      transaction: t,
+    });
+    await logEvent({
+      livraisonId: livraison.id,
+      type: 'shipped',
+      message: 'Colis expédié.',
+      authorName: 'Système',
+      transaction: t,
+    });
     if (!transaction) await t.commit();
     return livraison;
   } catch (err) {
@@ -223,25 +274,45 @@ async function assignOrder({ orderId, courierId, destination, scheduledAt }) {
       shippedAt: new Date(),
     }, { transaction });
     await order.update({ status: 'expédition' }, { transaction });
+    await logEvent({
+      livraisonId: livraison.id,
+      type: 'created',
+      message: `Livraison créée pour la commande ${order.reference}.`,
+      authorName: courier ? `${courier.firstName} ${courier.lastName}` : (legacyCourier ? legacyCourier.name : 'Système'),
+      transaction,
+    });
+    await logEvent({
+      livraisonId: livraison.id,
+      type: 'shipped',
+      message: 'Colis expédié.',
+      authorName: 'Système',
+      transaction,
+    });
     return livraison;
   });
 }
 
 /** Annule une livraison pour le moment non livrée. */
 /** Annule une livraison pour le moment non livrée. */
-async function cancelDelivery(livraison) {
+async function cancelDelivery(livraison, authorName) {
   if (livraison.status === 'livrée') {
     throw Object.assign(new Error('Une livraison déjà effectuée ne peut pas être annulée.'), { status: 400 });
   }
   livraison.status = 'annulée';
   livraison.cancelledAt = new Date();
   await livraison.save();
+  await logEvent({
+    livraisonId: livraison.id,
+    type: 'cancelled',
+    message: 'Livraison annulée.',
+    authorName: authorName || 'Système',
+  });
   return livraison;
 }
 
 /** Met à jour le statut d'une livraison avec les transitions autorisées. */
 /** Met à jour le statut d'une livraison avec les transitions autorisées. */
-async function updateDeliveryStatus(livraison, status) {
+async function updateDeliveryStatus(livraison, status, authorName) {
   if (!['en_cours', 'livrée', 'annulée'].includes(status)) {
     throw Object.assign(new Error('Statut de livraison invalide.'), { status: 400 });
   }
@@ -255,6 +326,29 @@ async function updateDeliveryStatus(livraison, status) {
   if (status === 'livrée') livraison.deliveredAt = livraison.deliveredAt || new Date();
   if (status === 'annulée') livraison.cancelledAt = livraison.cancelledAt || new Date();
   await livraison.save();
+  const author = authorName || 'Système';
+  if (status === 'livrée') {
+    await logEvent({
+      livraisonId: livraison.id,
+      type: 'delivered',
+      message: `Colis marqué comme livré.${livraison.lastReportMessage ? ` Dernier signalement : ${livraison.lastReportMessage}` : ''}`,
+      authorName: author,
+    });
+  } else if (status === 'annulée') {
+    await logEvent({
+      livraisonId: livraison.id,
+      type: 'cancelled',
+      message: 'Livraison annulée.',
+      authorName: author,
+    });
+  } else {
+    await logEvent({
+      livraisonId: livraison.id,
+      type: 'note',
+      message: `Statut mis à jour : ${status}.`,
+      authorName: author,
+    });
+  }
   return livraison;
 }
 
@@ -291,4 +385,6 @@ module.exports = {
   nextReference,
   parseScheduledAt,
   contentQuantity,
+  logEvent,
+  ensureLivraisonEvents,
 };

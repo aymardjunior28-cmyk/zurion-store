@@ -176,6 +176,12 @@
 .zurion-admin__back { display: flex; align-items: center; justify-content: center; gap: .8rem; padding: 1rem; border: 1px dashed #b9cbd8; border-radius: var(--zurion-radius-lg); color: var(--zurion-muted); font-weight: 600; font-size: 1.3rem; background: #fff; transition: color .18s, border-color .18s; }
 .zurion-admin__back:hover { color: var(--zurion-primary); border-color: var(--zurion-primary); }
 .zurion-admin__main { min-width: 0; background: #fff; border: 1px solid var(--zurion-border); border-radius: var(--zurion-radius-lg); box-shadow: var(--zurion-shadow-sm); padding: 2.8rem; }
+/* Tableaux admin non enveloppés (sans .zurion-table-wrap) : rester dans
+   l'espace alloué en activant le défilement horizontal, au lieu de faire
+   déborder le tableau au-delà de la zone. */
+.zurion-admin__main .zurion-table { display: block; max-width: 100%; overflow-x: auto; }
+.zurion-admin__main .zurion-table-wrap { overflow-x: auto; }
+.zurion-admin__main .zurion-table-wrap > .zurion-table { display: table; overflow: visible; }
 .zurion-admin__head { display: flex; justify-content: space-between; align-items: flex-end; gap: 1.4rem; flex-wrap: wrap; margin-bottom: 2.6rem; padding-bottom: 1.8rem; border-bottom: 1px solid var(--zurion-border); }
 .zurion-admin__head h1 { margin: 0; font-size: 2.6rem; font-weight: 800; letter-spacing: -.03em; }
 .zurion-admin__head p { margin: .3rem 0 0; color: var(--zurion-muted); font-size: 1.35rem; }
@@ -263,14 +269,14 @@ body[data-role="admin"] .zurion-account__nav a.is-active {
 body[data-role="livreur"] .zurion-admin__nav a.is-active,
 body[data-role="livreur"] .zurion-account__nav a.is-active,
 body[data-role="livreur"] .zurion-livreur-hero {
-  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
-  box-shadow: 0 8px 18px rgba(15,118,110,.28);
+  background: linear-gradient(135deg, #12887d 0%, #19a295 50%, #2bb4a6 100%);
+  box-shadow: 0 18px 40px rgba(20,140,124,.18), inset 0 1px 0 rgba(255,255,255,.20);
 }
 body[data-role="livreur"] .zurion-account__avatar {
-  background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  background: linear-gradient(135deg, #0d9488 0%, #2dd4bf 70%);
 }
 body[data-role="livreur"] .zurion-account__role:not(.is-admin) {
-  background: #ccfbf1;
+  background: #e6f8f4;
   color: #0f766e;
 }
 body[data-role="superadmin"] .zurion-account__role:not(.is-admin),
@@ -279,12 +285,28 @@ body[data-role="admin"] .zurion-account__role:not(.is-admin) {
   color: #4338ca;
 }
 .zurion-livreur-hero {
-  border-radius: var(--zurion-radius-lg);
+  border-radius: 26px;
   color: #fff;
-  padding: 2.6rem;
+  padding: 4rem 4.6rem;
   position: relative;
   overflow: hidden;
 }
+.zurion-livreur-hero__row { display: flex; justify-content: space-between; align-items: center; gap: 2.4rem; flex-wrap: wrap; position: relative; z-index: 2; }
+.zurion-livreur-hero__eyebrow { color: #d9f6ef !important; margin: 0 0 .9rem; font-weight: 700; letter-spacing: .16em; }
+.zurion-livreur-hero__text h2 { color: #fff; margin: 0 0 .8rem; font-size: 2.8rem; font-weight: 800; letter-spacing: -.02em; }
+.zurion-livreur-hero__name { position: relative; }
+.zurion-livreur-hero__name::after { content: ''; position: absolute; left: 0; right: 0; bottom: .25rem; height: 1rem; background: rgba(255,255,255,.22); z-index: -1; border-radius: 2px; }
+.zurion-livreur-hero__moto { font-size: 1.7rem; vertical-align: middle; margin-left: .5rem; }
+.zurion-livreur-hero__text p:last-child { color: rgba(255,255,255,.92); margin: 0; max-width: 62rem; font-size: 1.55rem; }
+.zurion-livreur-hero__badge {
+  display: inline-flex; align-items: center; gap: .7rem;
+  padding: .8rem 1.6rem; border-radius: 999px;
+  background: rgba(255,255,255,.16); color: #fff; font-size: 1.3rem; font-weight: 600;
+  border: 1px solid rgba(255,255,255,.28);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(20,120,105,.18);
+}
+.zurion-livreur-hero__badge strong { font-size: 1.35rem; }
 
 /* ── Espace client ────────────────────────────────────────────── */
 .zurion-account { display: grid; grid-template-columns: 276px minmax(0, 1fr); gap: 2.6rem; align-items: start; padding-bottom: 6rem; }
@@ -378,4 +400,168 @@ body[data-role="admin"] .zurion-account__role:not(.is-admin) {
   .zurion-steps { grid-template-columns: 1fr; }
   .zurion-delivery__grid { grid-template-columns: 1fr; }
   .zurion-contact-form { padding: 2rem; }
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ * Espace livreur — palette douce, airy, cartes et détail livraison
+ * ════════════════════════════════════════════════════════════════════ */
+body[data-role="livreur"] { background: #f5faf8; }
+
+.livreur-dashboard { padding-top: 3rem; padding-bottom: 7rem; }
+
+.zurion-lv-section-title {
+  margin-top: 4rem !important;
+  font-size: 2rem !important;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  letter-spacing: -.01em;
+}
+.zurion-lv-section-title i { color: var(--zurion-primary); font-size: 1.9rem; }
+
+/* Compteurs rapides du dashboard — cartes douces et espacées */
+.zurion-lv-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2.4rem; margin-top: 2.8rem; }
+.zurion-lv-stat {
+  display: flex;
+  align-items: center;
+  gap: 1.8rem;
+  background: #fff;
+  border: 1px solid rgba(210,222,214,.7);
+  border-radius: 24px;
+  padding: 2.4rem 2.8rem;
+  box-shadow: 0 6px 24px rgba(34,72,60,.06);
+  transition: transform .18s ease, box-shadow .22s ease;
+}
+.zurion-lv-stat:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(34,72,60,.10); }
+.zurion-lv-stat__icon { width: 5.4rem; height: 5.4rem; border-radius: 18px; display: flex; align-items: center; justify-content: center; font-size: 2rem; flex-shrink: 0; }
+.zurion-lv-stat--cours .zurion-lv-stat__icon { background: #edf6fc; color: #17669d; }
+.zurion-lv-stat--livree .zurion-lv-stat__icon { background: #eefaf3; color: #157347; }
+.zurion-lv-stat--annulee .zurion-lv-stat__icon { background: #fdf4f2; color: #b04332; }
+.zurion-lv-stat strong { display: block; font-size: 2.6rem; color: var(--zurion-ink); line-height: 1; font-weight: 800; }
+.zurion-lv-stat small { color: var(--zurion-muted); font-weight: 600; font-size: 1.3rem; margin-top: .2rem; }
+
+/* Liste de livraisons : cartes cliquables aérées */
+.zurion-lv-cards { display: flex; flex-direction: column; gap: 2.2rem; }
+.zurion-lv-card {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  background: #fff;
+  border: 1px solid rgba(210,222,214,.7);
+  border-radius: 24px;
+  box-shadow: 0 6px 24px rgba(34,72,60,.06);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform .18s ease, box-shadow .22s ease, border-color .2s ease;
+}
+.zurion-lv-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 40px rgba(34,72,60,.12);
+  border-color: #cfe4d9;
+  color: inherit;
+}
+.zurion-lv-card__bar { width: 7px; align-self: stretch; flex-shrink: 0; }
+.zurion-lv-card--cours .zurion-lv-card__bar { background: linear-gradient(180deg, #5eb3e4, #17669d); }
+.zurion-lv-card--livree .zurion-lv-card__bar { background: linear-gradient(180deg, #68cf9e, #157347); }
+.zurion-lv-card--annulee .zurion-lv-card__bar { background: linear-gradient(180deg, #e6a29a, #b04332); }
+.zurion-lv-card__inner { flex: 1; min-width: 0; padding: 2.4rem 2.9rem; }
+.zurion-lv-card__head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1.6rem; flex-wrap: wrap; margin-bottom: 1.6rem; }
+.zurion-lv-card__ref { display: block; font-size: 1.8rem; font-weight: 800; color: var(--zurion-ink); letter-spacing: -.01em; }
+.zurion-lv-card__order { display: block; margin-top: .35rem; color: var(--zurion-muted); font-size: 1.3rem; }
+.zurion-lv-card__order i { margin-right: .4rem; }
+.zurion-lv-card__badge { display: inline-flex; align-items: center; gap: .6rem; padding: .55rem 1.15rem; border-radius: 999px; font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
+.zurion-lv-card__body { display: flex; justify-content: space-between; align-items: center; gap: 2rem; flex-wrap: wrap; margin-bottom: 1.8rem; }
+.zurion-lv-card__name { margin: 0 0 .45rem; color: var(--zurion-ink); font-weight: 600; font-size: 1.55rem; }
+.zurion-lv-card__name i, .zurion-lv-card__tel i, .zurion-lv-card__addr i { color: var(--zurion-primary); margin-right: .6rem; }
+.zurion-lv-card__tel { margin: 0; color: var(--zurion-body); font-size: 1.35rem; }
+.zurion-lv-card__addr { display: flex; align-items: flex-start; gap: .6rem; color: var(--zurion-muted); font-size: 1.35rem; max-width: 46rem; }
+.zurion-lv-card__addr i { margin-right: 0; margin-top: .15rem; }
+.zurion-lv-card__foot { display: flex; justify-content: space-between; align-items: center; gap: 1.4rem; flex-wrap: wrap; padding-top: 1.5rem; border-top: 1px solid #edf2ee; }
+.zurion-lv-card__meta { display: flex; gap: 2.2rem; flex-wrap: wrap; color: var(--zurion-muted); font-size: 1.3rem; }
+.zurion-lv-card__meta i { margin-right: .45rem; }
+.zurion-lv-card__go { color: var(--zurion-primary); font-weight: 700; font-size: 1.4rem; letter-spacing: -.01em; }
+.zurion-lv-card__go i { margin-left: .4rem; transition: transform .18s ease; }
+.zurion-lv-card:hover .zurion-lv-card__go i { transform: translateX(4px); }
+.zurion-lv-card__actions { display: flex; gap: 1.2rem; flex-wrap: wrap; padding-top: 1.6rem; margin-top: 1.6rem; border-top: 1px dashed #e4ece6; }
+.zurion-lv-card__actions .btn { padding: 1.1rem 1.9rem; font-size: 1.35rem; }
+
+/* Page détail livraison — aérée et douce */
+.zurion-lv-detail { padding-top: 2rem; padding-bottom: 7rem; }
+.zurion-lv-detail__hero { padding: 3.4rem 3.8rem; }
+.zurion-lv-back { display: inline-flex; align-items: center; gap: .8rem; color: var(--zurion-muted); font-weight: 600; margin-bottom: 2rem; padding: .5rem 1rem; border-radius: 999px; background: #fff; border: 1px solid #e6efe9; box-shadow: 0 2px 10px rgba(34,72,60,.04); }
+.zurion-lv-back:hover { color: var(--zurion-primary); border-color: #cfe4d9; }
+.zurion-lv-alert { display: flex; gap: 1.2rem; align-items: center; padding: 1.6rem 2rem; background: #fffaec; border: 1px solid #f3e3b3; color: #9a6a10; border-radius: 18px; margin-bottom: 2.4rem; font-size: 1.35rem; }
+.zurion-lv-alert i { font-size: 1.7rem; flex-shrink: 0; }
+.zurion-lv-detail__grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 3rem; align-items: start; }
+.zurion-lv-detail__main, .zurion-lv-detail__side { display: flex; flex-direction: column; gap: 3rem; min-width: 0; }
+.zurion-lv-panel {
+  background: #fff;
+  border: 1px solid rgba(210,222,214,.7);
+  border-radius: 24px;
+  box-shadow: 0 6px 24px rgba(34,72,60,.05);
+  padding: 3rem;
+  transition: box-shadow .2s ease;
+}
+.zurion-lv-panel:hover { box-shadow: 0 12px 32px rgba(34,72,60,.09); }
+.zurion-lv-panel > h2 { margin: 0 0 2rem; font-size: 1.8rem; display: flex; align-items: center; gap: 1rem; letter-spacing: -.01em; }
+.zurion-lv-panel > h2 i { color: var(--zurion-primary); }
+
+.zurion-lv-dest { display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; flex-wrap: wrap; margin-bottom: 2rem; }
+.zurion-lv-dest__info p { margin: 0 0 .9rem; font-size: 1.55rem; }
+.zurion-lv-dest__info p i { color: #2aa99a; width: 2.2rem; }
+.zurion-lv-dest__name { color: var(--zurion-ink); }
+.zurion-lv-dest__tel a { font-weight: 600; }
+.zurion-lv-dest__addr { color: var(--zurion-muted); }
+.zurion-lv-map { height: 360px; border-radius: 20px; overflow: hidden; border: 1px solid #e6efe9; background: #f2f7f4; z-index: 0; box-shadow: inset 0 2px 8px rgba(34,72,60,.05); }
+
+.zurion-lv-items { list-style: none; margin: 0; padding: 0; }
+.zurion-lv-items li { display: flex; align-items: center; gap: 1.4rem; padding: 1.5rem 0; border-bottom: 1px dashed #e4ece6; }
+.zurion-lv-items li:last-child { border-bottom: 0; }
+.zurion-lv-items__qty { min-width: 4.8rem; background: #edf6fc; color: #17669d; border-radius: 999px; text-align: center; padding: .45rem .8rem; font-weight: 700; font-size: 1.3rem; }
+.zurion-lv-items__name { flex: 1; font-weight: 600; color: var(--zurion-ink); font-size: 1.45rem; }
+.zurion-lv-items__price { color: var(--zurion-ink); font-weight: 700; font-size: 1.45rem; }
+
+.zurion-lv-timeline { list-style: none; margin: 0; padding: 0; }
+.zurion-lv-timeline__item { position: relative; display: flex; gap: 1.6rem; padding-bottom: 2.8rem; }
+.zurion-lv-timeline__item:last-child { padding-bottom: 0; }
+.zurion-lv-timeline__item::before { content: ''; position: absolute; left: 1.5rem; top: 3.1rem; bottom: 0; width: 2px; background: #e4ece6; }
+.zurion-lv-timeline__item:last-child::before { display: none; }
+.zurion-lv-timeline__dot { flex-shrink: 0; width: 3rem; height: 3rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; background: var(--zurion-surface-2); color: var(--zurion-muted); box-shadow: inset 0 0 0 1px rgba(0,0,0,.03); }
+.zurion-lv-timeline__item--delivered .zurion-lv-timeline__dot { background: #eefaf3; color: #157347; }
+.zurion-lv-timeline__item--non_livree .zurion-lv-timeline__dot { background: #fffaec; color: #9a6a10; }
+.zurion-lv-timeline__item--cancelled .zurion-lv-timeline__dot { background: #fdf4f2; color: #b04332; }
+.zurion-lv-timeline__item--shipped .zurion-lv-timeline__dot,
+.zurion-lv-timeline__item--created .zurion-lv-timeline__dot { background: #edf6fc; color: #17669d; }
+.zurion-lv-timeline__body { flex: 1; min-width: 0; }
+.zurion-lv-timeline__msg { margin: 0 0 .4rem; color: var(--zurion-ink); font-weight: 600; font-size: 1.45rem; }
+
+.zurion-lv-summary { margin: 0; display: flex; flex-direction: column; }
+.zurion-lv-summary > div { display: flex; justify-content: space-between; align-items: baseline; gap: 1.2rem; padding: 1.25rem 0; border-bottom: 1px dashed #e4ece6; }
+.zurion-lv-summary > div:last-child { border-bottom: 0; padding-bottom: 0; }
+.zurion-lv-summary dt { color: var(--zurion-muted); font-size: 1.35rem; }
+.zurion-lv-summary dd { margin: 0; text-align: right; font-size: 1.45rem; }
+
+.zurion-lv-actions { display: flex; flex-direction: column; gap: 1.3rem; }
+.zurion-lv-actions .btn { padding: 1.25rem 2rem; font-size: 1.45rem; }
+
+/* Messagerie livreur → admin : harmonisée avec la palette douce */
+body[data-role="livreur"] .card { border: 1px solid rgba(210,222,214,.7); border-radius: 24px; box-shadow: 0 6px 24px rgba(34,72,60,.05); }
+body[data-role="livreur"] .card-header { border-radius: 24px 24px 0 0; padding: 1.6rem 2.4rem; }
+body[data-role="livreur"] .card-body { padding: 2.4rem; }
+
+/* Section livraisons sur /compte (compte livreur) : même habillage aéré */
+body[data-role="livreur"] .zurion-account__section { border-color: rgba(210,222,214,.7); border-radius: 24px; box-shadow: 0 6px 24px rgba(34,72,60,.05); padding: 3rem; }
+
+@media (max-width: 991px) {
+  .zurion-lv-stats { grid-template-columns: repeat(3, 1fr); gap: 1.6rem; }
+  .zurion-lv-detail__grid { grid-template-columns: 1fr; }
+  .zurion-livreur-hero { padding: 3rem 2.6rem; }
+}
+@media (max-width: 599px) {
+  .zurion-lv-stats { grid-template-columns: 1fr; }
+  .zurion-lv-card__body { flex-direction: column; align-items: flex-start; }
+  .zurion-lv-card__inner { padding: 2rem; }
+  .zurion-lv-panel { padding: 2.2rem; }
+  .zurion-livreur-hero { padding: 2.6rem 2.2rem; }
 }

@@ -27,12 +27,13 @@
   <% if (orders.length) { %>
     <table class="zurion-table">
       <thead>
-        <tr><th>Référence</th><th>Client</th><th>Date</th><th>Articles</th><th>Livraison</th><th>Total</th><th>Statut</th><th>Action</th></tr>
+        <tr><th>ID</th><th>Référence</th><th>Client</th><th>Date</th><th>Articles</th><th>Livraison</th><th>Total</th><th>Statut</th><th>Action</th></tr>
       </thead>
       <tbody>
         <% orders.forEach(o => { %>
           <tr>
-            <td><strong><%- esc(o.reference) %></strong></td>
+            <td><strong>#<%= o.id %></strong></td>
+          <td><strong><%- esc(o.reference) %></strong></td>
             <td>
               <strong><%- esc(o.customerName || 'Client invité') %></strong><br>
               <small class="zurion-muted"><%- esc(o.customerPhone || 'Téléphone non renseigné') %></small>

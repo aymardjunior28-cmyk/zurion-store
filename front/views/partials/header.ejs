@@ -51,8 +51,8 @@
       <a href="/catalogue" class="zurion-icon-btn" aria-label="Rechercher" data-zurion-search-toggle>
         <i class="fa-solid fa-magnifying-glass"></i>
       </a>
-      <a href="<%= currentUser ? '/compte' : '/connexion' %>" class="zurion-icon-btn" aria-label="Mon compte">
-        <i class="fa-solid fa-user"></i>
+      <a href="<%= currentUser ? (currentUser.role === 'livreur' ? '/livreur' : '/compte') : '/connexion' %>" class="zurion-icon-btn" aria-label="<%= currentUser && currentUser.role === 'livreur' ? 'Espace livreur' : 'Mon compte' %>">
+        <i class="fa-solid <%= currentUser && currentUser.role === 'livreur' ? 'fa-motorcycle' : 'fa-user' %>"></i>
       </a>
       <a href="/favoris" class="zurion-icon-btn" aria-label="Favoris">
         <i class="fa-regular fa-heart"></i>
@@ -62,6 +62,14 @@
         <a href="/messages" class="zurion-icon-btn" aria-label="Messages" title="Messages">
           <i class="fa-solid fa-envelope"></i>
         </a>
+      <% } %>
+      <% if (currentUser && currentUser.role === 'livreur') { %>
+        <form method="post" action="/deconnexion" title="Se déconnecter">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="zurion-icon-btn" aria-label="Se déconnecter">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          </button>
+        </form>
       <% } %>
             <a href="/panier" class="zurion-icon-btn" aria-label="Panier">
         <i class="fa-solid fa-cart-shopping"></i>
@@ -92,6 +100,17 @@
       color: var(--zurion-body);
       text-decoration: none;
       font-size: 1rem;
+    }
+    .zurion-header__actions form { display: inline-flex; }
+    .zurion-header__actions button.zurion-icon-btn {
+      border: 0;
+      background: transparent;
+      cursor: pointer;
+      font-size: 1.7rem;
+    }
+    .zurion-header__actions button.zurion-icon-btn:hover {
+      background: #fdf1ef;
+      color: #b04332;
     }
     @media (max-width: 991px) {
       .zurion-header__row { padding-left: 2.5rem; }

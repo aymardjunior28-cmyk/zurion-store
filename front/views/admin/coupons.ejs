@@ -55,11 +55,12 @@
   <% if (coupons.length) { %>
     <table class="zurion-table">
       <thead>
-        <tr><th>Code</th><th>Remise</th><th>Panier min.</th><th>Utilisations</th><th>Validité</th><th>État</th><th>Action</th></tr>
+        <tr><th>ID</th><th>Code</th><th>Remise</th><th>Panier min.</th><th>Utilisations</th><th>Validité</th><th>État</th><th>Action</th></tr>
       </thead>
       <tbody>
         <% coupons.forEach(c => { %>
           <tr>
+            <td><strong>#<%= c.id %></strong></td>
             <td><strong><%- esc(c.code) %></strong></td>
             <td><%= c.type === 'percent' ? c.value + '%' : money(c.value) %></td>
             <td><%= c.minAmount ? money(c.minAmount) : '—' %></td>

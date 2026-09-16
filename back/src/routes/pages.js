@@ -10,7 +10,7 @@ const jwt = require('jsonwebtoken');
 
 const env = require('../config/env');
 const { COOKIE_NAME, signToken, cookieOptions } = require('../middlewares/auth');
-const { User, Address, Product, Review, Order, OrderItem, Category, Coupon, Livraison, ProductImage, ProductSpec, Wishlist, ContactMessage, Notification, sequelize } = require('../models');
+const { User, Address, Product, Review, Order, OrderItem, Category, Coupon, Livraison, LivraisonEvent, ProductImage, ProductSpec, Wishlist, ContactMessage, Notification, sequelize } = require('../models');
 const catalogService = require('../services/catalog.service');
 const cartService = require('../services/cart.service');
 const orderService = require('../services/order.service');
@@ -28,6 +28,9 @@ const SORTS_SET = new Set(['popular', 'price_asc', 'price_desc', 'newest', 'rati
 /* ------------------------------------------------------------------ */
 /* Helpers                                                             */
 /* ------------------------------------------------------------------ */
+const DEFAULT_DELIVERY = orderService.DELIVERY_MODES.standard;
+const DEFAULT_DELIVERY_FEE = DEFAULT_DELIVERY.fee;
+const DEFAULT_DELIVERY_LABEL = DEFAULT_DELIVERY.label;
 
 /** Rend une vue dans le layout : body = HTML de la vue, layout autour.
  *  Anti-cache navigateurs/proxies sur les pages SSR (évite de revoir des
@@ -53,6 +56,33 @@ async function previewCoupon(cart, rawCode) {
     if (err.status === 400) return { code: String(rawCode).trim().toUpperCase(), discount: 0, error: err.message };
     throw err;
   }
+}
+
+/** Parse le snapshot de destination d'une livraison pour les vues SSR. */
+function parseLivraisonDestinations(livraisons) {
+  return livraisons.map((l) => {
+    const plain = l.toJSON();
+    if (plain.destinationSnapshot) {
+      try { plain.destinationParsed = JSON.parse(plain.destinationSnapshot); } catch (_) { plain.destinationParsed = null; }
+    } else {
+      plain.destinationParsed = null;
+    }
+    return plain;
+  });
+}
+
+/** Livraisons assignées à un compte livreur (vues SSR). */
+function findLivreurLivraisons(userId) {
+  return Livraison.findAll({
+    where: { courierId: userId },
+    include: [{
+      model: Order, as: 'order',
+      attributes: ['reference', 'total', 'status'],
+      include: [{ model: OrderItem, as: 'items', attributes: ['nameSnapshot', 'priceSnapshot', 'quantity'] }],
+    }],
+    order: [['id', 'DESC']],
+    limit: 50,
+  });
 }
 
 /** Contexte partagé de toutes les pages. */
@@ -213,7 +243,7 @@ router.get('/panier', async (req, res, next) => {
       token: res.locals.currentUser ? null : res.locals.cartToken,
     });
     const coupon = await previewCoupon(cart, req.cookies[COUPON_COOKIE]);
-    return renderPage(req, res, 'cart', { title: 'Panier', cart: cart || null, totals: cartService.cartTotals(cart, 0), coupon });
+    return renderPage(req, res, 'cart', { title: 'Panier', cart: cart || null, totals: cartService.cartTotals(cart, DEFAULT_DELIVERY_FEE), coupon, deliveryLabel: DEFAULT_DELIVERY_LABEL });
   } catch (err) { return next(err); }
 });
 
@@ -226,8 +256,9 @@ router.post('/panier/code-promo', async (req, res, next) => {
       return renderPage(req, res, 'cart', {
         title: 'Panier',
         cart,
-        totals: cartService.cartTotals(cart, 0),
+        totals: cartService.cartTotals(cart, DEFAULT_DELIVERY_FEE),
         coupon,
+        deliveryLabel: DEFAULT_DELIVERY_LABEL,
       });
     }
     res.cookie(COUPON_COOKIE, coupon.code, { ...cookieOptions(), maxAge: 30 * 24 * 60 * 60 * 1000 });
@@ -261,7 +292,7 @@ router.get('/commande', async (req, res, next) => {
     });
     if (!cart || !cart.items.length) return res.redirect('/panier');
     const coupon = await previewCoupon(cart, req.cookies[COUPON_COOKIE]);
-    return renderPage(req, res, 'checkout', { title: 'Commande', cart, totals: cartService.cartTotals(cart, 0), coupon, error: null, values: { couponCode: coupon.code || '' } });
+    return renderPage(req, res, 'checkout', { title: 'Commande', cart, totals: cartService.cartTotals(cart, DEFAULT_DELIVERY_FEE), coupon, error: null, values: { couponCode: coupon.code || '' }, deliveryLabel: DEFAULT_DELIVERY_LABEL, deliveryModes: orderService.DELIVERY_MODES, paymentMethods: orderService.PAYMENT_METHODS });
   } catch (err) { return next(err); }
 });
 
@@ -287,8 +318,9 @@ router.post('/commande', async (req, res, next) => {
     const coupon = await previewCoupon(cart, couponCode);
     return renderPage(req, res, 'checkout', {
       title: 'Commande',
-      cart, totals: cartService.cartTotals(cart, 0), coupon,
+      cart, totals: cartService.cartTotals(cart, DEFAULT_DELIVERY_FEE), coupon,
       error: err.message, values: req.body,
+      deliveryLabel: DEFAULT_DELIVERY_LABEL, deliveryModes: orderService.DELIVERY_MODES, paymentMethods: orderService.PAYMENT_METHODS,
     });
   }
 });
@@ -322,7 +354,8 @@ router.post('/connexion', async (req, res, next) => {
     }
     await cartService.mergeGuestIntoUser(res.locals.cartToken, user.id);
     res.cookie(COOKIE_NAME, signToken(user), cookieOptions());
-    return res.redirect('/compte');
+    // Les livreurs arrivent directement sur leur tableau de bord (livraisons).
+    return res.redirect(user.role === 'livreur' ? '/livreur' : '/compte');
   } catch (err) { return next(err); }
 });
 
@@ -376,12 +409,16 @@ router.get('/compte', async (req, res, next) => {
   try {
     const user = res.locals.currentUser;
     if (!user) return res.redirect('/connexion');
-    const [orders, addresses, purchased] = await Promise.all([
+    const isLivreur = user.role === 'livreur';
+    const [orders, addresses, purchased, ownedLivraisons] = await Promise.all([
       orderService.listOrders(user.id),
       Address.findAll({ where: { userId: user.id }, order: [['isDefault', 'DESC'], ['id', 'DESC']] }),
       orderService.productsPurchased(user.id),
+      isLivreur ? findLivreurLivraisons(user.id) : Promise.resolve([]),
     ]);
-    return renderPage(req, res, 'compte', { title: 'Mon compte', orders, addresses, purchased, okSaved: req.query.ok || false, historyClearedCount: Number(req.query.count) || 0 });
+    // Les comptes livreurs retrouvent ici leurs livraisons assignées (section Livraison).
+    const livraisons = isLivreur ? parseLivraisonDestinations(ownedLivraisons || []) : [];
+    return renderPage(req, res, 'compte', { title: 'Mon compte', orders, addresses, purchased, livraisons, okSaved: req.query.ok || false, historyClearedCount: Number(req.query.count) || 0 });
   } catch (err) { return next(err); }
 });
 
@@ -1087,7 +1124,8 @@ router.post('/admin/livraisons/:id/annuler', async (req, res, next) => {
   try {
     const livraison = await Livraison.findByPk(Number(req.params.id));
     if (!livraison) return res.redirect('/admin?tab=livraisons');
-    await deliveryService.cancelDelivery(livraison);
+    const author = `${res.locals.currentUser.firstName} ${res.locals.currentUser.lastName}`.trim();
+    await deliveryService.cancelDelivery(livraison, author);
     return res.redirect('/admin?tab=livraisons');
   } catch (err) {
     if (!err.status) return next(err);
@@ -1100,7 +1138,8 @@ router.post('/admin/livraisons/:id/statut', async (req, res, next) => {
   try {
     const livraison = await Livraison.findByPk(Number(req.params.id));
     if (!livraison) return res.redirect('/admin?tab=livraisons');
-    await deliveryService.updateDeliveryStatus(livraison, String(req.body.status || '').trim());
+    const author = `${res.locals.currentUser.firstName} ${res.locals.currentUser.lastName}`.trim();
+    await deliveryService.updateDeliveryStatus(livraison, String(req.body.status || '').trim(), author);
     return res.redirect('/admin?tab=livraisons');
   } catch (err) {
     if (!err.status) return next(err);
@@ -1113,8 +1152,18 @@ router.post('/admin/livraisons/:id/statut', async (req, res, next) => {
 // GET — tableau de gestion des livreurs (créer / modifier / supprimer).
 router.get('/admin/livreurs', async (req, res, next) => {
   try {
-    const couriers = await deliveryService.listCouriers();
-    return renderPage(req, res, 'admin/couriers', { title: 'Livreurs · Admin', couriers, error: req.query.err || null });
+    const [couriers, livreurs] = await Promise.all([
+      deliveryService.listCouriers(),
+      deliveryService.listLivreurAccounts(),
+    ]);
+    return renderPage(req, res, 'admin/couriers', {
+      title: 'Livreurs · Admin',
+      couriers,
+      livreurs,
+      error: req.query.err || null,
+      okSaved: req.query.ok || false,
+      bulkCount: Number(req.query.count) || 0,
+    });
   } catch (err) { return next(err); }
 });
 
@@ -1323,24 +1372,44 @@ function requireNotCustomerPage(req, res, next) {
 /** GET /livreur — tableau de bord livreur (page SSR). */
 router.get('/livreur', requireLivreurPage, async (req, res, next) => {
   try {
-    const livraisons = await Livraison.findAll({
-      where: { courierId: req.user.id },
-      include: [{ model: Order, as: 'order', attributes: ['reference', 'total', 'status'] }],
-      order: [['id', 'DESC']],
-      limit: 50,
-    });
-    const livraisonsParsed = livraisons.map((l) => {
-      const plain = l.toJSON();
-      if (plain.destinationSnapshot) {
-        try { plain.destinationParsed = JSON.parse(plain.destinationSnapshot); } catch (_) { plain.destinationParsed = null; }
-      } else {
-        plain.destinationParsed = null;
-      }
-      return plain;
-    });
+    const livraisonsParsed = parseLivraisonDestinations(await findLivreurLivraisons(req.user.id));
     return renderPage(req, res, 'livreur/dashboard', {
       title: 'Espace Livreur · Zurion',
       livraisons: livraisonsParsed,
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
+/** GET /livreur/livraisons/:id — page détail d'une livraison assignée. */
+router.get('/livreur/livraisons/:id(\\d+)', requireLivreurPage, async (req, res, next) => {
+  try {
+    const livraison = await Livraison.findOne({
+      where: { id: Number(req.params.id), courierId: req.user.id },
+      include: [{
+        model: Order, as: 'order',
+        include: [{ model: OrderItem, as: 'items', attributes: ['nameSnapshot', 'priceSnapshot', 'quantity'] }],
+      }, {
+        model: LivraisonEvent,
+        as: 'events',
+        separate: true,
+        order: [['createdAt', 'ASC']],
+      }],
+    });
+    if (!livraison) return res.redirect('/livreur');
+    const plain = livraison.toJSON();
+    if (plain.destinationSnapshot) {
+      try { plain.destinationParsed = JSON.parse(plain.destinationSnapshot); } catch (_) { plain.destinationParsed = null; }
+    } else {
+      plain.destinationParsed = plain.order && plain.order.addressSnapshot
+        ? (() => { try { return JSON.parse(plain.order.addressSnapshot); } catch (_) { return null; } })()
+        : null;
+    }
+    return renderPage(req, res, 'livreur/livraison-detail', {
+      title: `${plain.reference} · Espace Livreur`,
+      livraison: plain,
+      backHref: '/livreur',
     });
   } catch (err) {
     return next(err);
