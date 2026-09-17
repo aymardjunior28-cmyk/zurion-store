@@ -7,11 +7,6 @@ const SIMULATED_METHODS = new Set([
   'Carte bancaire (simulation)',
 ]);
 
-/**
- * Les paiements opérateurs nécessitent un contrat marchand et des secrets
- * propres à l'environnement. Tant que l'adaptateur n'est pas configuré, le
- * serveur ne doit pas présenter une simulation comme un paiement réel.
- */
 /* ═══════════════════════════════════════════════════════════════════════════
  *  SERVICE PAIEMENT — contrôle des moyens de paiement
  *  Les paiements opérateurs nécessitent un contrat marchand et des secrets

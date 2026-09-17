@@ -116,7 +116,6 @@ async function getProductBySlug(slug) {
 }
 
 /** Nouveautés (les plus récents) pour l'accueil. */
-/** Nouveautés (les plus récents) pour l'accueil. */
 async function getNewProducts(limit = 8) {
   return Product.findAll({
     where: { active: true },
@@ -139,7 +138,6 @@ async function getSuggestions(query, limit = 6) {
   });
 }
 
-/** Produits mis en avant (featured) pour l'accueil. */
 /** Produits mis en avant (featured) pour l'accueil. */
 async function getFeaturedProducts(limit = 8) {
   return Product.findAll({

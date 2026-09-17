@@ -107,7 +107,6 @@ async function createCourier({ name, phone }) {
 }
 
 /** Modifie un livreur (nom, téléphone, actif). */
-/** Modifie un livreur (nom, téléphone, actif). */
 async function updateCourier(id, { name, phone, active }) {
   const courier = await Courier.findByPk(Number(id));
   if (!courier) throw Object.assign(new Error('Livreur introuvable.'), { status: 404 });
@@ -127,7 +126,6 @@ async function updateCourier(id, { name, phone, active }) {
   return courier;
 }
 
-/** Supprime un livreur (les livraisons passées conservent leur nom en instantané). */
 /** Supprime un livreur (les livraisons passées conservent leur nom en instantané). */
 async function deleteCourier(id) {
   const courier = await Courier.findByPk(Number(id));
@@ -293,7 +291,6 @@ async function assignOrder({ orderId, courierId, destination, scheduledAt }) {
 }
 
 /** Annule une livraison pour le moment non livrée. */
-/** Annule une livraison pour le moment non livrée. */
 async function cancelDelivery(livraison, authorName) {
   if (livraison.status === 'livrée') {
     throw Object.assign(new Error('Une livraison déjà effectuée ne peut pas être annulée.'), { status: 400 });
@@ -310,7 +307,6 @@ async function cancelDelivery(livraison, authorName) {
   return livraison;
 }
 
-/** Met à jour le statut d'une livraison avec les transitions autorisées. */
 /** Met à jour le statut d'une livraison avec les transitions autorisées. */
 async function updateDeliveryStatus(livraison, status, authorName) {
   if (!['en_cours', 'livrée', 'annulée'].includes(status)) {

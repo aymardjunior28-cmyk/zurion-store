@@ -55,7 +55,6 @@ function applyDiscount(coupon, subtotal) {
 }
 
 /** Incrémente le compteur d'utilisation du code (dans la transaction). */
-/** Incrémente le compteur d'utilisation du code (dans la transaction). */
 async function consumeCoupon(coupon, transaction) {
   await coupon.increment('usedCount', { by: 1, transaction });
 }

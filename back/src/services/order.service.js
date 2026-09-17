@@ -17,7 +17,6 @@ const paymentService = require('./payment.service');
  *  - productsPurchased : produits achetés par un client (pour les avis vérifiés).
  * ═══════════════════════════════════════════════════════════════════════════ */
 
-/** Cycle de vie des commandes (exigence cahier des charges). */
 const ORDER_STATUSES = [
   'créée',
   'paiement_confirmé',
@@ -27,7 +26,6 @@ const ORDER_STATUSES = [
   'terminée',
 ];
 
-/** Modes de livraison proposés au checkout. */
 /** Modes de livraison proposés au checkout (clé stable → libellé + délai + frais). */
 const DELIVERY_MODES = {
   standard: { label: 'Livraison standard', days: '2 à 5 jours ouvrés', fee: 2000 },
@@ -35,7 +33,6 @@ const DELIVERY_MODES = {
   pickup: { label: 'Retrait en agence', days: 'Dès disponibilité', fee: 0 },
 };
 
-/** Moyens de paiement simulés (démonstration) : clé stable + libellé affiché. */
 /** Moyens de paiement simulés (démonstration) : clé stable + libellé affiché. */
 const PAYMENT_METHODS = [
   'Paiement à la livraison',
@@ -50,7 +47,6 @@ const PAYMENT_METHOD_KEYS = {
   card: 'Carte bancaire (simulation)',
 };
 
-/** Normalise une clé ou un libellé vers le libellé canonique. */
 /** Normalise une clé ou un libellé vers le libellé canonique du moyen de paiement. */
 function normalizePaymentMethod(value) {
   if (PAYMENT_METHOD_KEYS[value]) return PAYMENT_METHOD_KEYS[value];
@@ -174,7 +170,6 @@ async function getOrderForUser(userId, reference, { allowGuest = false } = {}) {
   return Order.findOne({ where, include: [{ model: OrderItem, as: 'items' }] });
 }
 
-/** Avance le statut d'un cran dans le cycle (usage back-office). */
 /** Fait avancer la commande d'un cran dans son cycle de vie. */
 async function advanceStatus(order) {
   const index = ORDER_STATUSES.indexOf(order.status);
@@ -200,7 +195,6 @@ async function transitionStatus(order, status) {
   return order;
 }
 
-/** Statut d'après pour l'affichage du bouton admin. */
 /** Retourne le statut suivant possible (ou null si le cycle est terminé). */
 function nextStatus(order) {
   const index = ORDER_STATUSES.indexOf(order.status);
@@ -217,9 +211,8 @@ const HISTORY_STATUSES = ['terminée', 'annulée'];
  * Supprime définitivement les commandes de l'historique (terminées ou annulées)
  * d'un client, avec leurs lignes et livraisons associées. Les commandes encore
  * actives ne sont jamais touchées.
- * Retourne le nombre de commandes supprimées.
+*  Retourne le nombre de commandes supprimées.
  */
-/** Purge l'historique (commandes terminées/annulées) d'un client. */
 async function clearHistory(userId) {
   return sequelize.transaction(async (tx) => {
     const orders = await Order.findAll({
@@ -239,7 +232,6 @@ async function clearHistory(userId) {
  * Version administrateur : purge l'historique (commandes terminées/annulées)
  * de TOUS les clients. Retourne le nombre de commandes supprimées.
  */
-/** Purge l'historique (commandes terminées/annulées) de TOUS les clients (super-admin). */
 async function clearHistoryAdmin() {
   return sequelize.transaction(async (tx) => {
     const orders = await Order.findAll({
@@ -260,8 +252,6 @@ async function clearHistoryAdmin() {
  * annule les livraisons associées encore en cours, fige le statut.
  * Hors transaction retour : interdit.
  */
-/** Annule une commande (client ou admin) : restaure les stocks et annule les livraisons
- *  associées encore en cours. Hors transaction retour : interdit. */
 async function cancelOrder(order, { by = 'client', transaction: externalTx } = {}) {
   if (!CANCELLABLE_STATUSES.includes(order.status)) {
     throw Object.assign(new Error('Cette commande ne peut plus être annulée (déjà prise en charge ou terminée).'), { status: 400 });
@@ -290,7 +280,6 @@ async function cancelOrder(order, { by = 'client', transaction: externalTx } = {
  * Produits achetés par un client (avec quantités totales cumulées).
  * Retourne une liste dédupliquée par produit, classée par dernier achat.
  */
-/** Produits achetés par un client (avec quantités cumulées, dédupliqués). */
 async function productsPurchased(userId) {
   const { ProductImage } = require('../models');
   const items = await OrderItem.findAll({
