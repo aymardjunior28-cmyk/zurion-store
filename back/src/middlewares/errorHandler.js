@@ -16,7 +16,6 @@ function notFound(req, res) {
 }
 
 /** Gestionnaire d'erreurs central (toujours en dernier middleware). */
-/** Gestionnaire d'erreurs central (toujours en dernier middleware). */
 function errorHandler(err, req, res, next) { // eslint-disable-line no-unused-vars
   console.error(`[error] ${req.method} ${req.originalUrl} →`, err.message);
   if (err.name === 'SequelizeUniqueConstraintError') {

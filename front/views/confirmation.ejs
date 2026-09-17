@@ -11,7 +11,11 @@
   let addr = {};
   try { addr = JSON.parse(order.addressSnapshot); } catch (_) { addr = {}; }
   const deliveryLabel = deliveryModes[order.deliveryMode] ? deliveryModes[order.deliveryMode].label : order.deliveryMode;
-  const subtotal = Math.max(0, order.total - order.shipping + order.discount);
+  // Total réel des produits sélectionnés, recalculé depuis les lignes de commande
+  // (instantanés prix × quantité) — indépendant de ce qui est stocké dans
+  // order.total (qui reste la source du montant payé, hors remise).
+  const productsTotal = order.items.reduce((sum, it) => sum + (Number(it.priceSnapshot) || 0) * (Number(it.quantity) || 0), 0);
+  const totalPaid = productsTotal + (Number(order.shipping) || 0) - (Number(order.discount) || 0);
   const fmtDateTime = (d) => new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 %>
 <div class="container">
@@ -40,12 +44,12 @@
           <% }) %>
         </tbody>
         <tfoot>
-          <tr><td colspan="3">Sous-total</td><td><%= money(subtotal) %></td></tr>
+          <tr><td colspan="3">Sous-total (produits)</td><td><%= money(productsTotal) %></td></tr>
           <% if (order.discount > 0) { %>
             <tr><td colspan="3">Code promo <%- esc(order.couponCode) %></td><td class="zurion-text-success">-<%= money(order.discount) %></td></tr>
           <% } %>
           <tr><td colspan="3">Livraison — <%- esc(deliveryLabel) %></td><td><%= money(order.shipping) %></td></tr>
-          <tr class="zurion-table__grand"><td colspan="3">Total payé</td><td><strong><%= money(order.total) %></strong></td></tr>
+          <tr class="zurion-table__grand"><td colspan="3">Total payé</td><td><strong><%= money(totalPaid) %></strong></td></tr>
         </tfoot>
       </table>
     </section>

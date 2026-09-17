@@ -6,24 +6,14 @@ const env = require('../config/env');
 const CSRF_COOKIE = 'zurion_csrf';
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
-/**
- * Protection CSRF en pattern « double soumission » :
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  MIDDLEWARE CSRF — protection « double soumission » :
  *  - un cookie HTTP-only `zurion_csrf` est posé au premier passage ;
  *  - la même valeur est exposée à la vue via res.locals.csrfToken
  *    (rendue dans window.ZURION.csrfToken et dans les champs cachés des formulaires) ;
  *  - toute requête de mutation doit joindre X-CSRF-Token (API) ou _csrf (formulaire),
  *    sinon elle est rejetée. Un attaquant cross-site ne peut ni lire le token
  *    (httpOnly + SameSite=Lax) ni envoyer de cookie de sa façon.
- */
-/* ═══════════════════════════════════════════════════════════════════════════
- *  MIDDLEWARE CSRF — protection « double soumission »
- *  Cookie httpOnly + jeton dans les vues ; vérifié sur toute mutation.
- * ═══════════════════════════════════════════════════════════════════════════ */
-
-/** Protection CSRF en pattern « double soumission ». */
-/* ═══════════════════════════════════════════════════════════════════════════
- *  MIDDLEWARE CSRF — protection « double soumission »
- *  Cookie httpOnly + jeton dans les vues ; vérifié sur toute mutation.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 /** Protection CSRF en pattern « double soumission ». */

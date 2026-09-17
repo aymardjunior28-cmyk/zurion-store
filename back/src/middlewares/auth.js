@@ -6,17 +6,6 @@ const { User } = require('../models');
 
 const COOKIE_NAME = env.cookieName;
 
-/** Signe un JWT pour un utilisateur (sub = id, role, pwc = dernière date de MDP). */
-/* ═══════════════════════════════════════════════════════════════════════════
- *  MIDDLEWARE AUTH — JWT, cookies de session, rôles
- *  - signToken : signe un JWT (sub=id, role, pwc=date du dernier MDP).
- *  - cookieOptions : options du cookie de session (httpOnly, SameSite, Secure).
- *  - requireAuth : exige un utilisateur authentifié (ajoute req.user).
- *  - optionalAuth : charge l'utilisateur si le cookie est valide (sinon invité).
- *  - requireAdmin / requireSuperAdmin : contrôle d'accès par rôle.
- * ═══════════════════════════════════════════════════════════════════════════ */
-
-/** Signe un JWT pour un utilisateur (sub = id, role, pwc = dernière date de MDP). */
 /* ═══════════════════════════════════════════════════════════════════════════
  *  MIDDLEWARE AUTH — JWT, cookies de session, rôles
  *  - signToken : signe un JWT (sub=id, role, pwc=date du dernier MDP).
@@ -34,8 +23,6 @@ function signToken(user) {
   });
 }
 
-/** Options du cookie de session (httpOnly, SameSite, Secure en prod). */
-/** Options du cookie de session (httpOnly, SameSite, Secure en production). */
 /** Options du cookie de session (httpOnly, SameSite, Secure en production). */
 function cookieOptions() {
   return {
@@ -47,13 +34,7 @@ function cookieOptions() {
   };
 }
 
-/**
- * Middleware : exige un utilisateur authentifié.
- * Ajoute req.user (instance User) sur succès.
- */
-/** Middleware : exige un utilisateur authentifié. Ajoute req.user (instance User) sur succès.
- *  Invalide la session si le mot de passe a changé depuis l'émission du token. */
-/** Middleware : exige un utilisateur authentifié. Ajoute req.user (instance User) sur succès.
+/** Middleware : exige un utilisateur authentifié (ajoute req.user).
  *  Invalide la session si le mot de passe a changé depuis l'émission du token. */
 async function requireAuth(req, res, next) {
   try {
@@ -84,8 +65,6 @@ async function requireAuth(req, res, next) {
   }
 }
 
-/** Charge l'utilisateur si le cookie de session est valide, sans bloquer un invité. */
-/** Charge l'utilisateur si le cookie de session est valide, sans bloquer un invité. */
 /** Charge l'utilisateur si le cookie de session est valide, sans bloquer un invité. */
 async function optionalAuth(req, res, next) {
   try {

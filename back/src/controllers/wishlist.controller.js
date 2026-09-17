@@ -40,7 +40,6 @@ async function addWishlist(req, res, next) {
 }
 
 /** DELETE /api/wishlist/:productId — retire un favori. */
-/** DELETE /api/wishlist/:productId — retire un favori. */
 async function removeWishlist(req, res, next) {
   try {
     await Wishlist.destroy({ where: { userId: req.user.id, productId: Number(req.params.productId) } });

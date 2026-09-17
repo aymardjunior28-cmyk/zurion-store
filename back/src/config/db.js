@@ -87,7 +87,7 @@ function buildSequelize() {
     const dbPath = env.databaseUrl.replace('sqlite://', '').replace('./', '');
     const storage = path.resolve(__dirname, '../../', dbPath);
 
-    // Sequelize utilise automatiquement better-sqlite3 s'il est installé
+    // Le dialect SQLite de Sequelize charge `sqlite3` au runtime, s'il est installé
     return new Sequelize({
       dialect: 'sqlite',
       storage,

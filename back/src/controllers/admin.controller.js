@@ -180,7 +180,6 @@ async function deleteProduct(req, res, next) {
 // ── Catégories ───────────────────────────────────────────────────────────────
 
 /** POST /api/admin/categories — crée une catégorie. */
-/** POST /api/admin/categories — crée une catégorie. */
 async function createCategory(req, res, next) {
   try {
     const { name, description, image, active, sortOrder } = req.body;
@@ -201,7 +200,6 @@ async function createCategory(req, res, next) {
   }
 }
 
-/** PUT /api/admin/categories/:id — met à jour une catégorie. */
 /** PUT /api/admin/categories/:id — met à jour une catégorie. */
 async function updateCategory(req, res, next) {
   try {
@@ -293,7 +291,6 @@ async function setOrderStatus(req, res, next) {
 // ── Utilisateurs ─────────────────────────────────────────────────────────────
 
 /** GET /api/admin/users — liste paginée des comptes (sans hash de mot de passe). */
-/** GET /api/admin/users — liste paginée des comptes (sans hash de mot de passe). */
 async function adminUsers(req, res, next) {
   try {
     const page = Math.max(Number(req.query.page) || 1, 1);
@@ -368,7 +365,6 @@ async function listCoupons(req, res, next) {
 }
 
 /** POST /api/admin/coupons — crée un code promo. */
-/** POST /api/admin/coupons — crée un code promo. */
 async function createCoupon(req, res, next) {
   try {
     const { code, type, value, minAmount, maxUses, validFrom, validUntil, active } = req.body;
@@ -412,7 +408,6 @@ async function toggleCoupon(req, res, next) {
 }
 
 /** DELETE /api/admin/coupons/:id — supprime un code promo. */
-/** DELETE /api/admin/coupons/:id — supprime un code promo. */
 async function deleteCoupon(req, res, next) {
   try {
     const deleted = await Coupon.destroy({ where: { id: Number(req.params.id) } });
@@ -425,7 +420,6 @@ async function deleteCoupon(req, res, next) {
 
 // ── Livraisons ───────────────────────────────────────────────────────────────
 
-/** GET /api/admin/livraisons — liste des livraisons (avec commande associée). */
 /** GET /api/admin/livraisons — liste des livraisons (avec commande associée). */
 async function adminLivraisons(req, res, next) {
   try {
