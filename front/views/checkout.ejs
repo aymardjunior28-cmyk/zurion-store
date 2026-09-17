@@ -77,7 +77,7 @@
         </div>
       <% }) %>
       <hr>
-      <p class="d-flex justify-content-between"><span>Sous-total</span><strong><%= money(totals.subtotal) %></strong></p>
+      <p class="d-flex justify-content-between"><span>Sous-total</span><strong id="zurion-subtotal"><%= money(totals.subtotal) %></strong></p>
       <% if (coupon.discount > 0) { %>
         <p class="d-flex justify-content-between zurion-text-success"><span>Remise (<%- esc(coupon.code) %>)</span><strong id="zurion-discount">-<%= money(coupon.discount) %></strong></p>
       <% } %>
